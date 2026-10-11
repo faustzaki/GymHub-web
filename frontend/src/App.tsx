@@ -8,23 +8,23 @@ import PublicLayout from "@/layouts/PublicLayout";
 import AuthLayout from "@/layouts/AuthLayout";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import AdminLayout from "@/layouts/AdminLayout";
-import CoachLayout from "@/layouts/CoachLayout"; // NEW
-import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import CoachLayout from "@/layouts/CoachLayout";
+import ProtectedRoute from "@/routes/ProtectedRoute";
 
 // Public Pages
-import LandingPage from "@/pages/LandingPage";
+import HomePage from "@/pages/public/home/HomePage";
 
 // Auth Pages
 import LoginPage from "@/pages/auth/LoginPage";
 import RegisterPage from "@/pages/auth/RegisterPage";
 
 // Dashboard Pages
-import OverviewPage from "@/pages/dashboard/OverviewPage";
-import AdminOverviewPage from "@/pages/dashboard/AdminOverviewPage";
-import CoachOverviewPage from "@/pages/dashboard/CoachOverviewPage"; // NEW
-import { UserManagementPage } from "@/pages/dashboard/admin/UserManagementPage";
-import { CoachManagementPage } from "@/pages/dashboard/admin/CoachManagementPage";
-import { CoachFormPage } from "@/pages/dashboard/admin/CoachFormPage";
+import MemberOverviewPage from "@/pages/member/overview/MemberOverviewPage";
+import AdminOverviewPage from "@/pages/admin/overview/AdminOverviewPage";
+import CoachOverviewPage from "@/pages/coach/overview/CoachOverviewPage";
+import { UserManagementPage } from "@/pages/admin/users/UserManagementPage";
+import { CoachManagementPage } from "@/pages/admin/coaches/CoachManagementPage";
+import { CoachFormPage } from "@/pages/admin/coaches/CoachFormPage";
 
 /**
  * App Component
@@ -47,7 +47,7 @@ function App() {
             Menggunakan PublicLayout (Navbar + Footer)
         ========================================= */}
         <Route element={<PublicLayout />}>
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={<HomePage />} />
         </Route>
 
         {/* =========================================
@@ -64,7 +64,7 @@ function App() {
         ========================================= */}
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<DashboardLayout />}>
-            <Route index element={<OverviewPage />} />
+            <Route index element={<MemberOverviewPage />} />
             <Route path="schedule" element={<div className="p-4">Halaman Jadwal (Coming Soon)</div>} />
             <Route path="progress" element={<div className="p-4">Halaman Progres (Coming Soon)</div>} />
             <Route path="todos" element={<div className="p-4">Halaman To-Do (Coming Soon)</div>} />

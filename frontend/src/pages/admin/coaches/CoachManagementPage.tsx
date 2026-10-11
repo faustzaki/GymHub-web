@@ -3,10 +3,10 @@
 // ============================================================
 
 import { useEffect } from 'react';
-import { CoachFilters } from '@/components/admin/coaches/CoachFilters';
-import { CoachTable } from '@/components/admin/coaches/CoachTable';
-import { CoachDetailDialog } from '@/components/admin/coaches/CoachDetailDialog';
-import { CoachDeactivateAlert } from '@/components/admin/coaches/CoachDeactivateAlert';
+import { CoachFilters } from './components/CoachFilters';
+import { CoachTable } from './components/CoachTable';
+import { CoachDetailDialog } from './components/CoachDetailDialog';
+import { CoachDeactivateAlert } from './components/CoachDeactivateAlert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { GraduationCap } from 'lucide-react';
 import { useCoachManagement } from '@/hooks/useCoachManagement';

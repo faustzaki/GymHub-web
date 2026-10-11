@@ -1,17 +1,17 @@
-import Hero from "@/components/home/Hero";
-import FeaturesSection from "@/components/home/FeaturesSection";
-import { ClassesTrainersSection } from "@/components/home/ClassesTrainersSection";
-import PricingBMISection from "@/components/home/PricingBMISection";
-import ContactSection from "@/components/home/ContactSection";
+import Hero from "./components/Hero";
+import FeaturesSection from "./components/FeaturesSection";
+import { ClassesTrainersSection } from "./components/ClassesTrainersSection";
+import PricingBMISection from "./components/PricingBMISection";
+import ContactSection from "./components/ContactSection";
 
 /**
- * LandingPage — Halaman utama (beranda) website.
+ * HomePage — Halaman utama (beranda) website.
  *
  * Semua section yang sebelumnya ada di App.tsx dipindahkan ke sini.
  * Dengan begitu, App.tsx hanya bertugas sebagai "router hub"
  * dan halaman ini menjadi satu unit yang mandiri.
  */
-export default function LandingPage() {
+export default function HomePage() {
   return (
     <>
       {/* Section 1 — Hero */}

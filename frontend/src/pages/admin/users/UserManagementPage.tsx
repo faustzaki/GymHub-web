@@ -1,8 +1,8 @@
-import { UserFilters } from "@/components/admin/users/UserFilters";
-import { UserTable } from "@/components/admin/users/UserTable";
-import { UserFormResponsive } from "@/components/admin/users/UserFormResponsive";
-import { UserDetailSheet } from "@/components/admin/users/UserDetailSheet";
-import { UserDeleteAlert } from "@/components/admin/users/UserDeleteAlert";
+import { UserFilters } from "./components/UserFilters";
+import { UserTable } from "./components/UserTable";
+import { UserFormResponsive } from "./components/UserFormResponsive";
+import { UserDetailSheet } from "./components/UserDetailSheet";
+import { UserDeleteAlert } from "./components/UserDeleteAlert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users } from "lucide-react";
 
