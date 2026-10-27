@@ -1,13 +1,10 @@
 import { useState } from "react";
-import { MapPin, Phone, Clock, Mail, Send, ArrowUpRight } from "lucide-react";
+import { MapPin, Phone, Clock, Mail, Send, ArrowUpRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 
-// --- DATA INFO KONTAK ---
-// Dipisahkan dari UI agar mudah diubah tanpa menyentuh komponen
+// dummy — alamat & nomor kontak contoh; ganti dengan data resmi sebelum publikasi.
 const CONTACT_INFO = [
   {
     icon: MapPin,
@@ -23,31 +20,20 @@ const CONTACT_INFO = [
   },
   {
     icon: Clock,
-    label: "Jam Operasional",
-    value: "Senin – Minggu, 06:00 – 23:00",
+    label: "Jam operasional",
+    value: "Setiap hari, 05.00 – 23.00",
     href: null,
   },
   {
     icon: Mail,
     label: "Email",
-    value: "hello@gymhub.com",
-    href: "mailto:hello@gymhub.com",
+    value: "hello@bifrostgym.id",
+    href: "mailto:hello@bifrostgym.id",
   },
 ] as const;
 
-/**
- * Custom hook untuk mengelola state form kontak.
- *
- * Memisahkan logic dari UI agar komponen tetap bersih.
- * Nanti saat sudah ada backend Laravel, tinggal tambahkan
- * fetch/axios POST ke endpoint API di dalam fungsi handleSubmit.
- */
 function useContactForm() {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    message: "",
-  });
+  const [formData, setFormData] = useState({ name: "", email: "", message: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -55,137 +41,68 @@ function useContactForm() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  // Validasi sederhana: semua field harus terisi dan email valid
   const isValid =
     formData.name.trim().length > 0 &&
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) &&
     formData.message.trim().length > 0;
 
+  // dummy — belum ada endpoint kontak; perilaku & waktu kirim disimulasikan.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isValid) return;
-
     setIsSubmitting(true);
-
-    // Simulasi pengiriman — nanti diganti dengan API call ke Laravel
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
+    await new Promise((resolve) => setTimeout(resolve, 1200));
     setIsSubmitting(false);
     setIsSubmitted(true);
     setFormData({ name: "", email: "", message: "" });
-
-    // Reset notifikasi sukses setelah 5 detik
-    setTimeout(() => setIsSubmitted(false), 5000);
   };
 
-  return {
-    formData,
-    updateField,
-    isValid,
-    isSubmitting,
-    isSubmitted,
-    handleSubmit,
-  };
+  return { formData, updateField, isValid, isSubmitting, isSubmitted, handleSubmit };
 }
 
-/**
- * Section Contact / CTA — section penutup sebelum Footer.
- *
- * Layout:
- * - Desktop: 2 kolom (info kiri, form kanan)
- * - Mobile: stack vertikal
- *
- * Desain:
- * - Background gradient gelap untuk transisi mulus ke Footer
- * - Form dengan glassmorphism ringan
- * - Ikon merah sebagai aksen visual pada info kontak
- * - Micro-animations pada hover untuk setiap item
- */
+/** Penutup: lokasi, jam buka, kanal kontak, dan form singkat. */
 export default function ContactSection() {
-  const {
-    formData,
-    updateField,
-    isValid,
-    isSubmitting,
-    isSubmitted,
-    handleSubmit,
-  } = useContactForm();
+  const { formData, updateField, isValid, isSubmitting, isSubmitted, handleSubmit } = useContactForm();
 
   return (
     <section
       id="contact"
-      className="relative w-full py-24 bg-gradient-to-b from-[#0A0A0A] to-black text-white overflow-hidden"
+      className="relative overflow-hidden bg-background"
+      style={{ paddingBlock: "var(--rhythm-3)" }}
     >
-      {/* Background decorations */}
-      <div className="absolute top-1/3 right-0 w-80 h-80 bg-red-600/5 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-red-600/5 rounded-full blur-[100px] pointer-events-none" />
+      <div className="mx-auto w-full max-w-7xl px-6 lg:px-8">
+        <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
+          <div className="lg:col-span-5">
+            <h2 className="text-4xl font-extrabold uppercase leading-[1.02] tracking-tight text-foreground md:text-5xl">
+              Siap mulai.
+              <br />
+              <span className="italic font-light normal-case text-muted-foreground">Datang, atau tanya dulu.</span>
+            </h2>
+            <p className="mt-5 max-w-md text-base font-light leading-relaxed text-muted-foreground">
+              Kunjungi gym langsung untuk lihat ruangannya, atau kirim pertanyaan lewat salah satu kanal di bawah. Pernah
+              dibalas dalam 24 jam kerja.
+            </p>
 
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
-        {/* HEADER */}
-        <div className="flex flex-col items-center text-center space-y-4 mb-16">
-          <Badge
-            variant="outline"
-            className="text-red-500 border-red-500/30 bg-red-500/10 uppercase tracking-widest px-4 py-1"
-          >
-            Hubungi Kami
-          </Badge>
-          <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight">
-            SIAP <span className="text-red-600">MEMULAI?</span>
-          </h2>
-          <p className="text-gray-400 max-w-xl text-sm md:text-base leading-relaxed">
-            Punya pertanyaan atau ingin langsung bergabung? Hubungi kami atau
-            isi form di bawah. Tim kami akan merespons dalam 24 jam.
-          </p>
-        </div>
-
-        {/* CONTENT: 2 KOLOM */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
-          {/* ====== KOLOM KIRI: INFO KONTAK ====== */}
-          <div className="space-y-8">
-            <div className="space-y-2">
-              <h3 className="text-xl font-bold text-white">Info Kontak</h3>
-              <p className="text-sm text-gray-400 leading-relaxed">
-                Kunjungi gym kami atau hubungi melalui salah satu channel di
-                bawah ini.
-              </p>
-            </div>
-
-            {/* List item kontak */}
-            <div className="space-y-4">
+            <dl className="mt-10 divide-y divide-border border-y border-border">
               {CONTACT_INFO.map((item) => {
                 const content = (
-                  <div className="flex items-start gap-4 p-4 rounded-xl bg-white/[0.02] border border-white/5 hover:border-red-600/30 hover:bg-white/[0.04] transition-all duration-300 group">
-                    {/* Ikon dengan background lingkaran */}
-                    <div className="shrink-0 w-10 h-10 rounded-lg bg-red-600/10 flex items-center justify-center group-hover:bg-red-600/20 transition-colors duration-300">
-                      <item.icon className="w-4 h-4 text-red-500" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">
-                        {item.label}
-                      </p>
-                      <p className="text-sm text-white/80 group-hover:text-white transition-colors">
-                        {item.value}
-                      </p>
-                    </div>
-                    {/* Ikon panah muncul saat hover jika item bisa diklik */}
-                    {item.href && (
-                      <ArrowUpRight className="shrink-0 w-4 h-4 text-gray-600 opacity-0 group-hover:opacity-100 group-hover:text-red-500 transition-all duration-300 ml-auto mt-1" />
-                    )}
+                  <div className="flex min-h-14 items-center gap-4 py-3">
+                    <item.icon className="size-4 shrink-0 text-primary" aria-hidden="true" />
+                    <dt className="w-32 shrink-0 text-xs font-bold uppercase tracking-widest text-muted-foreground">{item.label}</dt>
+                    <dd className="flex min-w-0 flex-1 items-center gap-2 text-sm text-foreground group-hover:underline group-hover:underline-offset-4">
+                      {item.value}
+                      {item.href && <ArrowUpRight className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />}
+                    </dd>
                   </div>
                 );
 
-                // Jika ada href, bungkus dengan <a>; jika tidak, render div biasa
                 return item.href ? (
                   <a
                     key={item.label}
                     href={item.href}
                     target={item.href.startsWith("http") ? "_blank" : undefined}
-                    rel={
-                      item.href.startsWith("http")
-                        ? "noopener noreferrer"
-                        : undefined
-                    }
-                    className="block"
+                    rel={item.href.startsWith("http") ? "noopener noreferrer" : undefined}
+                    className="group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     {content}
                   </a>
@@ -193,108 +110,89 @@ export default function ContactSection() {
                   <div key={item.label}>{content}</div>
                 );
               })}
-            </div>
-
-            {/* Mini map placeholder — bisa diganti Google Maps embed nanti */}
-            <div className="relative rounded-xl overflow-hidden border border-white/5 h-40 bg-white/[0.02]">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center space-y-2">
-                  <MapPin className="w-6 h-6 text-red-500/50 mx-auto" />
-                  <p className="text-xs text-gray-600">
-                    Google Maps akan ditampilkan di sini
-                  </p>
-                </div>
-              </div>
-              {/* Gradient overlay atas & bawah untuk kesan premium */}
-              <div className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-[#0A0A0A] to-transparent" />
-              <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-[#0A0A0A] to-transparent" />
-            </div>
+            </dl>
           </div>
 
-          {/* ====== KOLOM KANAN: FORM KONTAK ====== */}
-          <Card className="bg-white/[0.02] border-white/10 backdrop-blur-sm shadow-2xl">
-            <CardContent className="p-6 md:p-8">
-              {/* Notifikasi sukses setelah submit */}
+          <div className="lg:col-span-7">
+            <div className="border border-border bg-card p-6 md:p-8">
               {isSubmitted && (
-                <div className="mb-6 p-4 rounded-lg bg-green-500/10 border border-green-500/20 animate-in fade-in slide-in-from-top-2 duration-300">
-                  <p className="text-sm text-green-400 text-center font-medium">
-                    ✓ Pesan berhasil dikirim! Kami akan segera menghubungi
-                    kamu.
-                  </p>
-                </div>
+                <p
+                  role="status"
+                  className="mb-6 border border-primary/60 bg-primary/10 px-4 py-3 text-sm text-foreground animate-in fade-in duration-200"
+                >
+                  Pesanmu terkirim. Kami akan membalas ke email yang kamu tulis.
+                </p>
               )}
 
               <form onSubmit={handleSubmit} className="space-y-5">
-                {/* Field Nama */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-300">
-                    Nama Lengkap
+                  <label htmlFor="nama" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                    Nama lengkap
                   </label>
                   <Input
+                    id="nama"
                     type="text"
-                    placeholder="John Doe"
+                    placeholder="Nama kamu"
                     value={formData.name}
                     onChange={(e) => updateField("name", e.target.value)}
-                    className="bg-black/50 border-white/10 text-white placeholder:text-gray-600 focus-visible:ring-red-600 h-11"
+                    className="h-11 rounded-md bg-background border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-ring"
                     required
                   />
                 </div>
 
-                {/* Field Email */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-300">
+                  <label htmlFor="email" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                     Email
                   </label>
                   <Input
+                    id="email"
                     type="email"
-                    placeholder="john@example.com"
+                    placeholder="nama@email.com"
                     value={formData.email}
                     onChange={(e) => updateField("email", e.target.value)}
-                    className="bg-black/50 border-white/10 text-white placeholder:text-gray-600 focus-visible:ring-red-600 h-11"
+                    className="h-11 rounded-md bg-background border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-ring"
                     required
                   />
                 </div>
 
-                {/* Field Pesan */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-300">
+                  <label htmlFor="pesan" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                     Pesan
                   </label>
                   <Textarea
-                    placeholder="Tulis pertanyaan atau pesanmu di sini..."
+                    id="pesan"
+                    placeholder="Mau tanya jadwal, biaya, atau sesi percobaan?"
                     value={formData.message}
                     onChange={(e) => updateField("message", e.target.value)}
-                    className="bg-black/50 border-white/10 text-white placeholder:text-gray-600 focus-visible:ring-red-600 min-h-[120px] resize-none"
+                    className="min-h-[120px] resize-none rounded-md bg-background border-border text-foreground placeholder:text-muted-foreground focus-visible:ring-ring"
                     required
                   />
                 </div>
 
-                {/* Tombol Submit */}
                 <Button
                   type="submit"
                   disabled={!isValid || isSubmitting}
-                  className="w-full bg-red-600 hover:bg-red-700 text-white font-bold h-12 transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed group"
+                  className="group h-12 w-full rounded bg-primary text-sm font-bold uppercase tracking-widest text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {isSubmitting ? (
-                    <span className="flex items-center gap-2">
-                      {/* Spinner loading sederhana */}
-                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Mengirim...
-                    </span>
+                    <>
+                      <Loader2 className="animate-spin" aria-hidden="true" />
+                      Mengirim
+                    </>
                   ) : (
-                    <span className="flex items-center gap-2">
+                    <>
                       Kirim Pesan
-                      <Send className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-0.5 transition-transform duration-300" />
-                    </span>
+                      <Send aria-hidden="true" />
+                    </>
                   )}
                 </Button>
 
-                <p className="text-xs text-gray-600 text-center">
-                  Kami akan merespons dalam waktu 1×24 jam kerja.
+                <p className="text-center text-xs text-muted-foreground">
+                  Butuh jawaban cepat? WhatsApp lebih dulu dibalas di jam operasional.
                 </p>
               </form>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
     </section>

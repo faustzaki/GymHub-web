@@ -81,7 +81,7 @@ export default function AdminLayout() {
                 Gym<span className="text-red-600">Hub</span>
               </span>
               {/* Badge Admin — pembeda visual dari Member Dashboard */}
-              <span className="text-[10px] font-semibold tracking-widest uppercase text-red-500/80 flex items-center gap-1">
+              <span className="text-[11px] font-semibold tracking-widest uppercase text-red-500/80 flex items-center gap-1">
                 <Shield size={10} />
                 Admin Panel
               </span>

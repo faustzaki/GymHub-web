@@ -74,11 +74,44 @@ Satu gesture berulang yang membuat design "milik Bifrost": teks uppercase berat 
 - "Bergabung Sekarang" (bukan "Sign Up")
 - "Cek Progres" (bukan "Learn More")
 
+## Aturan Warna (terukur, bukan selera)
+Rasio dihitung WCAG 2.1 — ini yang menentukan di mana merah boleh muncul:
+
+| Pasangan | Rasio | Boleh untuk |
+|---|---|---|
+| `#DC2626` di `#121212` | 3,88:1 | teks besar (>=24px, atau >=18,7px bold), garis, badge, ikon — BUKAN body text |
+| `#DC2626` di `#1E1E1E` | 3,45:1 | elemen/UI saja |
+| putih di `#121212` | 18,73:1 | body text |
+| `#a3a3a3` di `#121212` | 7,43:1 | teks sekunder |
+| putih di tombol merah | 4,83:1 | label tombol |
+| hitam `#0a0a0a` di tombol merah | 4,10:1 | hanya kalau labelnya besar |
+
+Aturan: **merah = material dan sinyal, bukan warna teks.** Body text selalu putih/abu. Label tombol merah pakai **putih**, bukan hitam. Merah sebagai paragraf adalah kesalahan paling sering di tema dark+merah.
+
+## Motif: Satu Jembatan, Tiga Ruang
+Bifrost = jembatan. Brand punya tiga ruang latihan (Iron / Yoga / Muaythai), dan landing wajib punya **pemilih disiplin** yang mengubah *grade foto, ritme tipografi, dan jadwal kelas* — bukan menambah warna (palet tetap 2 netral + 1 aksen):
+
+- **IRON**: grade kontras tinggi, extrabold rapat, ruang padat, tempo cepat
+- **YOGA**: grade lembut, tracking lebar, ruang lega, tempo lambat
+- **MUAYTHAI**: grade keras + grain, garis miring, ritme agresif
+
+Ornamen pengulang: **satu garis span (jembatan)** merah tipis, maksimal 1 elemen per seksi.
+
+## Konten Dummy
+- **Testimoni dummy diperbolehkan** di landing (keputusan pemilik, menggantikan larangan lama). Tanpa rating bintang palsu, dan wajib ditandai di komentar kode `// dummy` supaya tidak lolos ke produksi tanpa sadar.
+- Statistik: angka yang masuk akal, tandai `[angka nyata]` di komentar selama menunggu data asli.
+- Nama coach/trainer: bebas, pilih yang relevan; hindari nama Barat generik yang terasa template.
+
+## Aset Gambar & Video
+Aset di-generate manual oleh pemilik; agen menyiapkan **prompt siap-pakai** (satu per aset: subjek, framing, cahaya, rasio, grade) lalu memakainya di repo dengan nama file tetap.
+
+- Grade rumah wajib sama untuk semua foto: duotone gelap `#121212` + tint merah, grain halus, crop ketat.
+- Dilarang: orang senyum menghadap kamera, treadmill berjajar, foto stok "gym" generik.
+- Elemen buatan sendiri (SVG) tetap wajib sebagai pasangan: diagram tata letak alat, badge disiplin, kartu member, motif span.
+
 ## Hal yang DILARANG di Bifrost Gym
 - Nama brand lain: GymPro, GymHub — gunakan Bifrost Gym
 - Emoji dekoratif di heading atau tombol UI
-- Testimonial fiktif (nama karangan, rating palsu)
-- Statistik tanpa sumber nyata ("10K+ Members", "99.9% Uptime")
-- Nama Barat acak sebagai trainer (ALEX STANDALL, SARAH JENKINS) — gunakan nama Indonesia atau placeholder jelas `[Nama Coach]`
+- Merah sebagai warna body text (lihat tabel rasio di atas)
 - CTA generik: "Get Started", "Learn More", "Try Now"
 - Buzzword: "Seamless", "Revolutionary", "Next-Generation", "Powerful"

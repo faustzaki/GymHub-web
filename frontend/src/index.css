@@ -17,6 +17,8 @@
 
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  /* Aksen versi aman-teks: dipakai untuk label kecil; rasio terukur ada di bawah. */
+  --color-primary-text: var(--primary-text);
 
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
@@ -49,6 +51,7 @@
     --popover-foreground: 0 0% 3.9%;
     --primary: 0 72.2% 50.6%; /* Merah Accent */
     --primary-foreground: 0 85.5% 100%; /* White */
+    --primary-text: #b91c1c; /* merah untuk teks kecil di latar terang */
     --secondary: 0 0% 96.1%;
     --secondary-foreground: 0 0% 9%;
     --muted: 0 0% 96.1%;
@@ -72,6 +75,7 @@
     --popover-foreground: #ffffff;
     --primary: #DC2626; /* Merah Accent */
     --primary-foreground: #ffffff;
+    --primary-text: #f05252; /* aksen aman-teks: 5.38:1 di #121212, 4.79:1 di #1E1E1E */
     --secondary: #262626;
     --secondary-foreground: #fafafa;
     --muted: #262626;
@@ -93,6 +97,13 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: var(--font-sans);
+    /* detector: baris terakhir yang menyisakan satu kata -> tarik kata ke atas */
+    text-wrap: pretty;
+  }
+
+  /* detector: heading jangan pecah jadi baris jauh lebih pendek di akhir */
+  h1, h2, h3, h4 {
+    text-wrap: balance;
   }
 
   /* Hilangkan spin button default pada input number supaya bisa pakai custom */
@@ -105,5 +116,39 @@
   /* Firefox */
   input[type=number] {
     -moz-appearance: textfield;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Landing Bifrost — token gerak & ritme.
+ * Durasi & easing di sini; warna tetap memakai token semantik dari `.dark`.
+ *
+ * `@theme static` = semua variabel selalu di-emit, karena nilainya dipakai lewat
+ * atribut `style` dinamis (durasi per disiplin), bukan sebagai kelas utility.
+ * ------------------------------------------------------------------------- */
+@theme static {
+  --span-width: 1px; /* garis jembatan; 2px hanya di hero */
+  --rhythm-1: 4rem; /* jarak seksi rapat (di dalam ruang disiplin) */
+  --rhythm-2: 6rem; /* jarak seksi standar */
+  --rhythm-3: 8rem; /* jarak seksi lega (sebelum pergantian bab) */
+  --dur-iron: 220ms;
+  --dur-yoga: 600ms;
+  --dur-muaythai: 320ms;
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem; /* anchor tidak tertutup navbar */
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--primary) 70%, transparent);
+    color: #ffffff;
   }
 }

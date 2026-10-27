@@ -24,3 +24,6 @@ Thumbs.db
 /frontend/dist/
 /backend/public/storage
 /backend/public/build
+
+# Artefak verifikasi (24 MB PNG) — dibuat ulang oleh cache/scratch/gym_verify.py
+/docs/shots/

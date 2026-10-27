@@ -84,7 +84,7 @@ export default function CoachLayout() {
                 Gym<span className="text-red-600">Hub</span>
               </span>
               {/* Badge Coach — aksen teal untuk membedakan dari Admin (merah) */}
-              <span className="text-[10px] font-semibold tracking-widest uppercase text-teal-400/80 flex items-center gap-1">
+              <span className="text-[11px] font-semibold tracking-widest uppercase text-teal-400/80 flex items-center gap-1">
                 <GraduationCap size={10} />
                 Coach Panel
               </span>
