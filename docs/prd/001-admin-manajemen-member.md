@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **v1.0** — lingkup pendaftaran terkunci (2026-10-28) |
+| **Status** | **v1.1** — skema + endpoint admin sudah jalan (2026-10-28) |
 | **Pemilik** | josjis |
 | **Fase** | 1 dari urutan baru: **satu fitur, FE + API bareng** |
 | **Permukaan** | Dashboard admin (`/admin/members`) — desktop & HP |
@@ -15,9 +15,10 @@
 | # | Keputusan | Alasan |
 |---|---|---|
 | K1 | Pendaftaran **hanya oleh admin**, saat member datang ke gym. **Tidak ada pendaftaran online.** | Jalur utama gym lokal; halaman `/register` publik tidak dipakai lagi |
+| K1b | **Tidak ada pencatatan pembayaran.** Begitu admin mendaftarkan, member dianggap sudah bayar | MVP. Tidak ada tabel `payments`, tidak ada status Lunas/separuh |
 | K2 | Admin hanya menanyakan **nama** dan **nomor telepon**. Tidak ada field lain yang wajib | Member berdiri di depan; makin sedikit yang diketik, makin kecil salahnya |
 | K3 | Member baru **tidak diberi kata sandi** di fase ini. Akses login dibuat nanti saat dashboard member dibangun (§12) | Kata sandi hanya berguna kalau ada layar yang dipakai member. Sekarang belum ada |
-| K4 | Masa aktif awal otomatis **+30 hari**, bisa dikoreksi admin dari panel detail | Supaya pendaftaran tetap 2 field, tapi masa aktif tetap punya nilai |
+| K4 | Masa aktif = **bulanan**. Default 1 bulan, admin boleh langsung pilih **3** atau **6** bulan | Tidak ada tabel paket: MVP hanya member bulanan. Tombol, bukan kolom ketik |
 | K5 | Nomor telepon = **identitas unik**. Nama boleh kembar, dipakai sebagai username tampilan | "Budi" bisa ada tiga; nomor HP tidak |
 | K6 | `member_code` dibuat otomatis di belakang layar untuk rujukan admin, **tidak ditanyakan** ke member | Berguna untuk struk/laporan, tanpa menambah beban admin |
 
@@ -89,8 +90,9 @@ Ditulis eksplisit supaya tidak melebar seperti kemarin:
       dirapikan ke bentuk `08…`; format akhir harus `^08[0-9]{7,12}$`.
 - [ ] Nomor HP **tidak boleh duplikat**. Kalau sudah ada, admin diberi tahu **nama member yang
       sudah memakai nomor itu** dan ditawari "buka member itu" — bukan sekadar "gagal".
-- [ ] Masa aktif otomatis **+30 hari** dan tanggal berakhirnya **ditampilkan sebelum disimpan**,
-      dengan kontrol kecil untuk mengubah durasi (tidak wajib disentuh).
+- [ ] Durasi dipilih dari **tiga tombol** (1 / 3 / 6 bulan, default 1 bulan) dan tanggal
+      berakhirnya **ditampilkan sebelum disimpan** — dihitung bulan kalender, bukan +30 hari
+      (31 Jan + 1 bulan = 28/29 Feb).
 - [ ] Selesai → notifikasi `sonner` "Member tersimpan", form tertutup, dan member baru
       **langsung terlihat di baris atas daftar** tanpa perlu memuat ulang halaman.
 - [ ] Tombol simpan terkunci saat proses berjalan (tidak bisa dobel-klik).
@@ -200,10 +202,10 @@ galat validasi 422 `errors`). Semua endpoint di bawah `auth:sanctum` + `role:adm
 | Method | Path | Keterangan |
 |---|---|---|
 | GET | `/api/admin/members` | List + cari & filter. Query: `q`, `status`, `per_page`, `page` |
-| POST | `/api/admin/members` | Daftarkan member baru. Body: `name`, `phone`, `plan_days` (opsional, default 30) |
+| POST | `/api/admin/members` | Daftarkan member baru. Body: `name`, `phone`, `plan_months` (opsional, default 1; hanya 1/3/6) |
 | GET | `/api/admin/members/{id}` | Detail + riwayat perpanjangan |
 | PATCH | `/api/admin/members/{id}` | Koreksi nama / nomor HP |
-| POST | `/api/admin/members/{id}/renew` | Perpanjang; body: `plan_days` |
+| POST | `/api/admin/members/{id}/renew` | Perpanjang; body: `plan_months` (1/3/6) |
 | POST | `/api/admin/members/{id}/deactivate` | Soft delete |
 | POST | `/api/admin/members/{id}/reactivate` | Batal soft delete |
 
@@ -217,7 +219,7 @@ Jawaban satu baris member:
   "phone": "08123456789",
   "membership_started_at": "2026-10-28",
   "membership_expires_at": "2026-11-27",
-  "plan_days": 30,
+  "plan_months": 1,
   "status": "aktif",
   "days_left": 30,
   "has_login": false,
@@ -234,7 +236,7 @@ Jawaban satu baris member:
 |---|---|---|
 | `name` | wajib, 2–80 karakter, **tidak** harus unik | "Nama member wajib diisi." |
 | `phone` | wajib; setelah normalisasi `^08[0-9]{7,12}$`; unik di `users` | "Nomor HP ini sudah dipakai <Nama>. Buka member itu?" |
-| `plan_days` | opsional, integer 1–730, default 30 | "Durasi paket tidak masuk akal." |
+| `plan_months` | opsional, hanya `1`, `3`, atau `6`; default 1 | "Durasi hanya boleh 1, 3, atau 6 bulan." |
 
 Prinsip pesan galat: **menyebut apa yang harus dilakukan**, bukan mengulang nama kolom database.
 
@@ -288,17 +290,14 @@ Diperkirakan masuk PRD-002 bersama dashboard member.
 
 ### 12.1 Pertanyaan yang masih terbuka
 
-1. **Uang.** Fase ini mencatat **durasi + tanggal berakhir** saja. Apakah harga paket dan status
-   pembayaran (Lunas / separuh) perlu dicatat sekarang? Kalau ya, tabel `payments` minimal sebaiknya
-   disiapkan di fase ini supaya tidak menambah migrasi di belakang.
-   → Kalau tidak dijawab, fase 1 jalan tanpa harga.
+Tidak ada lagi. Pembayaran sudah dijawab di K1b: tidak dicatat di MVP, semua member bulanan.
 
 ## 13. Definisi selesai (diuji, bukan diklaim)
 
-- [ ] Migration `role` + `phone` + `email` nullable + `password` nullable + `credential_issued_at`
-      + soft delete di `users`, kolom baru di `members`, tabel `membership_renewals` — `php artisan migrate` bersih
-- [ ] Seeder akun admin, bisa login, `role = admin`
-- [ ] 7 endpoint §8 hidup, diuji lewat `curl` dengan token admin — keluarannya ditempel di laporan
+- [x] Migration `role` + `phone` + `email` nullable + `password` nullable + `credential_issued_at`
+      + soft delete di `users`, kolom baru di `members`, tabel `membership_renewals` — `migrate:fresh --seed` bersih
+- [x] Seeder akun admin (`admin@bifrost.local`), bisa login, `role = admin`
+- [x] 7 endpoint §8 hidup, diuji lewat `curl` dengan token admin — **15/15 uji lulus** (2026-10-28)
 - [ ] `/admin/members` bisa dibuka **hanya** oleh admin; member biasa dapat 403 (dibuktikan, bukan diasumsikan)
 - [ ] US-1 dijalankan di browser sungguhan: **2 field saja**, member muncul lagi setelah **refresh**
 - [ ] Nomor HP duplikat ditolak dengan menyebut nama pemilik nomor itu (diuji)

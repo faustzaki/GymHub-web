@@ -12,14 +12,15 @@ class DatabaseSeeder extends Seeder
 
     /**
      * Seed the application's database.
+     *
+     * Catatan: sebelumnya seeder ini membuat "Test User" dari factory. Itu sumber baris sampah
+     * (51 user / 49 member) di database dev yang tidak pernah dipakai layar mana pun. Sekarang
+     * yang dijalankan hanya seeder yang memang dibutuhkan untuk menguji PRD-001.
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        $this->call([
+            AdminSeeder::class,
         ]);
     }
 }

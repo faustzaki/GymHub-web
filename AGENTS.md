@@ -79,11 +79,14 @@ Yang sudah jadi dan terukur: **landing publik** (`/`). Selebihnya belum.
 
 | Hal | Keadaan | Kenapa penting |
 |---|---|---|
-| `users.role` | **belum ada** | middleware `role:admin` di kontrak API belum bisa jalan tanpa ini |
-| Endpoint backend | 5: register, login, me, logout, /user | belum ada endpoint admin |
+| `users.role` | **sudah ada** (+ `phone`, `credential_issued_at`, soft delete) | middleware `role:admin` sudah jalan, sudah diuji 401/403/200 |
+| Endpoint backend | 12: auth (5) + admin member (7) | `GET/POST /api/admin/members`, `{id}`, `{id}/renew`, `deactivate`, `reactivate` |
+| Database dev | sempat **menyimpang** dari migrasi (kolom `role`/`phone`/`subscription_plan` tidak ada di migrasi mana pun) | sudah di-`migrate:fresh` + seed; cadangan ada di `Projects/_backup/gymhub_gymwebsite-sebelum-prd001.sql` |
+| Nama basis data | `gymhub_gymwebsite` — memakai nama lama yang dilarang | ganti nama DB saat sempat; bukan penghalang sekarang |
+| `app/Models/User.php` | **rusak** (sisa baris setelah kurung tutup -> `php -l` gagal, seluruh app tidak boot) | sudah diperbaiki 2026-10-28; kalau backend "misterius 500", cek `php -l` dulu |
 | `/admin` & `/coach` | **di luar `ProtectedRoute`**; penjaga peran masih dikomentari di `App.tsx` | jangan dianggap terlindungi |
 | `lib/axios.ts` | `baseURL` masih hardcode `localhost` | harus dari `VITE_API_BASE_URL` |
-| Dashboard admin/coach/member | jalan di data mock | diganti di PRD-001 |
+| Dashboard admin/coach/member di FE | masih jalan di data mock | endpoint-nya sudah siap (12 endpoint); tinggal mengganti mock di FE — langkah 3 PRD-001 |
 | `docs/DESIGN.md` | sudah dihapus, isinya digabung ke `DESIGN.md` akar | rujuk `DESIGN.md` saja |
 | Dashboard admin & coach | **beku** sampai PRD-001 selesai | jangan lanjutkan keduanya dulu |
 

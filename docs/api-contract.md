@@ -105,10 +105,17 @@ Semua list endpoint yang bisa besar menggunakan:
 ### Admin (role=admin)
 | Method | Path | Controller | Keterangan |
 |--------|------|------------|------------|
-| GET | `/api/admin/users` | AdminUserController@index | List user (paginated, filter) |
-| POST | `/api/admin/users` | AdminUserController@store | Buat user manual |
-| PUT | `/api/admin/users/{id}` | AdminUserController@update | Update role/status |
-| DELETE | `/api/admin/users/{id}` | AdminUserController@destroy | Soft delete (is_deleted) |
+| GET | `/api/admin/members` | AdminMemberController@index | List member (paginated, cari `q`, filter `status`) |
+| POST | `/api/admin/members` | AdminMemberController@store | Daftarkan member: `name`, `phone`, `plan_months` (1/3/6) |
+| GET | `/api/admin/members/{id}` | AdminMemberController@show | Detail + riwayat perpanjangan |
+| PATCH | `/api/admin/members/{id}` | AdminMemberController@update | Koreksi nama / nomor HP |
+| POST | `/api/admin/members/{id}/renew` | AdminMemberController@renew | Perpanjang; `plan_months` |
+| POST | `/api/admin/members/{id}/deactivate` | AdminMemberController@deactivate | Nonaktifkan (soft delete) |
+| POST | `/api/admin/members/{id}/reactivate` | AdminMemberController@reactivate | Aktifkan kembali |
+
+Nomor HP duplikat dibalas **409** + `data.existing_member`, bukan 422, supaya UI bisa menawarkan
+"buka member itu". Status member (`aktif` / `akan_berakhir` / `kadaluarsa` / `nonaktif`) **dihitung**,
+tidak disimpan sebagai kolom. Rincian lengkap: `docs/prd/001-admin-manajemen-member.md`.
 | GET | `/api/admin/coaches` | AdminCoachController@index | List coach (paginated, filter) |
 | POST | `/api/admin/coaches` | AdminCoachController@store | Buat akun coach |
 | PUT | `/api/admin/coaches/{id}` | AdminCoachController@update | Update data coach |
@@ -128,7 +135,9 @@ Semua list endpoint yang bisa besar menggunakan:
 ```php
 // app/Http/Middleware/EnsureRole.php
 // Dipakai di routes: ->middleware('role:admin') atau ->middleware('role:coach')
-// Cek: $request->user()->role === $requiredRole, else abort(403)
+// SUDAH ADA: app/Http/Middleware/EnsureRole.php, alias 'role' didaftarkan di bootstrap/app.php
+// Balasannya JSON (401 kalau belum login, 403 kalau perannya salah) -- bukan redirect.
+// Diuji: token member biasa -> 403 "Akses ditolak. Halaman ini hanya untuk admin."'
 ```
 
 Route grouping di `api.php`:

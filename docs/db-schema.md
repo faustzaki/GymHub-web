@@ -1,3 +1,9 @@
+> **Sumber kebenaran skema adalah folder `backend/database/migrations/`.** Dokumen ini ringkasan
+> bacaan saja. Kalau berbeda, migrasi yang benar — dan dokumen ini yang harus diperbarui.
+> Per 2026-10-28 database dev pernah **menyimpang** dari migrasi (kolom `role`, `phone`, `status`,
+> `subscription_plan` ada di DB tapi tidak ada di migrasi mana pun); penyimpangan itu sudah
+> diselesaikan dengan `migrate:fresh`. Jangan tambah kolom lewat phpMyAdmin.
+
 # Database Schema — Bifrost Gym
 
 ## Tabel yang SUDAH ADA (migrasi sudah ada)

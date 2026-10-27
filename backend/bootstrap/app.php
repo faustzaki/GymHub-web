@@ -12,8 +12,17 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Penjaga peran untuk endpoint admin/coach (PRD-001 §10). Dipakai di routes/api.php
+        // sebagai ->middleware('role:admin').
+        $middleware->alias([
+            'role' => \App\Http\Middleware\EnsureRole::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Balasan API selalu JSON, termasuk 401 dari auth:sanctum. Tanpa ini, permintaan tanpa
+        // header `Accept: application/json` dilempar ke route bernama 'login' yang tidak ada di
+        // aplikasi API-only ini -> 500 "Route [login] not defined" (ketemu di storage/logs).
+        $exceptions->shouldRenderJsonWhen(
+            fn ($request) => $request->is('api/*') || $request->expectsJson()
+        );
     })->create();
