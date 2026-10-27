@@ -28,13 +28,18 @@ cd frontend && cp .env.example .env.local && npm install && npm run dev
 
 ## Status Modul
 
-Lihat [.agents/rules/project-context.md](.agents/rules/project-context.md) untuk status terbaru per modul.
+Landing publik sudah jadi dan terukur. Dashboard member/coach/admin masih memakai data mock dan
+belum tersambung backend. Fitur yang sedang dikerjakan: **PRD-001 Admin: Manajemen Member**
+([docs/prd/001-admin-manajemen-member.md](docs/prd/001-admin-manajemen-member.md)).
+Keadaan teknis terkini ada di [AGENTS.md](AGENTS.md).
 
 ## Dokumentasi
 
 | File | Isi |
 |------|-----|
+| [PRODUCT.md](PRODUCT.md) | Produk: pengguna, tujuan, batasan, prinsip |
 | [DESIGN.md](DESIGN.md) | Brand, visual, tone |
+| [docs/prd/](docs/prd/) | PRD per fitur |
 | [docs/db-schema.md](docs/db-schema.md) | Skema database |
 | [docs/api-contract.md](docs/api-contract.md) | Endpoint API + konvensi |
 | [docs/workflow.md](docs/workflow.md) | Setup lokal + konvensi kode |

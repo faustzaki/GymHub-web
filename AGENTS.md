@@ -1,41 +1,101 @@
 # AGENTS.md — Bifrost Gym
 
-Entry file untuk semua AI coding agent yang bekerja di repo ini.
+Satu-satunya pintu masuk untuk AI coding agent di repo ini. Semua yang perlu diketahui ada di sini
+atau di berkas yang ditunjuk di bawah. **Tidak ada folder aturan kedua.**
 
-**Proyek**: Bifrost Gym — platform manajemen gym digital-first (jadwal, progres, materi, 3-tier role: Member / Coach / Admin).
+**Produk:** platform manajemen gym — landing publik + dashboard 3 peran (member / coach / admin).
+**Tumpukan:** React 19 + Vite 8 + TS + Tailwind 4 + shadcn/Radix · Laravel 13 + Sanctum · MySQL.
 
-Aturan berikut tersebar di `.agents/rules/`. Baca file yang relevan sebelum mulai bekerja:
+---
 
-| File | Trigger | Deskripsi singkat |
-|------|---------|-------------------|
-| `.agents/rules/role.md` | always_on | Persona agent: Senior Full-Stack Dev + UX |
-| `.agents/rules/tech-stack.md` | always_on | React/Vite/Tailwind/shadcn + Laravel Sanctum + MySQL |
-| `.agents/rules/system-context.md` | always_on | Laragon local env, Laravel terbaru |
-| `.agents/rules/project-context.md` | always_on | Fitur utama, status per modul |
-| `.agents/rules/dashboard-structure.md` | always_on | 3-tier role: Member / Coach / Admin |
-| `.agents/rules/style.md` | always_on | Visual: merah-hitam-putih, Plus Jakarta Sans |
-| `.agents/rules/rules.md` | always_on | Aturan komponen, Tailwind, shadcn, fallback |
-| `.agents/rules/general-instructions.md` | always_on | Bahasa Indonesia, klarifikasi dulu |
-| `.agents/rules/pendekatan.md` | always_on | Diskusi dulu, proaktif, best practice |
-| `.agents/rules/lucide-icons.md` | always_on | Larangan icon brand, pakai SVG manual |
-| `DESIGN.md` | always_on | Design direction: brand Bifrost Gym |
-| `docs/api-contract.md` | kontekstual | Skeleton endpoint REST + konvensi response |
-| `docs/db-schema.md` | kontekstual | Skema DB lengkap + diagram |
-| `docs/workflow.md` | kontekstual | Workflow dev, setup lokal, konvensi kode |
+## Cara kerja di repo ini (hasil evaluasi cara lama)
 
-## Catatan Kritis
+Proyek ini pernah mangkrak karena dokumennya lebih luas dari produknya, lalu tiga dashboard
+dibangun di atas backend yang belum ada. Empat aturan berikut menggantikan cara itu:
 
-- Jika memodifikasi kode frontend, selalu rujuk `DESIGN.md`.
-- Jika memodifikasi backend, rujuk `docs/api-contract.md` dan `docs/db-schema.md`.
-- Jangan pernah hardcode nama "GymPro" atau "GymHub"; nama brand resmi adalah **Bifrost Gym**.
+1. **Satu fitur pada satu waktu.** Fitur aktif ditulis di `docs/prd/`. Kalau belum ada PRD-nya,
+   tulis PRD dulu — jangan menulis kode lebih dulu.
+2. **Endpoint dulu, layar kemudian.** Jangan membangun layar yang memanggil API yang belum ada.
+   Kalau terpaksa memakai data contoh, katakan "ini mock" dan catat di PRD.
+3. **Bukti sebelum lanjut.** Tiap langkah ditutup dengan keluaran nyata: hasil `curl`, keluaran
+   `npm run build`, tangkapan layar. Bukan "sudah selesai".
+4. **Jangan menambah peran/dashboard baru** sebelum fitur yang sedang dikerjakan selesai dan teruji.
 
-<!-- antislop:start -->
-## antislop
-For UI, copy, people, mobile layout, or code comments work, read `antislop.md` (core) and then the skill for the task:
-- UI / visual: `skills/antislop-ui/SKILL.md`
-- Copy & text: `skills/antislop-copywriting/SKILL.md`
-- People: `skills/antislop-human/SKILL.md`
-- Mobile / responsive: `skills/antislop-layoutmobile/SKILL.md`
-- Code comments: `skills/antislop-code/SKILL.md`
-Before starting, follow the core's "Two Usage Modes" section in strict order: explicit session instruction first, then global preference, then ask.
-<!-- antislop:end -->
+## Sumber kebenaran
+
+| Berkas | Isi — dan hanya isi ini |
+|---|---|
+| `AGENTS.md` (berkas ini) | Cara kerja, perintah, larangan |
+| `PRODUCT.md` | Produk: pengguna, tujuan, posisi, batasan, prinsip |
+| `DESIGN.md` | Visual: palet, tipografi, aturan permukaan, larangan gaya |
+| `docs/prd/<nomor>-<slug>.md` | Satu berkas per fitur: lingkup, cerita pengguna, kriteria selesai |
+| `docs/api-contract.md` | Bentuk endpoint + konvensi respons |
+| `docs/db-schema.md` | Skema database |
+| `docs/workflow.md` | Setup lokal, perintah harian |
+| `docs/decisions/` | Keputusan arsitektur (ADR), satu berkas per keputusan |
+
+Satu fakta, satu tempat. Kalau sebuah fakta perlu muncul di dua berkas, tulis di satu tempat lalu
+tunjuk dari yang lain. Berkas yang mengulang isi tabel ini adalah utang — perbaiki, jangan ditiru.
+
+**Fitur aktif:** [PRD-001 Admin: Manajemen Member](docs/prd/001-admin-manajemen-member.md).
+
+## Larangan
+
+- Nama brand resmi **Bifrost Gym**. Dilarang menulis GymPro / GymHub — termasuk di
+  kunci localStorage, nama variabel, dan komentar.
+- Emoji dekoratif di UI. Tanpa CTA generik ("Get Started", "Learn More").
+- Merah (`#DC2626`) untuk teks isi — rasionya 3,88:1, gagal AA. Merah = material & sinyal.
+- Data karangan tanpa tanda. Mock wajib diberi komentar `// dummy` dan disebut di PRD.
+- Dependensi baru tanpa alasan tertulis di PRD atau ADR.
+  Sudah terpasang tapi **belum dipakai sama sekali**: `xlsx`, `next-themes`, `tailwindcss-animate`.
+- Heading yang melompat level, `alt` kosong, target sentuh < 44 px, atau animasi yang mengabaikan
+  `prefers-reduced-motion`.
+
+## Perintah
+
+Frontend (dijalankan di `frontend/`):
+
+```bash
+npm run dev      # vite, dev server
+npm run build    # tsc -b && vite build — WAJIB hijau sebelum bilang selesai
+npm run lint     # eslint — baseline 14 error; jangan menambah
+```
+
+- Node repo ini butuh **v24.22.1 portabel** (`engine-strict` menolak Node 22 host):
+  `C:/Users/faust/AppData/Local/hermes/tools/node-v24.22.1-win-x64`.
+- `frontend/tsconfig.app.json` memuat `"ignoreDeprecations": "6.0"` — jangan dihapus.
+- Berkas repo memakai **CRLF**; pola multi-baris harus tahan terhadap `\n` dan `\r\n`.
+
+Backend (dijalankan di `backend/`):
+
+```bash
+php artisan migrate    # sqlite lokal
+php artisan serve      # http://localhost:8000
+```
+
+## Keadaan sekarang (per 2026-10-28)
+
+Yang sudah jadi dan terukur: **landing publik** (`/`). Selebihnya belum.
+
+| Hal | Keadaan | Kenapa penting |
+|---|---|---|
+| `users.role` | **belum ada** | middleware `role:admin` di kontrak API belum bisa jalan tanpa ini |
+| Endpoint backend | 5: register, login, me, logout, /user | belum ada endpoint admin |
+| `/admin` & `/coach` | **di luar `ProtectedRoute`**; penjaga peran masih dikomentari di `App.tsx` | jangan dianggap terlindungi |
+| `lib/axios.ts` | `baseURL` masih hardcode `localhost` | harus dari `VITE_API_BASE_URL` |
+| Dashboard admin/coach/member | jalan di data mock | diganti di PRD-001 |
+| `docs/DESIGN.md` | sudah dihapus, isinya digabung ke `DESIGN.md` akar | rujuk `DESIGN.md` saja |
+| Dashboard admin & coach | **beku** sampai PRD-001 selesai | jangan lanjutkan keduanya dulu |
+
+Template dokumen `ai-project-docs` (39 berkas, dulu di `.agents/`) sudah **dipindah keluar repo** ke
+`C:/Belajar Coding/Projects/_vendor/ai-project-docs` supaya tidak ada dua salinan kebenaran.
+Boleh dibaca sebagai rujukan; jangan disalin masuk lagi.
+
+## Konvensi kode singkat
+
+- Komponen: fungsi TypeScript, `PascalCase`, berkas `<Nama>.tsx`.
+- Gaya: utility Tailwind + token di `frontend/src/index.css`. Tidak ada CSS per komponen.
+- shadcn/ui dipakai apa adanya dari `frontend/src/components/ui/`; jangan menulis ulang tombol/dialog.
+- Data server: `axios` + hook. Keadaan UI: `useState`. **Satu sumber kebenaran** — jangan menyimpan
+  data yang sama di hook *dan* di store global.
+- Komentar dan pesan galat berbahasa Indonesia, menyebut apa yang harus dilakukan pengguna.

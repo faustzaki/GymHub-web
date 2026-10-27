@@ -53,9 +53,10 @@ tiga disiplin itu dikelola dalam satu sistem yang sama, bukan tiga tempat terpis
 - Tidak mengintimidasi, tidak elitis, tidak bergaya militer.
 
 ## Evidence on Hand
-- Aset di `frontend/public/assets/`: 3 video hero (Iron/Yoga/Muaythai, 1280x720, 10 detik, tanpa audio)
-  + 3 poster, 3 foto disiplin, 4 foto alat, 1 foto komunitas, 3 potret coach, 2 tekstur
-  (chalk, grain). Semua satu grade: near-black + rim merah. Tanpa watermark.
+- Aset di `frontend/public/assets/`: 3 video hero 1920x1080 (Iron/Yoga/Muaythai, 7-8 detik, tanpa audio,
+  sumber Mixkit — lihat `docs/asset-credits.md`) + 3 poster, 3 foto disiplin, 4 foto alat,
+  1 foto komunitas, 3 potret coach, 2 tekstur (chalk, grain).
+  Semua satu grade: near-black + rim merah. Tanpa watermark.
 - `DESIGN.md` (aturan brand lengkap), `docs/landing-plan.md` (rencana landing),
   `docs/asset-prompts.md` (prompt aset), `docs/db-schema.md`, `docs/api-contract.md`.
 - Belum ada: foto ruangan nyata per-disiplin yang sempurna (foto yoga paling lemah), angka
