@@ -66,6 +66,38 @@ const Hero = () => {
   const meta = DISCIPLINES[discipline];
   const reduced = usePrefersReducedMotion();
   const mediaRef = useParallax(40);
+  const videoRefs = useRef<Record<string, HTMLVideoElement | null>>({});
+
+  // Hanya ruang aktif yang berjalan dan mengunduh. `autoplay` sengaja tidak dipasang sebagai
+  // atribut: browser menyalakannya saat elemen dimuat, jadi video yang tidak terlihat pun ikut
+  // mengunduh. Pemutaran juga DITUNDA sampai mesin menganggur -- kalau tidak, unduhan video 1080p
+  // berebut dengan poster hero, dan LCP naik dari ~0,5 s ke 4,7 s di 1440 px.
+  useEffect(() => {
+    if (reduced || shouldSkipVideo) return;
+    const jalankan = () => {
+      VIDEOS.forEach((v) => {
+        const el = videoRefs.current[v.id];
+        if (!el) return;
+        if (v.id === discipline) {
+          el.play().catch(() => {
+            /* autoplay ditolak: poster tetap tampil, tidak ada yang rusak */
+          });
+        } else {
+          el.pause();
+        }
+      });
+    };
+    let batal = () => {};
+    if (typeof requestIdleCallback === "function") {
+      const id = requestIdleCallback(jalankan, { timeout: 2500 });
+      batal = () => cancelIdleCallback(id);
+    } else {
+      const id = setTimeout(jalankan, 1200);
+      batal = () => clearTimeout(id);
+    }
+    return batal;
+  }, [discipline, reduced]);
+
   const typing = {
     iron: "tracking-[-0.03em]",
     yoga: "tracking-[0.03em]",
@@ -75,7 +107,7 @@ const Hero = () => {
   return (
     <section
       id="home"
-      className="relative flex min-h-[100svh] w-full flex-col justify-end overflow-hidden bg-background pb-10 pt-28"
+      className="relative flex min-h-[100svh] w-full flex-col justify-end overflow-hidden bg-background pb-10 pt-24"
       style={{ ["--local-dur" as string]: `${meta.duration}ms` }}
     >
       {/* Media: satu video per ruang, crossfade opacity. Di belakangnya poster
@@ -98,29 +130,37 @@ const Hero = () => {
             VIDEOS.map((video) => (
               <video
                 key={video.id}
+                ref={(el) => {
+                  videoRefs.current[video.id] = el;
+                }}
                 className={cn(
-                  "absolute inset-0 hidden h-full w-full object-cover transition-opacity ease-[var(--ease-out-quint)] md:block",
+                  // Tampil di SEMUA lebar layar (sebelumnya `hidden md:block`, jadi di HP
+                  // hero cuma gambar diam). Tidak ada atribut `autoplay`: pemutaran diatur
+                  // efek di bawah supaya hanya ruang aktif yang mengunduh dan berjalan.
+                  "absolute inset-0 h-full w-full object-cover transition-opacity ease-[var(--ease-out-quint)]",
                   video.id === discipline ? "opacity-100" : "opacity-0"
                 )}
                 style={{ filter: DISCIPLINES[video.id].grade, transitionDuration: `${meta.duration}ms` }}
                 src={video.src}
                 poster={video.poster}
-                autoPlay
                 muted
                 loop
                 playsInline
-                preload={video.id === "iron" ? "auto" : "none"}
+                preload="none"
                 tabIndex={-1}
               />
             ))}
         </div>
         {/* Overlay gelap supaya teks tetap >=4.5:1 di semua frame video. */}
-        {/* Dua lapis scrim: vertikal menahan bagian bawah, horizontal menahan kolom teks.
-            Diukur dari piksel hasil render: sebelumnya bagian paling terang di pita teks
-            hanya menyisakan 2,65:1 untuk putih (gagal AA) karena asap chalk yang terang. */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(18,18,18,0.98)_0%,rgba(18,18,18,0.95)_36%,rgba(18,18,18,0.86)_58%,rgba(18,18,18,0.6)_80%,rgba(18,18,18,0.5)_100%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(18,18,18,0.96)_0%,rgba(18,18,18,0.88)_50%,rgba(18,18,18,0.3)_100%)] opacity-60 md:opacity-100" />
-        <ChalkField position="bottom" opacity={discipline === "yoga" ? 0.24 : 0.42} />
+        {/* Dua lapis scrim yang saling menutup: vertikal menjaga PITA BAWAH (tempat judul, paragraf,
+            fakta, dan tombol) selebar layar; horizontal menjaga KOLOM KIRI (tempat teks) dan
+            menghilang sebelum sisi kanan. Dasarnya diukur dari piksel hasil render: pita teks diblur
+            dulu supaya huruf tidak ikut terukur.
+            Percobaan sebelumnya memakai scrim merata 0,9+ di seluruh bidang -- teks aman tapi
+            subjek latihan di video ikut tenggelam. Sekarang yang gelap hanya area teks. */}
+        <ChalkField position="bottom" opacity={discipline === "yoga" ? 0.14 : 0.22} />
+        <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(18,18,18,0.99)_0%,rgba(18,18,18,0.96)_36%,rgba(18,18,18,0.93)_58%,rgba(18,18,18,0.78)_80%,rgba(18,18,18,0.62)_100%)] md:bg-[linear-gradient(to_top,rgba(18,18,18,0.97)_0%,rgba(18,18,18,0.92)_26%,rgba(18,18,18,0.6)_45%,rgba(18,18,18,0.22)_62%,rgba(18,18,18,0.08)_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(18,18,18,0.97)_0%,rgba(18,18,18,0.9)_50%,rgba(18,18,18,0.45)_100%)] opacity-90 md:bg-[linear-gradient(to_right,rgba(18,18,18,0.95)_0%,rgba(18,18,18,0.8)_32%,rgba(18,18,18,0.28)_58%,rgba(18,18,18,0)_78%)] md:opacity-100" />
       </div>
 
       <div className="relative z-10 mx-auto w-full max-w-7xl px-6 lg:px-8">
@@ -139,7 +179,7 @@ const Hero = () => {
                   "jembatan.Tiga" sebagai satu kata. */}
               <span className="italic font-light normal-case text-foreground/90">{" "}Tiga ruang latihan.</span>
             </h1>
-            <p className="mt-6 max-w-xl text-lead font-light text-foreground/80">
+            <p className="mt-6 max-w-xl text-lead font-light text-foreground/90">
               Angkat beban, yoga, dan muaythai di satu atap — dengan jadwal, progres, dan materi yang
               tercatat di akunmu.
             </p>
@@ -148,7 +188,7 @@ const Hero = () => {
           <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
             <div className="flex flex-col gap-4">
               <DisciplineSwitch />
-              <p key={meta.id} className="max-w-md text-sm leading-relaxed text-foreground/80 animate-in fade-in duration-300">
+              <p key={meta.id} className="max-w-md text-sm leading-relaxed text-foreground/90 animate-in fade-in duration-300">
                 <span className="font-bold uppercase tracking-widest text-foreground">{meta.name}</span>
                 {" — "}
                 {meta.promise}
@@ -177,15 +217,15 @@ const Hero = () => {
 
           {/* Baris fakta: jam buka, lokasi, tiga disiplin. */}
           <div className="grid grid-cols-1 gap-px border-t border-border pt-6 text-sm sm:grid-cols-3">
-            <p className="flex items-center gap-2 text-foreground/85">
+            <p className="flex items-center gap-2 text-foreground/90">
               <Clock className="size-4 text-primary" aria-hidden="true" />
               Buka setiap hari, 05.00–23.00
             </p>
-            <p className="flex items-center gap-2 text-foreground/85">
+            <p className="flex items-center gap-2 text-foreground/90">
               <MapPin className="size-4 text-primary" aria-hidden="true" />
               Jakarta Selatan, dekat MRT
             </p>
-            <p className="text-foreground/85">
+            <p className="text-foreground/90">
               <span className="font-bold text-foreground">3 ruang</span> beroperasi bersamaan
             </p>
           </div>

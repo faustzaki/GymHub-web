@@ -39,9 +39,9 @@ export default function Navbar() {
       )}
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between lg:h-20">
-          <a href="#home" className="flex shrink-0 items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-            <img src={logoImg} alt="" className="h-11 w-auto object-contain" />
+        <div className="flex h-14 items-center justify-between lg:h-16">
+          <a href="#home" className="flex h-11 shrink-0 items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <img src={logoImg} alt="" className="h-8 w-auto object-contain lg:h-9" />
             <span className="text-xl font-extrabold uppercase tracking-tight text-foreground">
               Bifrost<span className="text-primary">Gym</span>
             </span>
