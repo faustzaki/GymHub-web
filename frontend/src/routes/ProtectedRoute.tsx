@@ -1,4 +1,4 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useEffect } from "react";
 
@@ -11,7 +11,7 @@ import { useEffect } from "react";
  * 3. Jika oke, render konten (Outlet).
  */
 export default function ProtectedRoute() {
-  const { isAuthenticated, isLoading, checkAuth } = useAuthStore();
+  const { isLoading, checkAuth } = useAuthStore();
 
   useEffect(() => {
     // Verifikasi token ke backend saat pertama kali load

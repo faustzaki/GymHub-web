@@ -10,7 +10,7 @@
 // TANPA mengubah interface/signature fungsi.
 // ============================================================
 
-import { DUMMY_COACHES, type Coach, type CoachSpecialization, type CoachGender, type CoachStatus } from '@/lib/mock/dummy-coaches';
+import { DUMMY_COACHES, type Coach } from '@/lib/mock/dummy-coaches';
 
 /** In-memory store untuk simulasi — replace dengan API call nanti */
 let coachesData: Coach[] = [...DUMMY_COACHES];

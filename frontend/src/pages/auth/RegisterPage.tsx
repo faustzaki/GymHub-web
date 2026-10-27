@@ -66,6 +66,16 @@ export default function RegisterPage() {
         </p>
       </div>
 
+      {/* Galat: state-nya sudah ada sejak awal tapi belum pernah dirender */}
+      {error && (
+        <div
+          role="alert"
+          className="rounded-md border border-red-600/30 bg-red-600/10 px-3 py-2 text-sm text-red-400"
+        >
+          {error}
+        </div>
+      )}
+
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Nama Lengkap */}

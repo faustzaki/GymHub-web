@@ -29,7 +29,6 @@ import * as coachService from '@/lib/services/coachService';
 import { useCoachManagementStore } from '@/store/useCoachManagementStore';
 import {
   COACH_SPECIALIZATIONS,
-  type Coach,
   type CoachSpecialization,
   type CoachGender,
   type CoachStatus,
@@ -312,7 +311,7 @@ export function CoachFormPage() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => updateField('email', e.target.value)}
-                  placeholder="email@gymhub.com"
+                  placeholder="email@domain.com"
                   required
                 />
               </div>
@@ -492,7 +491,7 @@ export function CoachFormPage() {
                     className="h-24 w-24 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-colors"
                   >
                     <Upload className="h-5 w-5 text-muted-foreground mb-1" />
-                    <span className="text-[10px] text-muted-foreground">Upload</span>
+                    <span className="text-[11px] text-muted-foreground">Upload</span>
                   </div>
                 )}
                 <div className="flex-1 space-y-1">

@@ -53,8 +53,10 @@ export function useCoachManagement() {
     }
 
     // Filter Spesialisasi
-    if (store.filterSpecialization !== 'Semua') {
-      result = result.filter((c) => c.spesialisasi.includes(store.filterSpecialization));
+    // dipindah ke const: narrowing "bukan Semua" tidak bertahan di dalam callback filter
+    const specializationFilter = store.filterSpecialization;
+    if (specializationFilter !== 'Semua') {
+      result = result.filter((c) => c.spesialisasi.includes(specializationFilter));
     }
 
     // Filter Gender
