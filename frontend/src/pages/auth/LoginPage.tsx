@@ -93,7 +93,7 @@ export default function LoginPage() {
             </label>
             <a
               href="#"
-              className="text-xs text-red-600 hover:text-red-500 transition-colors"
+              className="text-xs text-primary-text hover:text-primary transition-colors"
             >
               Lupa password?
             </a>
@@ -123,7 +123,7 @@ export default function LoginPage() {
         <Button
           type="submit"
           disabled={isLoading}
-          className="w-full h-11 bg-red-600 hover:bg-red-500 text-white font-semibold transition-all duration-200 active:scale-[0.98]"
+          className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold transition-all duration-200 active:scale-[0.98]"
         >
           {isLoading ? (
             <span className="flex items-center gap-2">

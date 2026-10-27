@@ -7,6 +7,17 @@ import { DISCIPLINES, DISCIPLINE_ORDER, useDisciplineStore } from "@/store/useDi
 import { cn } from "@/lib/utils";
 import DisciplineSwitch from "./DisciplineSwitch";
 
+/** Skip video on save-data or slow connections (2g/slow-2g). */
+const shouldSkipVideo = (() => {
+  if (!("connection" in navigator)) return false;
+  const conn = navigator.connection;
+  if (!conn || typeof conn !== "object") return false;
+  const saveData = "saveData" in conn && conn.saveData === true;
+  const effectiveType = "effectiveType" in conn ? conn.effectiveType : null;
+  return saveData || effectiveType === "slow-2g" || effectiveType === "2g";
+})();
+
+
 /** Tiga klip hero; ketiganya dirender berdampingan lalu di-crossfade (tanpa remount). */
 const VIDEOS = DISCIPLINE_ORDER.map((id) => ({
   id,
@@ -83,7 +94,7 @@ const Hero = () => {
               style={{ filter: DISCIPLINES[video.id].grade, transitionDuration: `${meta.duration}ms` }}
             />
           ))}
-          {!reduced &&
+          {!reduced && !shouldSkipVideo &&
             VIDEOS.map((video) => (
               <video
                 key={video.id}
@@ -108,7 +119,7 @@ const Hero = () => {
             Diukur dari piksel hasil render: sebelumnya bagian paling terang di pita teks
             hanya menyisakan 2,65:1 untuk putih (gagal AA) karena asap chalk yang terang. */}
         <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(18,18,18,0.98)_0%,rgba(18,18,18,0.95)_36%,rgba(18,18,18,0.86)_58%,rgba(18,18,18,0.6)_80%,rgba(18,18,18,0.5)_100%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(18,18,18,0.96)_0%,rgba(18,18,18,0.88)_50%,rgba(18,18,18,0.3)_100%)] md:block" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(18,18,18,0.96)_0%,rgba(18,18,18,0.88)_50%,rgba(18,18,18,0.3)_100%)] opacity-60 md:opacity-100" />
         <ChalkField position="bottom" opacity={discipline === "yoga" ? 0.24 : 0.42} />
       </div>
 
@@ -117,15 +128,18 @@ const Hero = () => {
           <div className="max-w-4xl">
             <h1
               className={cn(
-                "text-5xl font-extrabold uppercase leading-[0.95] text-foreground transition-[letter-spacing] duration-300 md:text-6xl lg:text-7xl",
+                "text-display font-extrabold uppercase text-foreground transition-[letter-spacing] duration-300",
                 typing
               )}
             >
               Satu jembatan.
               <br />
-              <span className="italic font-light normal-case text-foreground/90">Tiga ruang latihan.</span>
+              {/* Spasi di awal span ini tidak terlihat (white-space normal), tapi
+                  memberi pemisah kata supaya pembaca layar tidak membaca
+                  "jembatan.Tiga" sebagai satu kata. */}
+              <span className="italic font-light normal-case text-foreground/90">{" "}Tiga ruang latihan.</span>
             </h1>
-            <p className="mt-6 max-w-xl text-lg font-light leading-relaxed text-foreground/80">
+            <p className="mt-6 max-w-xl text-lead font-light text-foreground/80">
               Angkat beban, yoga, dan muaythai di satu atap — dengan jadwal, progres, dan materi yang
               tercatat di akunmu.
             </p>
@@ -162,7 +176,7 @@ const Hero = () => {
           </div>
 
           {/* Baris fakta: jam buka, lokasi, tiga disiplin. */}
-          <div className="grid gap-px border-t border-border pt-6 text-sm sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-px border-t border-border pt-6 text-sm sm:grid-cols-3">
             <p className="flex items-center gap-2 text-foreground/85">
               <Clock className="size-4 text-primary" aria-hidden="true" />
               Buka setiap hari, 05.00–23.00

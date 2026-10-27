@@ -61,13 +61,14 @@ export default function DisciplineSection() {
     <DisciplineBlock
       id="ruang"
       rhythm={3}
-      tone="raised"
+      tone="raised"
+
       title="Pindah ruang,"
       titleItalic="bukan pindah tempat."
       lead="Yang berubah di tiap ruang bukan warnanya, tapi gradenya: tempo, ritme label, dan isi jadwal. Lihat sendiri bedanya sebelum datang."
       className="border-y border-border"
     >
-      <div className="grid gap-6 md:grid-cols-3 md:gap-4">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3 md:gap-4">
         {DISCIPLINE_ORDER.map((id, index) => {
           const meta = DISCIPLINES[id];
           const panel = PANELS[index];

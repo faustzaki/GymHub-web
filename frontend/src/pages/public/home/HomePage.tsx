@@ -8,6 +8,7 @@ import MembershipSection from "./components/MembershipSection";
 import TestimonialsSection from "./components/TestimonialsSection";
 import CommunitySection from "./components/CommunitySection";
 import ContactSection from "./components/ContactSection";
+import StickyCTA from "./components/StickyCTA";
 
 /**
  * HomePage — landing Bifrost Gym.
@@ -40,6 +41,7 @@ export default function HomePage() {
       <CommunitySection />
       {/* Penutup — lokasi, jam buka, kontak */}
       <ContactSection />
+      <StickyCTA />
     </>
   );
 }

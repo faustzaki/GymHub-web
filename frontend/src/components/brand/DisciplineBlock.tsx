@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { DISCIPLINES, useDisciplineStore } from "@/store/useDisciplineStore";
+import { DISCIPLINES, TYPE_BY_DISCIPLINE, useDisciplineStore, useDisciplineType } from "@/store/useDisciplineStore";
 import { useInViewOnce, usePrefersReducedMotion } from "@/hooks/useLandingMotion";
 
 /** Kontrak data untuk kartu alat. Semua foto dari `/assets` lokal. */
@@ -15,9 +15,9 @@ export type Equipment = {
 /** Foto berlapis grade per disiplin. */
 export type Photo = { src: string; alt: string; className?: string };
 
+
 type DisciplineBlockProps = {
   id: string;
-  /** Label kecil di atas judul, mis. "Ruang alat · 4 jenis utama". */
   /** Baris kedua judul memakai gaya italic ringan; dikirim terpisah. */
   title: string;
   titleItalic?: string;
@@ -49,40 +49,36 @@ export function DisciplineBlock({
 }: DisciplineBlockProps) {
   const discipline = useDisciplineStore((s) => s.discipline);
   const meta = DISCIPLINES[discipline];
-  const typing = {
-    iron: { title: "tracking-[-0.03em] font-extrabold", lead: "tracking-tight" },
-    yoga: { title: "tracking-[0.04em] font-bold", lead: "tracking-wide" },
-    muaythai: { title: "tracking-tight font-extrabold", lead: "tracking-normal" },
-  }[discipline];
+  const typing = TYPE_BY_DISCIPLINE[discipline];
   const rhythmVar = { 1: "--rhythm-1", 2: "--rhythm-2", 3: "--rhythm-3" }[rhythm];
 
   return (
     <section
       id={id}
       data-discipline={discipline}
-      className={cn("relative overflow-hidden", tone === "raised" ? "bg-card" : "bg-background", className)}
+      className={cn("cv-auto relative overflow-hidden", tone === "raised" ? "bg-card" : "bg-background", className)}
       style={{ paddingBlock: `var(${rhythmVar})`, ["--local-dur" as string]: `${meta.duration}ms` }}
     >
       <div className="relative mx-auto w-full max-w-7xl px-6 lg:px-8">
         <header className="mb-12 flex flex-col gap-4 lg:mb-16">
           <h2
             className={cn(
-              "max-w-4xl text-4xl uppercase leading-[1.05] text-foreground transition-[letter-spacing] duration-300 md:text-5xl lg:text-6xl",
+              "max-w-4xl text-title uppercase text-foreground transition-[letter-spacing] duration-300",
               typing.title
             )}
           >
             {title}
             {titleItalic && (
               <>
-                <br />
-                <span className="italic font-light normal-case text-muted-foreground">{titleItalic}</span>
+                {" "}
+                <span className="block italic font-light normal-case text-muted-foreground">{titleItalic}</span>
               </>
             )}
           </h2>
           {lead && (
             <p
               className={cn(
-                "max-w-2xl text-base font-light leading-relaxed text-muted-foreground transition-[letter-spacing] duration-300 md:text-lg",
+                "max-w-2xl text-lead font-light text-muted-foreground transition-[letter-spacing] duration-300",
                 typing.lead
               )}
             >
@@ -98,11 +94,12 @@ export function DisciplineBlock({
 
 /** Angka pendukung seksi; statis, tidak ditransisikan. */
 export function SignatureRow({ items }: { items: { value: string; label: string }[] }) {
+  const typing = useDisciplineType();
   return (
     <dl className="grid grid-cols-1 gap-px border border-border bg-border sm:grid-cols-3">
       {items.map((item) => (
         <div key={item.label} className="bg-background px-5 py-6">
-          <dt className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{item.label}</dt>
+          <dt className={cn("text-label font-bold uppercase text-muted-foreground", typing.label)}>{item.label}</dt>
           <dd className="mt-2 text-2xl font-extrabold tracking-tight text-foreground md:text-3xl">{item.value}</dd>
         </div>
       ))}
@@ -130,7 +127,7 @@ export function PhotoFrame({
   const clipId = `cut-${photo.src.replace(/[^a-z0-9]/gi, "")}`;
 
   return (
-    <div className={cn("relative overflow-hidden bg-card", className)}>
+    <div className={cn("relative min-w-0 overflow-hidden bg-card", className)}>
       {angle && (
         <svg width="0" height="0" className="absolute" aria-hidden="true">
           <defs>

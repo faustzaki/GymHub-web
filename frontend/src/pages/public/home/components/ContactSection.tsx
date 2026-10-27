@@ -67,16 +67,16 @@ export default function ContactSection() {
   return (
     <section
       id="contact"
-      className="relative overflow-hidden bg-background"
+      className="cv-auto relative overflow-hidden bg-background"
       style={{ paddingBlock: "var(--rhythm-3)" }}
     >
       <div className="mx-auto w-full max-w-7xl px-6 lg:px-8">
-        <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-16">
           <div className="lg:col-span-5">
             <h2 className="text-4xl font-extrabold uppercase leading-[1.02] tracking-tight text-foreground md:text-5xl">
               Siap mulai.
               <br />
-              <span className="italic font-light normal-case text-muted-foreground">Datang, atau tanya dulu.</span>
+              <span className="italic font-light normal-case text-muted-foreground">{" "}Datang, atau tanya dulu.</span>
             </h2>
             <p className="mt-5 max-w-md text-base font-light leading-relaxed text-muted-foreground">
               Kunjungi gym langsung untuk lihat ruangannya, atau kirim pertanyaan lewat salah satu kanal di bawah. Pernah

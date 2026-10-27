@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useRef, useState, useCallback } from "react";
 import { DisciplineBlock, PhotoFrame, Reveal, SignatureRow } from "@/components/brand/DisciplineBlock";
 import { LinePattern } from "@/components/brand/LinePattern";
 import type { Equipment, Photo } from "@/components/brand/DisciplineBlock";
+import { cn } from "@/lib/utils";
+import { Minus, Plus } from "lucide-react";
 
 // [angka nyata] — spesifikasi alat dikonfirmasi pemilik; angka final ditunggu.
 const EQUIPMENT: Equipment[] = [
@@ -48,30 +50,99 @@ const PHOTOS: Photo[] = [
   { src: "/assets/equip-yoga.jpg", alt: "Matras yoga dan peti di studio", className: "col-span-1 min-h-40 lg:col-span-4" },
 ];
 
+/** Bar olimpiade selalu terpasang; berat plat ditambahkan di atasnya. */
+const BAR_KG = 20;
+const STEP_KG = 2.5;
+const MAX_PLATE_KG = 120;
+const PX_PER_STEP = 12;
+const SLOTS = MAX_PLATE_KG / STEP_KG;
+
+const snap = (value: number) =>
+  Math.min(MAX_PLATE_KG, Math.max(0, Math.round(value / STEP_KG) * STEP_KG));
+
 /**
  * Blok 03 — Alat yang ada.
- * Interaksi fisik satu-satunya: menumpuk beban dengan klik/tarik slider berat,
- * pelat bergeser dan bayangannya ikut menebal (bukan hover pada kartu).
+ *
+ * Satu interaksi fisik: mengisi pelat di bar dengan menyeret. Langkah 2,5 kg,
+ * berhenti di langkah terdekat (snap), bisa dipakai lewat keyboard, dan saat
+ * seret dilepas pelat memantul satu kali — sinyal "sudah terkunci", bukan hiasan.
+ * Angka total dibacakan lewat `aria-live="polite"` setelah seret selesai supaya
+ * pembaca layar tidak dibanjiri nilai antara.
  */
 export default function EquipmentSection() {
   const [load, setLoad] = useState(60);
-  // 2,5 kg per pelat; tumpukan maks 120 kg supaya tetap muat sebagai ilustrasi.
-  const plates = Math.round(load / 2.5);
-  const stack = Math.min(plates, 48);
+  const [dragging, setDragging] = useState(false);
+  const [settleKey, setSettleKey] = useState(0);
+  const [announced, setAnnounced] = useState(BAR_KG + 60);
+  const dragOrigin = useRef<{ x: number; load: number } | null>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+
+  const plates = Math.round(load / STEP_KG);
+  const total = BAR_KG + load;
+  const pct = (load / MAX_PLATE_KG) * 100;
+
+  const commit = useCallback((value: number) => {
+    const next = snap(value);
+    setLoad(next);
+    setAnnounced(BAR_KG + next);
+  }, []);
+
+  const settle = useCallback(() => {
+    setSettleKey((k) => k + 1);
+    setAnnounced(BAR_KG + snap(load));
+  }, [load]);
+
+  const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragOrigin.current) return;
+    dragOrigin.current = null;
+    setDragging(false);
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+    settle();
+  };
+
+  const onTrackPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    const track = trackRef.current;
+    if (!track) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const rect = track.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const clicked = snap(ratio * MAX_PLATE_KG);
+    setLoad(clicked);
+    dragOrigin.current = { x: e.clientX, load: clicked };
+    setDragging(true);
+  };
+
+  const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const moves: Record<string, number | "min" | "max"> = {
+      ArrowRight: load + STEP_KG,
+      ArrowUp: load + STEP_KG,
+      ArrowLeft: load - STEP_KG,
+      ArrowDown: load - STEP_KG,
+      Home: "min",
+      End: "max",
+    };
+    const move = moves[e.key];
+    if (move === undefined) return;
+    e.preventDefault();
+    commit(move === "min" ? 0 : move === "max" ? MAX_PLATE_KG : move);
+  };
 
   return (
     <DisciplineBlock
       id="alat"
       rhythm={3}
-      tone="raised"
+      tone="raised"
       title="Alatnya nyata,"
       titleItalic="spesifikasinya tertulis."
       lead="Tidak perlu menebak apakah bar-nya olimpiade atau platnya berpasangan. Semua yang kamu lihat di daftar ini ada di lantai, siap dipakai kelas."
       className="border-y border-border"
     >
-      <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
-        <div className="lg:col-span-7">
-          <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-14">
+        <div className="min-w-0 lg:col-span-7">
+          <div className="grid min-w-0 grid-cols-4 gap-3">
             {PHOTOS.map((photo) => (
               <PhotoFrame key={photo.src + photo.className} photo={photo} className={photo.className} />
             ))}
@@ -82,49 +153,136 @@ export default function EquipmentSection() {
           <Reveal>
             <div className="border border-border bg-background p-6">
               <div className="flex items-baseline justify-between gap-4">
-                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Simulasi tumpukan bar</p>
-                <p className="font-extrabold text-3xl tracking-tight text-foreground">
-                  {load}
+                <p className="text-label font-bold uppercase tracking-widest text-muted-foreground">
+                  Simulasi tumpukan bar
+                </p>
+                <p className="font-extrabold text-3xl tracking-tight text-foreground tabular-nums">
+                  {total}
                   <span className="ml-1 text-sm font-bold text-muted-foreground">kg</span>
                 </p>
               </div>
-              <label htmlFor="beban" className="mt-5 block text-sm text-muted-foreground">
-                Geser untuk menumpuk plat di satu sisi bar. Beban ini yang tercatat di akunmu setiap sesi.
-              </label>
-              <input
-                id="beban"
-                type="range"
-                min={0}
-                max={120}
-                step={2.5}
-                value={load}
-                onChange={(e) => setLoad(Number(e.target.value))}
-                className="mt-3 h-11 w-full accent-primary"
-                aria-valuetext={`${load} kilogram, ${plates} pelat`}
-              />
-              <div aria-hidden="true" className="mt-4 flex h-16 items-center justify-center gap-[2px]">
-                {Array.from({ length: 48 }).map((_, index) => (
-                  <span
-                    key={index}
-                    className="block h-14 w-[3px] origin-bottom rounded-sm transition-[height,background-color,box-shadow] duration-200 ease-[var(--ease-out-quint)]"
+
+              {/* Track + kenop + tombol ±. Seluruh baris ≥44px untuk sentuh. */}
+              <div className="mt-5 flex items-center gap-3">
+                <button
+                  type="button"
+                  aria-label="Kurangi 2,5 kg"
+                  onClick={() => commit(load - STEP_KG)}
+                  disabled={load <= 0}
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded border border-border bg-card text-foreground transition-colors hover:bg-primary hover:text-primary-foreground active:bg-primary/80 disabled:pointer-events-none disabled:opacity-40"
+                >
+                  <Minus className="size-4" aria-hidden="true" />
+                </button>
+
+                {/* Slider track — seret di track atau kenop. */}
+                <div
+                  ref={trackRef}
+                  role="slider"
+                  tabIndex={0}
+                  aria-label="Berat plat di bar"
+                  aria-valuemin={0}
+                  aria-valuemax={MAX_PLATE_KG}
+                  aria-valuenow={load}
+                  aria-valuetext={`${load} kilogram plat, total ${total} kilogram`}
+                  onPointerDown={onTrackPointerDown}
+                  onPointerMove={(e) => {
+                    const origin = dragOrigin.current;
+                    if (!origin) return;
+                    const deltaSteps = (e.clientX - origin.x) / PX_PER_STEP;
+                    setLoad(snap(origin.load + deltaSteps * STEP_KG));
+                  }}
+                  onPointerUp={endDrag}
+                  onPointerCancel={endDrag}
+                  onKeyDown={onKeyDown}
+                  className={cn(
+                    "relative h-11 w-full touch-none select-none rounded",
+                    dragging ? "cursor-grabbing" : "cursor-grab"
+                  )}
+                >
+                  {/* Track background */}
+                  <div className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-card" />
+                  {/* Track fill */}
+                  <div
+                    className="absolute top-1/2 left-0 h-1 -translate-y-1/2 rounded-full bg-primary transition-[width] ease-[var(--ease-out-quint)]"
                     style={{
-                      height: index < stack ? `${28 + Math.min(index, 20) * 1.6}px` : "6px",
-                      backgroundColor: index < stack ? "var(--primary)" : "var(--border)",
-                      boxShadow: index < stack ? "0 6px 10px -6px rgba(220,38,38,0.55)" : "none",
+                      width: `${pct}%`,
+                      transitionDuration: dragging ? "0ms" : "220ms",
                     }}
                   />
-                ))}
+                  {/* Kenop */}
+                  <div
+                    className={cn(
+                      "absolute top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-primary bg-foreground transition-[left,transform] ease-[var(--ease-out-quint)]",
+                      dragging ? "scale-125" : "hover:scale-110"
+                    )}
+                    style={{
+                      left: `${pct}%`,
+                      transitionDuration: dragging ? "0ms" : "220ms",
+                    }}
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  aria-label="Tambah 2,5 kg"
+                  onClick={() => commit(load + STEP_KG)}
+                  disabled={load >= MAX_PLATE_KG}
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded border border-border bg-card text-foreground transition-colors hover:bg-primary hover:text-primary-foreground active:bg-primary/80 disabled:pointer-events-none disabled:opacity-40"
+                >
+                  <Plus className="size-4" aria-hidden="true" />
+                </button>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Bar 20 kg + {plates} pelat. Di lantai, plat tersedia 2,5–25 kg dan selalu berpasangan.
+
+              {/* Plat visual: jarak 5px agar terbaca sebagai tumpukan. */}
+              <div
+                key={settleKey}
+                className="plate-settle mt-4 flex h-16 items-end justify-center gap-[5px] px-3"
+                style={{
+                  filter: plates > 0 ? `drop-shadow(0 ${Math.min(plates, 18)}px 8px rgba(220,38,38,0.16))` : "none",
+                }}
+              >
+                {Array.from({ length: SLOTS }).map((_, index) => {
+                  const filled = index < plates;
+                  return (
+                    <span
+                      key={index}
+                      aria-hidden="true"
+                      className={cn(
+                        "block w-[3px] origin-bottom rounded-sm transition-[transform,background-color] ease-[var(--ease-out-quint)]",
+                        filled ? "bg-primary" : "bg-border"
+                      )}
+                      style={{
+                        height: "100%",
+                        transform: `scaleY(${filled ? 0.72 + Math.min(index, 20) * 0.014 : 0.06})`,
+                        transitionDuration: dragging ? "80ms" : "220ms",
+                      }}
+                    />
+                  );
+                })}
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-sm text-foreground/70">
+                <p>
+                  <span className="font-bold text-foreground">Bar {BAR_KG} kg</span> + {plates} pelat ({load} kg)
+                </p>
+                {/* Instruksi keyboard: sr-only, bukan teks antarmuka. */}
+                <p className="sr-only">Panah kiri/kanan ubah 2,5 kg. Home ke minimum, End ke maksimum.</p>
+              </div>
+
+              <p className="mt-4 text-sm text-foreground/70">
+                Beban ini yang tercatat di akunmu setiap sesi.
+              </p>
+
+              <p aria-live="polite" className="sr-only">
+                Total {announced} kilogram.
               </p>
             </div>
           </Reveal>
 
           <Reveal delay={80}>
-            <dl className="divide-y divide-border border-y border-border">
+            <dl className="divide-y divide-border border border-border bg-background">
               {EQUIPMENT.map((item) => (
-                <div key={item.name} className="flex flex-col gap-1 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6">
+                <div key={item.name} className="flex flex-col gap-1 px-6 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6">
                   <dt className="font-bold text-foreground">{item.name}</dt>
                   <dd className="text-sm text-muted-foreground">{item.spec}</dd>
                 </div>
@@ -132,10 +290,10 @@ export default function EquipmentSection() {
             </dl>
           </Reveal>
 
-          <div className="relative border border-border p-6">
+          <div className="relative border border-border bg-background p-6">
             <LinePattern id="equip-stripes" angle={-32} gap={12} opacity={0.1} />
             <div className="relative">
-              <p className="text-xs font-bold uppercase tracking-widest text-primary-text">Pendukung</p>
+              <p className="text-label font-bold uppercase tracking-widest text-primary-text">Pendukung</p>
               <ul className="mt-3 grid grid-cols-1 gap-2 text-sm text-muted-foreground sm:grid-cols-2">
                 {SUPPORTING.map((item) => (
                   <li key={item} className="flex gap-2">

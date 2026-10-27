@@ -115,3 +115,31 @@ Aset di-generate manual oleh pemilik; agen menyiapkan **prompt siap-pakai** (sat
 - Merah sebagai warna body text (lihat tabel rasio di atas)
 - CTA generik: "Get Started", "Learn More", "Try Now"
 - Buzzword: "Seamless", "Revolutionary", "Next-Generation", "Powerful"
+
+## Aturan Bahasa Permukaan
+
+Aturan visual untuk menjaga konsistensi tampilan di seluruh halaman publik.
+
+### Latar bergantian
+
+- Setiap blok seksi memakai satu latar: `bg-background` (#121212) atau `bg-card` (#1E1E1E), bergantian.
+- Elemen di atas `bg-card` memakai `bg-background` sebagai kartu, dan sebaliknya.
+
+### Bingkai
+
+- Semua elemen berbingkai: `border border-border`.
+- Radius: `rounded` (4 px) untuk kontrol kecil (tombol, input, switch), `rounded-none` untuk panel besar — satu pilihan per kelas elemen, tidak dicampur.
+
+### Bayangan
+
+- Bayangan **hanya** untuk elemen yang benar-benar melayang: dropdown, toast, sticky CTA.
+- Panel statis tidak boleh memakai bayangan.
+
+### Hover
+
+- Satu pola hover di seluruh halaman: `hover:bg-{latar-lawan}` atau transform halus (`group-hover:translate-x-1`).
+- Tidak ada campuran efek: pilih satu jenis per kelas elemen.
+
+### Fokus
+
+- `:focus-visible` seragam: `outline: 2px solid var(--ring); outline-offset: 2px;` — sudah global di `index.css`.

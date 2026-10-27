@@ -18,7 +18,7 @@ export default function CommunitySection() {
   const meta = DISCIPLINES[discipline];
 
   return (
-    <section id="komunitas" className="relative overflow-hidden bg-background" style={{ ["--local-dur" as string]: `${meta.duration}ms` }}>
+    <section id="komunitas" className="cv-auto relative overflow-hidden bg-background" style={{ ["--local-dur" as string]: `${meta.duration}ms` }}>
       <div className="relative">
         <img
           src="/assets/community.jpg"
@@ -35,19 +35,19 @@ export default function CommunitySection() {
             <h2 className="max-w-2xl text-4xl font-extrabold uppercase leading-[1.02] tracking-tight text-foreground md:text-5xl lg:text-6xl">
               Latihan sendiri,
               <br />
-              <span className="italic font-light normal-case text-muted-foreground">pulang punya nama yang dikenal.</span>
+              <span className="italic font-light normal-case text-muted-foreground">{" "}pulang punya nama yang dikenal.</span>
             </h2>
           </div>
         </div>
       </div>
 
       <div className="mx-auto w-full max-w-7xl px-6 pb-16 pt-10 lg:px-8 lg:pb-24">
-        <div className="grid gap-10 lg:grid-cols-12">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-12">
           <div className="lg:col-span-7">
             <ol className="divide-y divide-border border-y border-border">
               {ACTIVITIES.map((activity, index) => (
                 <Reveal key={activity.title} delay={index * 60}>
-                  <li className="grid gap-2 py-5 sm:grid-cols-[56px_1fr] sm:gap-6">
+                  <li className="grid grid-cols-1 gap-2 py-5 sm:grid-cols-[56px_1fr] sm:gap-6">
                     <span className="font-bold tabular-nums text-primary-text">{String(index + 1).padStart(2, "0")}</span>
                     <div>
                       <h3 className="text-lg font-extrabold uppercase tracking-tight text-foreground">{activity.title}</h3>

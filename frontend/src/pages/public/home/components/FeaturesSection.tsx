@@ -34,13 +34,14 @@ export default function FeaturesSection() {
   return (
     <DisciplineBlock
       id="kenapa"
-      rhythm={2}
+      rhythm={2}
+
       title="Empat alasan yang bisa kamu periksa"
       lead="Kami tidak menjanjikan tubuh baru dalam sebulan. Yang kami janjikan: alat lengkap, jadwal jelas, dan angka latihan yang bisa kamu bandingkan sendiri."
     >
       <BridgeSpan edge="top" className="mb-12 text-primary" />
 
-      <ol className="grid gap-px border border-border bg-border md:grid-cols-2">
+      <ol className="grid grid-cols-1 gap-px border border-border bg-border md:grid-cols-2">
         {REASONS.map((reason, index) => (
           <li key={reason.title} className="bg-background">
             <Reveal delay={index * 60} className="h-full">

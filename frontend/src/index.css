@@ -135,6 +135,82 @@
   --dur-yoga: 600ms;
   --dur-muaythai: 320ms;
   --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Skala tipografi landing (docs/landing-polish.md item 2).
+   * Semua heading/lead seksi memakai token ini — bukan angka acak per komponen. */
+  --text-display: clamp(2.75rem, 7vw, 5.5rem);
+  --text-display--line-height: 0.95;
+  --text-title: clamp(2rem, 4.2vw, 3.5rem);
+  --text-title--line-height: 1.05;
+  --text-lead: clamp(1.0625rem, 1.5vw, 1.25rem);
+  --text-lead--line-height: 1.6;
+  --text-body: 1rem;
+  --text-body--line-height: 1.7;
+  --text-label: 0.6875rem;
+  --text-label--line-height: 1.4;
+}
+
+/* ---------------------------------------------------------------------------
+ * Micro-detail & aksesibilitas lanjutan (docs/landing-polish.md item 7 & 8).
+ *
+ * Satu pola fokus untuk seluruh aplikasi: garis 2px `--ring` (merah) dengan
+ * jarak 2px di atas latar. Ditaruh di layer `utilities` (bukan `base`) supaya
+ * tidak bisa ditimpa utility lain dan komponen tidak perlu mengulang kelas.
+ * Utility ring per komponen sudah dihapus agar tidak ada indikator ganda.
+ * ------------------------------------------------------------------------- */
+@layer utilities {
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  /* `prefers-contrast: more` — muted dinaikkan ke teks penuh, bingkai jadi
+     ⁠`foreground/40`. Ditulis per-utility agar menang atas nilai bawaannya
+     (source order di layer yang sama). */
+  @media (prefers-contrast: more) {
+    .text-muted-foreground,
+    .text-muted-foreground\/80,
+    .text-muted-foreground\/85 {
+      color: var(--foreground);
+    }
+    .text-primary-text {
+      color: var(--foreground);
+    }
+    .border-border {
+      border-color: color-mix(in srgb, var(--foreground) 40%, transparent);
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Pantulan pelat (docs/landing-polish.md item 3).
+ * Tujuan UX: satu sinyal bahwa tumpukan sudah terkunci di langkah terdekat —
+ * sekali per seret, bukan loop. Dimatikan total saat reduced-motion.
+ * ------------------------------------------------------------------------- */
+@keyframes plate-settle {
+  0% { transform: translateY(0); }
+  40% { transform: translateY(3px); }
+  100% { transform: translateY(0); }
+}
+
+@layer utilities {
+  .plate-settle {
+    animation: plate-settle 220ms var(--ease-out-quint) 1;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .plate-settle {
+      animation: none;
+    }
+  }
+}
+
+@layer utilities {
+  /* Below-fold sections: skip layout until near viewport.
+     contain-intrinsic-size keeps CLS near zero. */
+  .cv-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 800px;
+  }
 }
 
 @layer base {

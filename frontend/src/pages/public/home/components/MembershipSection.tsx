@@ -50,11 +50,12 @@ export default function MembershipSection() {
   return (
     <DisciplineBlock
       id="membership"
-      rhythm={2}
+      rhythm={2}
+
       title="Tiga cara untuk masuk"
       lead="Satu harga sudah termasuk akses iron, yoga, dan muaythai — tidak ada biaya tambahan untuk pindah ruang. Tanpa biaya pendaftaran tersembunyi."
     >
-      <div className="grid gap-px border border-border bg-border lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-px border border-border bg-border lg:grid-cols-3">
         {PLANS.map((plan, index) => (
           <Reveal key={plan.id} delay={index * 60} className="h-full">
             <article

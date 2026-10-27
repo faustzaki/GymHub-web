@@ -38,12 +38,13 @@ export default function PTProfessionalsSection() {
     <DisciplineBlock
       id="pt"
       rhythm={3}
-      tone="raised"
+      tone="raised"
+
       title="Kalau butuh didampingi satu orang"
       lead="Sesi personal 60 menit, dijadwalkan lewat WhatsApp. Coach menyusun program berdasarkan catatan latihanmu, bukan template umum."
       className="border-y border-border"
     >
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         {PROFESSIONALS.map((person, index) => (
           <Reveal key={person.name} delay={index * 70} className="h-full">
             <article className="flex h-full flex-col border border-border bg-background">

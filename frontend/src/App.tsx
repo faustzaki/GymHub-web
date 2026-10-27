@@ -1,30 +1,31 @@
+import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useEffect } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Toaster } from "@/components/ui/sonner";
 
-// Layouts
+// Layouts — PublicLayout stays in main chunk (landing page shell)
 import PublicLayout from "@/layouts/PublicLayout";
-import AuthLayout from "@/layouts/AuthLayout";
-import DashboardLayout from "@/layouts/DashboardLayout";
-import AdminLayout from "@/layouts/AdminLayout";
-import CoachLayout from "@/layouts/CoachLayout";
-import ProtectedRoute from "@/routes/ProtectedRoute";
 
-// Public Pages
+// Landing — main chunk
 import HomePage from "@/pages/public/home/HomePage";
 
-// Auth Pages
-import LoginPage from "@/pages/auth/LoginPage";
-import RegisterPage from "@/pages/auth/RegisterPage";
+// Lazy-loaded layouts
+const AuthLayout = lazy(() => import("@/layouts/AuthLayout"));
+const DashboardLayout = lazy(() => import("@/layouts/DashboardLayout"));
+const AdminLayout = lazy(() => import("@/layouts/AdminLayout"));
+const CoachLayout = lazy(() => import("@/layouts/CoachLayout"));
+const ProtectedRoute = lazy(() => import("@/routes/ProtectedRoute"));
 
-// Dashboard Pages
-import MemberOverviewPage from "@/pages/member/overview/MemberOverviewPage";
-import AdminOverviewPage from "@/pages/admin/overview/AdminOverviewPage";
-import CoachOverviewPage from "@/pages/coach/overview/CoachOverviewPage";
-import { UserManagementPage } from "@/pages/admin/users/UserManagementPage";
-import { CoachManagementPage } from "@/pages/admin/coaches/CoachManagementPage";
-import { CoachFormPage } from "@/pages/admin/coaches/CoachFormPage";
+// Lazy-loaded pages
+const LoginPage = lazy(() => import("@/pages/auth/LoginPage"));
+const RegisterPage = lazy(() => import("@/pages/auth/RegisterPage"));
+const NotFoundPage = lazy(() => import("@/pages/auth/NotFoundPage"));
+const MemberOverviewPage = lazy(() => import("@/pages/member/overview/MemberOverviewPage"));
+const AdminOverviewPage = lazy(() => import("@/pages/admin/overview/AdminOverviewPage"));
+const CoachOverviewPage = lazy(() => import("@/pages/coach/overview/CoachOverviewPage"));
+const UserManagementPage = lazy(() => import("@/pages/admin/users/UserManagementPage").then((m) => ({ default: m.UserManagementPage })));
+const CoachManagementPage = lazy(() => import("@/pages/admin/coaches/CoachManagementPage").then((m) => ({ default: m.CoachManagementPage })));
+const CoachFormPage = lazy(() => import("@/pages/admin/coaches/CoachFormPage").then((m) => ({ default: m.CoachFormPage })));
 
 /**
  * App Component
@@ -41,6 +42,7 @@ function App() {
 
   return (
     <BrowserRouter>
+      <Suspense fallback={<div className="min-h-screen bg-background" />}>
       <Routes>
         {/* =========================================
             PUBLIC ROUTES
@@ -107,17 +109,9 @@ function App() {
         </Route>
 
         {/* 404 Fallback */}
-        <Route
-          path="*"
-          element={
-            <div className="min-h-screen flex items-center justify-center bg-background text-foreground flex-col gap-4">
-              <h1 className="text-4xl font-bold">404</h1>
-              <p>Halaman tidak ditemukan.</p>
-              <a href="/" className="text-red-500 hover:underline">Kembali ke Beranda</a>
-            </div>
-          }
-        />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      </Suspense>
       <Toaster position="top-right" richColors closeButton />
     </BrowserRouter>
   );

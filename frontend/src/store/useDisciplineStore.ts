@@ -59,3 +59,20 @@ export const useDisciplineStore = create<DisciplineState>((set) => ({
   discipline: "iron",
   setDiscipline: (discipline) => set({ discipline }),
 }));
+
+/**
+ * Ritme tipografi per disiplin (docs/landing-polish.md item 2).
+ * `label` ikut berubah, bukan cuma judul — label adalah suara ruang, dan tanpa
+ * perubahan tracking, label pemilih terasa sama di tiga ruang.
+ */
+export const TYPE_BY_DISCIPLINE = {
+  iron: { title: "tracking-[-0.03em] font-extrabold", lead: "tracking-tight", label: "tracking-[0.18em]" },
+  yoga: { title: "tracking-[0.04em] font-bold", lead: "tracking-wide", label: "tracking-[0.3em]" },
+  muaythai: { title: "tracking-tight font-extrabold", lead: "tracking-normal", label: "tracking-[0.14em]" },
+} as const;
+
+/** Kelas tipografi disiplin aktif, untuk label di seksi mana pun. */
+export function useDisciplineType() {
+  const discipline = useDisciplineStore((s) => s.discipline);
+  return TYPE_BY_DISCIPLINE[discipline];
+}

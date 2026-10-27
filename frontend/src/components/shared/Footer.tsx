@@ -40,7 +40,7 @@ export default function Footer() {
 
   return (
     <footer className="border-t border-border bg-background text-foreground">
-      <div className="mx-auto max-w-7xl px-6 pb-8 pt-16 sm:px-8 lg:px-12">
+      <div className="mx-auto max-w-7xl px-6 pt-16 pb-24 sm:px-8 sm:pb-8 lg:px-12">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-16">
           <div className="space-y-6 lg:col-span-5">
             <a href="#home" className="inline-flex items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">

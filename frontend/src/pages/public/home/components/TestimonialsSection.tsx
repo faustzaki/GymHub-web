@@ -35,12 +35,13 @@ export default function TestimonialsSection() {
     <DisciplineBlock
       id="kata-member"
       rhythm={3}
-      tone="raised"
+      tone="raised"
+
       title="Bukan ulasan, tapi catatan latihan"
       lead="Tiga kutipan dari member yang masih aktif. Jumlah dan perubahan angkanya mereka sebut sendiri."
       className="border-y border-border"
     >
-      <div className="grid gap-8 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
         {NOTES.map((note, index) => {
           const isActive = note.discipline === active;
           return (

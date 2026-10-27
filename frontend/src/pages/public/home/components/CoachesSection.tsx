@@ -92,15 +92,18 @@ export default function CoachesSection() {
   return (
     <DisciplineBlock
       id="jadwal"
-      rhythm={2}
+      rhythm={2}
+
       title="Siapa yang melatih, jam berapa kamu datang"
       lead={`Jadwal minggu kerja di tiga ruang. Disiplin aktif saat ini ${DISCIPLINES[active].name}; saring ruang di bawah bila kamu ingin fokus ke satu ruang saja.`}
     >
-      <div className="grid gap-10 lg:grid-cols-12 lg:gap-14">
+      <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-14">
         <div className="lg:col-span-7">
           <div className="flex flex-wrap items-start justify-between gap-2 pb-3">
-            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Jadwal kelas</p>
-            <p className="text-xs uppercase tracking-widest text-primary-text">{DISCIPLINES[active].rhythmLabel} aktif</p>
+            <p className="text-label font-bold uppercase text-muted-foreground">Jadwal kelas</p>
+            <p aria-live="polite" className="text-label uppercase text-primary-text">
+              {DISCIPLINES[active].rhythmLabel} aktif
+            </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 border-b border-border pb-4">
             <div role="group" aria-label="Pilih hari" className="flex flex-wrap gap-1">
