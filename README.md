@@ -1,4 +1,4 @@
-# Bifrost Gym — Platform Manajemen Gym Digital
+# GymHub — Platform Manajemen Gym Digital
 
 Platform manajemen gym digital-first untuk komunitas lokal. Member bisa akses jadwal latihan, progres harian, dan materi pelatihan secara online. Coach kelola kurikulum. Admin pantau operasional dan keuangan.
 

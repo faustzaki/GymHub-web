@@ -11,7 +11,7 @@ import ContactSection from "./components/ContactSection";
 import StickyCTA from "./components/StickyCTA";
 
 /**
- * HomePage — landing Bifrost Gym.
+ * HomePage — landing GymHub.
  *
  * Urutan mengikuti docs/landing-direction.md §5: pemilih ruang di hero mengubah
  * seluruh halaman di bawahnya (grade foto, ritme tipografi, isi jadwal), lalu

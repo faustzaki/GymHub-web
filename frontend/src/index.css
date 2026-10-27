@@ -120,7 +120,7 @@
 }
 
 /* ---------------------------------------------------------------------------
- * Landing Bifrost — token gerak & ritme.
+ * Landing GymHub — token gerak & ritme.
  * Durasi & easing di sini; warna tetap memakai token semantik dari `.dark`.
  *
  * `@theme static` = semua variabel selalu di-emit, karena nilainya dipakai lewat

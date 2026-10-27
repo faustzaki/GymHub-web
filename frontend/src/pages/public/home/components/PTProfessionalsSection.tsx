@@ -65,7 +65,7 @@ export default function PTProfessionalsSection() {
                   className="mt-auto h-11 rounded border-border bg-transparent text-sm font-bold uppercase tracking-widest text-foreground hover:bg-card hover:text-foreground focus-visible:ring-ring"
                 >
                   <a
-                    href={waLink(`Halo Bifrost, saya ingin jadwal sesi PT dengan ${person.name} (${DISCIPLINES[discipline].name}).`)}
+                    href={waLink(`Halo GymHub, saya ingin jadwal sesi PT dengan ${person.name} (${DISCIPLINES[discipline].name}).`)}
                     target="_blank"
                     rel="noopener noreferrer"
                   >

@@ -1,4 +1,4 @@
-# Rencana Landing Page — Bifrost Gym
+# Rencana Landing Page — GymHub
 
 Status: **rencana (sesi diskusi)**. Belum ada kode yang diubah. Dokumen ini yang jadi acuan
 saat eksekusi dibuka.

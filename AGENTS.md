@@ -1,4 +1,4 @@
-# AGENTS.md — Bifrost Gym
+# AGENTS.md — GymHub
 
 Satu-satunya pintu masuk untuk AI coding agent di repo ini. Semua yang perlu diketahui ada di sini
 atau di berkas yang ditunjuk di bawah. **Tidak ada folder aturan kedua.**
@@ -41,7 +41,8 @@ tunjuk dari yang lain. Berkas yang mengulang isi tabel ini adalah utang — perb
 
 ## Larangan
 
-- Nama brand resmi **Bifrost Gym**. Dilarang menulis GymPro / GymHub — termasuk di
+- Nama brand resmi **GymHub** (diputuskan josjis 2026-10-28, menggantikan GymHub).
+  Dilarang menulis GymHub / GymPro — termasuk di
   kunci localStorage, nama variabel, dan komentar.
 - Emoji dekoratif di UI. Tanpa CTA generik ("Get Started", "Learn More").
 - Merah (`#DC2626`) untuk teks isi — rasionya 3,88:1, gagal AA. Merah = material & sinyal.

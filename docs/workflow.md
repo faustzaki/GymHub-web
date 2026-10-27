@@ -1,4 +1,4 @@
-# Workflow & Setup — Bifrost Gym
+# Workflow & Setup — GymHub
 
 ## Setup Lokal (Laragon)
 

@@ -296,7 +296,7 @@ Tidak ada lagi. Pembayaran sudah dijawab di K1b: tidak dicatat di MVP, semua mem
 
 - [x] Migration `role` + `phone` + `email` nullable + `password` nullable + `credential_issued_at`
       + soft delete di `users`, kolom baru di `members`, tabel `membership_renewals` — `migrate:fresh --seed` bersih
-- [x] Seeder akun admin (`admin@bifrost.local`), bisa login, `role = admin`
+- [x] Seeder akun admin (`admin@gymhub.local`), bisa login, `role = admin`
 - [x] 7 endpoint §8 hidup, diuji lewat `curl` dengan token admin — **15/15 uji lulus** (2026-10-28)
 - [ ] `/admin/members` bisa dibuka **hanya** oleh admin; member biasa dapat 403 (dibuktikan, bukan diasumsikan)
 - [ ] US-1 dijalankan di browser sungguhan: **2 field saja**, member muncul lagi setelah **refresh**

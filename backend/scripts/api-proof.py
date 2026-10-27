@@ -24,6 +24,8 @@ Yang dibuktikan:
 Jalankan: py -3.13 api_proof.py
 """
 import json
+import random
+import time
 import urllib.error
 import urllib.request
 
@@ -59,8 +61,18 @@ def cek(label, dapat, harap, tambahan=""):
     return ok
 
 
+# Data uji dibuat unik per jalan supaya skrip bisa dijalankan berulang di database yang sama.
+# Sebelum ini, jalan kedua langsung gagal: email uji sudah terpakai (422) dan nomor uji
+# sudah terdaftar (409) -- uji jadi merah padahal aplikasinya benar.
+EKOR = str(int(time.time()))[-6:]
+EMAIL_UJI = f"ujimember{EKOR}@example.com"
+NOMOR_UJI = "0812" + str(random.randint(10000000, 99999999))
+# Dikirim ke API dalam bentuk yang ditulis admin di HP (+62 dengan tanda hubung, tanpa 0 depan),
+# supaya normalisasi nomor benar-benar diuji, bukan cuma jalur yang sudah rapi.
+NOMOR_FORMAT = f"+62 {NOMOR_UJI[1:4]}-{NOMOR_UJI[4:8]}-{NOMOR_UJI[8:]}"
+
 print("== 1. login admin ==")
-st, r = call("POST", "/login", {"email": "admin@bifrost.local", "password": "admin12345"})
+st, r = call("POST", "/login", {"email": "admin@gymhub.local", "password": "admin12345"})
 cek("POST /login admin", st, 200)
 token_admin = (r.get("data") or {}).get("access_token") or r.get("access_token")
 print(f"     token admin: {'ada' if token_admin else 'TIDAK ADA'} | peran: {(r.get('data') or {}).get('user', {}).get('role')}")
@@ -70,7 +82,7 @@ st, _ = call("GET", "/admin/members")
 cek("GET /admin/members tanpa token", st, 401)
 
 st, r = call("POST", "/register", {
-    "name": "Uji Member Biasa", "email": "ujimember@example.com",
+    "name": "Uji Member Biasa", "email": EMAIL_UJI,
     "password": "rahasia123", "password_confirmation": "rahasia123",
 })
 token_member = (r.get("data") or {}).get("access_token")
@@ -84,15 +96,15 @@ items = ((r.get("data") or {}).get("items") or [])
 cek("GET /admin/members pakai token admin", st, 200, f"| {len(items)} baris, meta total={(r.get('data') or {}).get('meta', {}).get('total')}")
 
 print("\n== 4. daftarkan member baru: hanya nama + nomor ==")
-st, baru = call("POST", "/admin/members", {"name": "Dewi Lestari", "phone": "+62 812-9999-8888"}, token=token_admin)
+st, baru = call("POST", "/admin/members", {"name": "Dewi Lestari", "phone": NOMOR_FORMAT}, token=token_admin)
 d = baru.get("data") or {}
 cek("POST /admin/members", st, 201, f"| kode={d.get('member_code')} berakhir={d.get('membership_expires_at')} has_login={d.get('has_login')}")
-print(f"     nomor dinormalisasi jadi: {d.get('phone')}")
+print(f"     nomor dinormalisasi jadi: {d.get('phone')} (dikirim sebagai +62 dengan tanda hubung)")
 id_baru = d.get("id")
 kode_baru = d.get("member_code")
 
 print("\n== 5. nomor duplikat ==")
-st, r = call("POST", "/admin/members", {"name": "Dewi Yang Lain", "phone": "081299998888"}, token=token_admin)
+st, r = call("POST", "/admin/members", {"name": "Dewi Yang Lain", "phone": NOMOR_UJI}, token=token_admin)
 cek("POST nomor yang sama", st, 409, f"| pesan: {r.get('message')} | existing={(r.get('data') or {}).get('existing_member')}")
 
 print("\n== 6. nomor ngawur ==")
@@ -111,8 +123,8 @@ riwayat = (r.get("data") or {}).get("riwayat") or []
 cek("GET detail member", st, 200, f"| {len(riwayat)} baris riwayat | {riwayat[:1]}")
 
 print("\n== 9. cari & filter ==")
-st, r = call("GET", "/admin/members?q=9999", token=token_admin)
-cek("GET ?q=9999 (potongan nomor)", st, 200, f"| {len((r.get('data') or {}).get('items') or [])} baris")
+st, r = call("GET", f"/admin/members?q={NOMOR_UJI[-4:]}", token=token_admin)
+cek(f"GET ?q={NOMOR_UJI[-4:]} (potongan nomor)", st, 200, f"| {len((r.get('data') or {}).get('items') or [])} baris")
 st, r = call("GET", "/admin/members?status=akan_berakhir", token=token_admin)
 cek("GET ?status=akan_berakhir", st, 200, f"| {len((r.get('data') or {}).get('items') or [])} baris")
 

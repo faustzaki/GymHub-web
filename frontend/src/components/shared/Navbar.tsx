@@ -43,7 +43,7 @@ export default function Navbar() {
           <a href="#home" className="flex h-11 shrink-0 items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             <img src={logoImg} alt="" className="h-8 w-auto object-contain lg:h-9" />
             <span className="text-xl font-extrabold uppercase tracking-tight text-foreground">
-              Bifrost<span className="text-primary">Gym</span>
+              Gym<span className="text-primary">Hub</span>
             </span>
           </a>
 

@@ -1,4 +1,4 @@
-# landing-notes.md — catatan verifikasi landing Bifrost Gym
+# landing-notes.md — catatan verifikasi landing GymHub
 
 Semua angka di bawah berasal dari render nyata (`vite dev` di :5178 + Chromium headless),
 bukan dari membaca kode. Skrip: `cache/scratch/gym_verify.py` (kontras, a11y, layout, gerak),
@@ -29,7 +29,7 @@ detector `impeccable detect --json <url>`.
    untuk label 10–12px. `#DC2626` tetap untuk bidang, garis, ikon, dan teks besar.
 2. **Teks fungsional minimum 11px** (`text-[10px]` → `text-[11px]`) di 3 tempat.
 3. **Kicker di atas heading dihapus** (detector: dilarang mutlak). Kata-katanya yang penting sudah
-   ada di heading masing-masing; hero juga kehilangan chip "Bifrost Gym · Jakarta Selatan" karena
+   ada di heading masing-masing; hero juga kehilangan chip "GymHub · Jakarta Selatan" karena
    informasinya sudah ada di navbar dan baris fakta.
 4. **`text-wrap: pretty` pada body dan `balance` pada h1–h4** — menghapus baris terakhir yang
    menyisakan satu kata dan heading yang pecah tidak rata.

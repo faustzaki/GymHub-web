@@ -1,4 +1,4 @@
-# landing-direction.md — arah visual & tata letak landing Bifrost Gym
+# landing-direction.md — arah visual & tata letak landing GymHub
 
 Dokumen ini adalah **perintah kerja**, bukan catatan. Diambil dari brief pemilik + `PRODUCT.md` +
 `DESIGN.md`, lalu diterjemahkan jadi keputusan visual yang bisa dieksekusi. Yang tidak diatur di

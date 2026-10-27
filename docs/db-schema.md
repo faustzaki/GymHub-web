@@ -4,7 +4,7 @@
 > `subscription_plan` ada di DB tapi tidak ada di migrasi mana pun); penyimpangan itu sudah
 > diselesaikan dengan `migrate:fresh`. Jangan tambah kolom lewat phpMyAdmin.
 
-# Database Schema — Bifrost Gym
+# Database Schema — GymHub
 
 ## Tabel yang SUDAH ADA (migrasi sudah ada)
 

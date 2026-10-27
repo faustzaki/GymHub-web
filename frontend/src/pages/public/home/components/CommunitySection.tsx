@@ -22,7 +22,7 @@ export default function CommunitySection() {
       <div className="relative">
         <img
           src="/assets/community.jpg"
-          alt="Member Bifrost Gym berbaris menghadap dinding dari belakang sebelum sesi"
+          alt="Member GymHub berbaris menghadap dinding dari belakang sebelum sesi"
           loading="lazy"
           decoding="async"
           className="h-[52vh] min-h-80 w-full object-cover transition-[filter] duration-500"

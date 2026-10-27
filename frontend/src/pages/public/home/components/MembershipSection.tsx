@@ -95,7 +95,7 @@ export default function MembershipSection() {
                 )}
               >
                 <a
-                  href={`${WA}${encodeURIComponent(`Halo Bifrost, saya ingin mendaftar paket ${plan.name} (disiplin ${discipline}).`)}`}
+                  href={`${WA}${encodeURIComponent(`Halo GymHub, saya ingin mendaftar paket ${plan.name} (disiplin ${discipline}).`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >

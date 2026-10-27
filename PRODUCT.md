@@ -45,7 +45,7 @@ tiga disiplin itu dikelola dalam satu sistem yang sama, bukan tiga tempat terpis
 - Motor: `prefers-reduced-motion` wajib dihormati; video hero punya poster sebagai fallback.
 
 ## Brand Commitments
-- Nama resmi **Bifrost Gym** (bukan GymPro/GymHub). Bifrost = jembatan.
+- Nama resmi **GymHub** (bukan GymHub / GymPro). GymHub = pintu masuk kebugaran.
 - Motif identitas: heading uppercase tebal + baris italic ringan di bawahnya.
 - Motif "Satu Jembatan, Tiga Ruang": tiga disiplin sebagai tiga suara dari satu sistem.
 - Nada copy: langsung, motivasional, bahasa Indonesia nyata. Tanpa buzzword ("seamless",

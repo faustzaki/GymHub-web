@@ -46,7 +46,7 @@ export default function Footer() {
             <a href="#home" className="inline-flex items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
               <img src={logoImg} alt="" className="h-12 w-auto object-contain" />
               <span className="text-2xl font-extrabold uppercase tracking-tight">
-                Bifrost<span className="text-primary">Gym</span>
+                Gym<span className="text-primary">Hub</span>
               </span>
             </a>
             <p className="max-w-sm text-sm font-light leading-relaxed text-muted-foreground">
@@ -112,7 +112,7 @@ export default function Footer() {
 
         <Separator className="my-8" />
 
-        <p className="text-xs text-muted-foreground">&copy; {currentYear} Bifrost Gym. Seluruh hak cipta dilindungi.</p>
+        <p className="text-xs text-muted-foreground">&copy; {currentYear} GymHub. Seluruh hak cipta dilindungi.</p>
       </div>
     </footer>
   );

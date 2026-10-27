@@ -1,7 +1,7 @@
-# DESIGN.md — Bifrost Gym
+# DESIGN.md — GymHub
 
 ## Identity
-- **Nama Brand**: Bifrost Gym
+- **Nama Brand**: GymHub
 - **Tagline / Positioning**: Gym lokal digital-first — semua jadwal, progres, dan materi bisa dipantau online.
 - **Persona pengguna**: Komunitas gym lokal, semua usia. Tidak mengintimidasi, tapi tetap serius soal hasil latihan.
 
@@ -66,7 +66,7 @@ ENERGY 2 / RHYTHM 2 / MOTION 3
 ```
 
 ## Identity Motif
-Satu gesture berulang yang membuat design "milik Bifrost": teks uppercase berat (`font-extrabold uppercase tracking-tight`) dikontraskan dengan teks italic light di bawahnya (contoh: "DEFEAT YOUR LIMITS." diikuti "*REDEFINE YOURSELF.*"). Pattern ini muncul di hero H1 dan boleh diulang di section key lain — bukan di semua heading.
+Satu gesture berulang yang membuat design "milik GymHub": teks uppercase berat (`font-extrabold uppercase tracking-tight`) dikontraskan dengan teks italic light di bawahnya (contoh: "DEFEAT YOUR LIMITS." diikuti "*REDEFINE YOURSELF.*"). Pattern ini muncul di hero H1 dan boleh diulang di section key lain — bukan di semua heading.
 
 ## Contoh CTA yang benar
 - "Mulai Latihanmu" (bukan "Get Started")
@@ -89,7 +89,7 @@ Rasio dihitung WCAG 2.1 — ini yang menentukan di mana merah boleh muncul:
 Aturan: **merah = material dan sinyal, bukan warna teks.** Body text selalu putih/abu. Label tombol merah pakai **putih**, bukan hitam. Merah sebagai paragraf adalah kesalahan paling sering di tema dark+merah.
 
 ## Motif: Satu Jembatan, Tiga Ruang
-Bifrost = jembatan. Brand punya tiga ruang latihan (Iron / Yoga / Muaythai), dan landing wajib punya **pemilih disiplin** yang mengubah *grade foto, ritme tipografi, dan jadwal kelas* — bukan menambah warna (palet tetap 2 netral + 1 aksen):
+GymHub = hub kebugaran: satu pintu masuk, banyak ruang latihan. Brand punya tiga ruang latihan (Iron / Yoga / Muaythai), dan landing wajib punya **pemilih disiplin** yang mengubah *grade foto, ritme tipografi, dan jadwal kelas* — bukan menambah warna (palet tetap 2 netral + 1 aksen):
 
 - **IRON**: grade kontras tinggi, extrabold rapat, ruang padat, tempo cepat
 - **YOGA**: grade lembut, tracking lebar, ruang lega, tempo lambat
@@ -109,8 +109,8 @@ Aset di-generate manual oleh pemilik; agen menyiapkan **prompt siap-pakai** (sat
 - Dilarang: orang senyum menghadap kamera, treadmill berjajar, foto stok "gym" generik.
 - Elemen buatan sendiri (SVG) tetap wajib sebagai pasangan: diagram tata letak alat, badge disiplin, kartu member, motif span.
 
-## Hal yang DILARANG di Bifrost Gym
-- Nama brand lain: GymPro, GymHub — gunakan Bifrost Gym
+## Hal yang DILARANG di GymHub
+- Nama brand lain: GymHub, GymPro, GymHub-app — gunakan **GymHub**
 - Emoji dekoratif di heading atau tombol UI
 - Merah sebagai warna body text (lihat tabel rasio di atas)
 - CTA generik: "Get Started", "Learn More", "Try Now"

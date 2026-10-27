@@ -26,9 +26,9 @@ class AdminSeeder extends Seeder
         $sandi = $sandi ?: 'admin12345';
 
         $admin = User::updateOrCreate(
-            ['email' => 'admin@bifrost.local'],
+            ['email' => 'admin@gymhub.local'],
             [
-                'name' => 'Admin Bifrost',
+                'name' => 'Admin GymHub',
                 'phone' => '08110000001',
                 'password' => Hash::make($sandi),
                 'role' => User::ROLE_ADMIN,

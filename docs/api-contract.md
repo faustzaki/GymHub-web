@@ -1,4 +1,4 @@
-# API Contract — Bifrost Gym
+# API Contract — GymHub
 
 ## Konvensi Global
 

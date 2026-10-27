@@ -13,11 +13,11 @@ export default function AuthLayout() {
           <Link to="/" className="inline-flex items-center gap-3 group">
             <img
               src={logoImg}
-              alt="Bifrost Gym"
+              alt="GymHub"
               className="h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-110"
             />
             <span className="text-2xl font-bold tracking-tight text-foreground">
-              Bifrost<span className="text-primary">Gym</span>
+              Gym<span className="text-primary">Hub</span>
             </span>
           </Link>
 
@@ -45,9 +45,9 @@ export default function AuthLayout() {
         <div className="w-full max-w-md">
           <div className="lg:hidden flex justify-center mb-10">
             <Link to="/" className="flex flex-col items-center gap-2">
-              <img src={logoImg} alt="Bifrost Gym" className="h-16 w-auto object-contain" />
+              <img src={logoImg} alt="GymHub" className="h-16 w-auto object-contain" />
               <span className="text-2xl font-bold tracking-tight text-foreground">
-                Bifrost<span className="text-primary">Gym</span>
+                Gym<span className="text-primary">Hub</span>
               </span>
             </Link>
           </div>

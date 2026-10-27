@@ -1,4 +1,4 @@
-# Prompt Aset — Bifrost Gym Landing
+# Prompt Aset — GymHub Landing
 
 Setiap blok di bawah **berdiri sendiri**: salin-tempel utuh, sudah termasuk GRADE dan AVOID.
 Baris pertama adalah nama file yang harus dipakai saat menyimpan — kode merujuk nama itu persis.

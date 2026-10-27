@@ -140,7 +140,7 @@ Diperiksa dari render nyata (screenshot `#alat` 1440), bukan dari kode. Fungsiny
 | Target sentuh < 44 px | ada | **0** |
 | CTA lengket HP | tidak ada | ada; hilang saat kontak terlihat |
 | Grid foto di 390 px | 453 px, 2 kartu terpotong | **342 px, 4/4 kartu utuh** |
-| Judul halaman | `frontend` | `Bifrost Gym` |
+| Judul halaman | `frontend` | `GymHub` |
 | Lint | 14 error | 14 error (nol tambahan) |
 | Build | hijau | hijau |
 

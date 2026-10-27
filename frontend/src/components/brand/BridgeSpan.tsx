@@ -2,7 +2,7 @@ import { useId } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * BridgeSpan — motif utama Bifrost: satu path SVG tipis berbentuk kurva jembatan.
+ * BridgeSpan — motif utama GymHub: satu path SVG tipis berbentuk kurva jembatan.
  *
  * Aturan pemakaian (docs/landing-direction.md §4): maksimal 2 tempat di seluruh
  * halaman — batas Hero→Alat, dan sebelum footer (seksi Komunitas→Kontak).
