@@ -126,16 +126,37 @@ Diperiksa dari render nyata (screenshot `#alat` 1440), bukan dari kode. Fungsiny
 
 ## 10. Status terukur (dari render nyata)
 
-| Perkara | Baseline (dist lama) | Sesudah Run A+B (dev) |
+| Perkara | Baseline (dist lama) | Sekarang |
 |---|---|---|
-| Chunk utama | 931,83 kB / gzip 281,96 kB | **245,61 kB / gzip 74,53 kB** (50 chunk) |
+| Chunk utama | 931,83 kB / gzip 281,96 kB | **247,71 kB / gzip 75,01 kB** |
+| LCP (dev, 3 viewport) | 972 / 464 / 428 ms | **520 / 460 / 412 ms** |
+| Main thread terblokir | 201 ms / 3 tugas | **60 ms / 2 tugas** |
+| CLS | 0,0015–0,0037 | **0,0015–0,0020** |
+| Kontras gagal | 12 elemen (sebelum tambalan kontras) | **0 dari 279–280 elemen** × 3 viewport |
 | `aria-live` | 1 | 4 |
 | `content-visibility` | 0 elemen | 9 elemen |
 | Hemat data (`saveData`) | tetap 3 `<video>` | **0 `<video>`**, poster tetap |
 | Fokus keyboard pemilih ruang | `1px none` | `2px solid` |
-| Target sentuh < 44 px | 1 (skip-link, salah ukur) | 0 |
-| CTA lengket HP | tidak ada | ada, **tapi belum hilang di kontak** |
+| Target sentuh < 44 px | ada | **0** |
+| CTA lengket HP | tidak ada | ada; hilang saat kontak terlihat |
+| Grid foto di 390 px | 453 px, 2 kartu terpotong | **342 px, 4/4 kartu utuh** |
 | Judul halaman | `frontend` | `Bifrost Gym` |
 | Lint | 14 error | 14 error (nol tambahan) |
 | Build | hijau | hijau |
+
+Catatan pengukuran (biar tidak salah lagi di lain waktu):
+
+- **`content-visibility: auto` membuat screenshot full-page palsu** — Chromium tidak merender seksi
+  yang belum terlihat, jadi potongan bawah jadi gambar kosong 11 KB. Skrip `shoot_full.py`
+  menetralkan properti itu dan menggulir bertahap sebelum memotret. Alat screenshot pihak ketiga
+  (dan crawler) akan melihat hal yang sama.
+- **Elemen `fixed` yang digeser keluar layar tetap punya rect** — cek "CTA masih tampil?" harus
+  menuntut irisan dengan viewport (`r.bottom > 8 && r.top < vh - 8`), bukan sekadar ada elemen `fixed`.
+- **Di dasar dokumen, `#contact` sudah lewat di atas viewport**, jadi pertanyaan "hilang saat kontak
+  terlihat?" wajib diukur dengan menggulir ke posisi kontak, bukan ke dasar halaman.
+- **`"grid-cols-1" in cls` salah** — `grid-cols-12` memuat substring itu; pakai
+  `grid-cols-1(?![0-9])`.
+- **`subprocess.run(..., shell=True)` di Windows memakai cmd.exe** — baris gaya bash (`export PATH=...`)
+  gagal dengan `'export' is not recognized`. Panggil `bash -lc` eksplisit.
+
 
