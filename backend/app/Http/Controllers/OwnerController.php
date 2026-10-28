@@ -126,16 +126,36 @@ class OwnerController extends Controller
         ]);
     }
 
+    /** Seberapa jauh ke depan orang masih pantas dikabari, dan berapa lama setelah lewat masih dikejar. */
+    private const TAGIH_HARI_KE_DEPAN = 14;
+
+    private const TAGIH_HARI_KE_BELAKANG = 30;
+
     public function priorities(): JsonResponse
     {
-        // Target tagihan: akunnya masih hidup (petugas yang mematikan memang memilih pergi,
-        // menagih dia salah sasaran) dan punya tanggal berakhir. Urut paling telat dulu --
-        // sisa hari menaik. Batas 10 = layar ringkas, bukan tabel penuh.
+        $hariIni = now()->startOfDay();
+        $kedepan = $hariIni->copy()->addDays(self::TAGIH_HARI_KE_DEPAN);
+        $kebelakang = $hariIni->copy()->subDays(self::TAGIH_HARI_KE_BELAKANG);
+
+        // Target tagihan: akunnya masih hidup (yang dimatikan petugas memang sudah memilih pergi),
+        // punya tanggal berakhir, dan masih masuk akal dikejar -- habis dalam 14 hari ke depan, atau
+        // lewat tidak lebih dari 30 hari lalu.
+        //
+        // Urutannya SENGAJA bukan "sisa hari menaik": yang paling telat (lewat 21 hari) hampir pasti
+        // sudah pergi, dan menaruhnya di puncak daftar cuma menutupi orang yang masih bisa
+        // diselamatkan. Yang di atas: yang akan habis dalam beberapa hari (masih anggota, masih bisa
+        // dikabari), baru yang paling baru lewat.
         $top = Member::query()
             ->with(['user' => fn ($q) => $q->withTrashed()])
             ->whereNotNull('membership_expires_at')
+            ->whereDate('membership_expires_at', '<=', $kedepan->toDateString())
+            ->whereDate('membership_expires_at', '>=', $kebelakang->toDateString())
             ->whereHas('user', fn ($u) => $u->whereNull('deleted_at'))
-            ->orderBy('membership_expires_at')
+            ->orderByRaw(
+                'CASE WHEN DATE(membership_expires_at) >= ? THEN 0 ELSE 1 END ASC,'
+                .' ABS(DATEDIFF(DATE(membership_expires_at), ?)) ASC',
+                [$hariIni->toDateString(), $hariIni->toDateString()],
+            )
             ->limit(10)
             ->get();
 

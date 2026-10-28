@@ -78,6 +78,35 @@ Aturan yang menempel di endpoint ini:
 - **Nomor HP duplikat → 409** + `data.existing_member`, supaya UI bisa menawarkan "buka anggota itu".
 - Status anggota **dihitung** (`Member::status()`), bukan kolom. Rincian perilaku: PRD-001.
 
+Aturan uang yang menempel di `POST /members` dan `POST /members/{id}/renew` (keputusan josjis 2026-10-28):
+
+- Menerima tambahan opsional `payment_method` (`cash` / `qris`, bawaan `cash`) dan `amount_paid`
+  (angka, min 0). Kalau `amount_paid` dikirim, itu yang dipakai — untuk diskon atau bayar sebagian.
+- Nominal diambil dari pengaturan harga. Kalau tidak bisa dihitung (harga belum diisi dan petugas
+  tidak mengirim nominal), **tidak ada baris `payments` yang ditulis**: balasan berisi
+  `payment_recorded: false` + alasan. Baris bernilai Rp 0 itu bukan pembayaran, itu data sampah.
+- `GET /members/{id}` mengembalikan `pembayaran` (daftar pembayaran anggota itu) + `harga_saran`.
+
+### Owner (`role:owner`)
+
+Semua baca-saja. Owner **tidak** punya endpoint tulis untuk anggota — pekerjaan itu ada di
+`/api/admin/*`, dan owner boleh memakainya karena perannya bertingkat (P1).
+
+| Method | Path | Keterangan |
+| --- | --- | --- |
+| GET | `/api/owner/summary` | Jumlah aktif / akan berakhir / nonaktif · anggota baru & berhenti bulan ini · uang masuk bulan ini · `harga_terisi` |
+| GET | `/api/owner/revenue?months=6` | Uang masuk per bulan: total, jumlah transaksi, pecahan cash/qris |
+| GET | `/api/owner/growth?months=6` | Anggota baru per bulan |
+| GET | `/api/owner/priorities` | 10 anggota teratas untuk ditagih: yang habis ≤14 hari dulu, baru yang lewat ≤30 hari, berikut nilai paketnya |
+| GET | `/api/owner/settings` | Semua pengaturan + siapa dan kapan terakhir mengubah |
+| PATCH | `/api/owner/settings` | Ubah harga & info gym. Kosong berarti "belum diisi", bukan 0 |
+
+### Publik
+
+| Method | Path | Keterangan |
+| --- | --- | --- |
+| GET | `/api/settings/public` | Harga & info gym yang **sudah** diisi, untuk landing. Tanpa login. Yang belum diisi dikirim `null` |
+
 ### Sisa yang harus dibersihkan
 
 | Method | Path | Kenapa |
