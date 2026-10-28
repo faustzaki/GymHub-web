@@ -172,15 +172,13 @@ print(f"\nRINGKASAN: {sum(HASIL)}/{len(HASIL)} uji lulus")
 
 # Uji ini MEMBUAT data. Kalau dibiarkan, database dev perlahan penuh anggota palsu dan daftar
 # anggota di layar jadi menyesatkan -- jadi sisanya dibersihkan sendiri di sini.
+#
+# Lewat skrip PHP berdiri sendiri, bukan `artisan tinker --execute`: perintah tinker yang panjang
+# dan penuh kutip sering gagal di lingkungan ini, dan tiap kali gagal, data ujinya tertinggal.
 if kode_baru:
-    bersih = (
-        "$m = App\\Models\\Member::where('member_code','" + str(kode_baru) + "')->first();"
-        " if ($m) { $m->user?->forceDelete(); $m->delete(); }"
-        " $u = App\\Models\\User::where('email','" + EMAIL_UJI + "')->first();"
-        " if ($u) { $u->member?->delete(); $u->forceDelete(); }"
-        " echo App\\Models\\Member::count();"
+    hasil = subprocess.run(
+        ["php", "scripts/bersihkan-data-uji.php", str(kode_baru), EMAIL_UJI],
+        capture_output=True, text=True,
     )
-    hasil = subprocess.run(["php", "artisan", "tinker", "--execute", bersih],
-                           capture_output=True, text=True)
-    sisa = hasil.stdout.strip().splitlines()[-1].strip() if hasil.stdout.strip() else "?"
-    print(f"data uji dibersihkan ({kode_baru}, id {id_baru}, akun {EMAIL_UJI}) -- sisa anggota: {sisa}")
+    catatan = hasil.stdout.strip().splitlines()[-1].strip() if hasil.stdout.strip() else hasil.stderr.strip()[:200]
+    print(f"data uji dibersihkan ({kode_baru}, id {id_baru}, akun {EMAIL_UJI}) -- {catatan}")
