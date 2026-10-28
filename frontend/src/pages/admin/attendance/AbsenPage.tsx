@@ -247,16 +247,29 @@ export default function AbsenPage() {
                   <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
                     <div className="h-40 w-40 rounded border-2 border-white/70" />
                   </div>
-                  <Button
-                    onClick={matikanKamera}
-                    variant="outline"
-                    className="absolute bottom-2 right-2 h-9 rounded border-white/30 bg-black/50 px-3 text-xs text-white hover:bg-black/70"
-                  >
-                    Matikan
-                  </Button>
                 </>
               )}
             </div>
+
+            {/* Tombol kamera di LUAR kotak video. Sebelumnya mengambang di dalam dan menutupi QR
+                yang sedang dibidik -- di layar HP area bidik cuma ~300px, dan sudut kartu anggota
+                sering mendarat tepat di pojok tempat tombolnya. */}
+            {kamera === "menyala" && (
+              <div className="flex items-center justify-between gap-3">
+                <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span className="size-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
+                  Kamera aktif &mdash; arahkan QR ke dalam bingkai
+                </span>
+                <Button
+                  onClick={matikanKamera}
+                  size="sm"
+                  variant="outline"
+                  className="h-8 shrink-0 rounded px-3 text-xs"
+                >
+                  Matikan
+                </Button>
+              </div>
+            )}
 
             <div className="space-y-1.5">
               <label htmlFor="kode-absen" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
@@ -380,8 +393,8 @@ export default function AbsenPage() {
                     <th className="px-4 py-2 font-bold">Jam</th>
                     <th className="px-4 py-2 font-bold">Anggota</th>
                     <th className="px-4 py-2 font-bold">Kode</th>
-                    <th className="px-4 py-2 font-bold">Cara</th>
-                    <th className="px-4 py-2 font-bold">Dicatat</th>
+                    <th className="hidden px-4 py-2 font-bold sm:table-cell">Cara</th>
+                    <th className="hidden px-4 py-2 font-bold sm:table-cell">Dicatat</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -390,8 +403,12 @@ export default function AbsenPage() {
                       <td className="px-4 py-2.5 font-mono tabular-nums text-foreground">{row.jam ?? "—"}</td>
                       <td className="px-4 py-2.5 text-foreground">{row.nama ?? "—"}</td>
                       <td className="px-4 py-2.5 font-mono text-xs text-muted-foreground">{row.member_code ?? "—"}</td>
-                      <td className="px-4 py-2.5 text-xs uppercase text-muted-foreground">{row.method}</td>
-                      <td className="px-4 py-2.5 text-xs text-muted-foreground">{row.oleh ?? "—"}</td>
+                      <td className="hidden px-4 py-2.5 text-xs uppercase text-muted-foreground sm:table-cell">
+                        {row.method}
+                      </td>
+                      <td className="hidden px-4 py-2.5 text-xs text-muted-foreground sm:table-cell">
+                        {row.oleh ?? "—"}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
