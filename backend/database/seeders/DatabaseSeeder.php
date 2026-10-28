@@ -22,6 +22,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             AdminSeeder::class,
             DemoMemberSeeder::class,
+            OwnerSeeder::class,
+            SettingsSeeder::class,
         ]);
     }
 }

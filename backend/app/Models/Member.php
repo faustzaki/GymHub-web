@@ -41,6 +41,12 @@ class Member extends Model
         return $this->hasMany(MembershipRenewal::class)->latest('id');
     }
 
+    /** Catatan uang masuk anggota ini (pendaftaran + perpanjangan) -- terbaru dulu. */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class)->latest('id');
+    }
+
     /**
      * Kode rujukan admin, mis. GH-0012. Berurutan dan enak dibacakan lewat telepon.
      *

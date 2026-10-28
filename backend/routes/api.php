@@ -3,9 +3,10 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Models\Member;
-
 use App\Http\Controllers\AdminMemberController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\OwnerController;
+use App\Http\Controllers\SettingController;
 
 // Auth Routes (Public)
 Route::post('/register', [AuthController::class, 'register']);
@@ -21,9 +22,10 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 });
 
-// Manajemen member oleh admin -- PRD-001 (docs/prd/001-admin-manajemen-member.md).
-// Butuh auth:sanctum + role:admin. Diuji: tanpa token 401, token member biasa 403.
-Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(function () {
+// Manajemen member oleh petugas -- PRD-001 + keputusan P1 (owner bertingkat: boleh semua yang
+// boleh admin, karena pemiliknya ikut jaga meja). Diuji: tanpa token 401, token member 403,
+// token admin & owner 200.
+Route::middleware(['auth:sanctum', 'role:admin,owner'])->prefix('admin')->group(function () {
     Route::get('/members', [AdminMemberController::class, 'index']);
     Route::post('/members', [AdminMemberController::class, 'store']);
     Route::get('/members/{member}', [AdminMemberController::class, 'show']);
@@ -32,6 +34,22 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     Route::post('/members/{member}/deactivate', [AdminMemberController::class, 'deactivate']);
     Route::post('/members/{member}/reactivate', [AdminMemberController::class, 'reactivate']);
 });
+
+// Panel owner: angka & keputusan (rencana dashboard owner, tahap 1-2). Semuanya baca KECUALI
+// pengaturan. Sengaja TANPA endpoint tulis untuk anggota -- itu pekerjaan panel petugas; ada di
+// dua tempat berarti dua aplikasi untuk pekerjaan yang sama.
+Route::middleware(['auth:sanctum', 'role:owner'])->prefix('owner')->group(function () {
+    Route::get('/summary', [OwnerController::class, 'summary']);
+    Route::get('/revenue', [OwnerController::class, 'revenue']);
+    Route::get('/growth', [OwnerController::class, 'growth']);
+    Route::get('/priorities', [OwnerController::class, 'priorities']);
+    Route::get('/settings', [SettingController::class, 'index']);
+    Route::patch('/settings', [SettingController::class, 'update']);
+});
+
+// Pengaturan publik untuk landing -- TANPA login. Setelah ini landing berhenti memakai angka
+// yang ditanam di kode.
+Route::get('/settings/public', [SettingController::class, 'publicPayload']);
 
 // Endpoint untuk Integration Test -- hanya di lingkungan lokal.
 // Sebelumnya endpoint ini hidup juga di produksi dan membocorkan versi PHP + versi Laravel.

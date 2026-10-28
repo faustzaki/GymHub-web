@@ -15,15 +15,17 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Indeks `users_role_index` sudah dibuat oleh migrasi 100001 -- mendeklarasikannya
+        // lagi di sini bikin migrate gagal: "Duplicate key name 'users_role_index'".
         Schema::table('users', function (Blueprint $table) {
-            $table->enum('role', ['member', 'coach', 'admin', 'owner'])->default('member')->index()->change();
+            $table->enum('role', ['member', 'coach', 'admin', 'owner'])->default('member')->change();
         });
     }
 
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->enum('role', ['member', 'coach', 'admin'])->default('member')->index()->change();
+            $table->enum('role', ['member', 'coach', 'admin'])->default('member')->change();
         });
     }
 };
