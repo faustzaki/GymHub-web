@@ -39,8 +39,21 @@ export interface PhoneTaken {
   existing_member: { id: number; name: string; member_code: string } | null;
 }
 
-export const PLAN_OPTIONS = [1, 3, 6] as const;
-export type PlanMonths = (typeof PLAN_OPTIONS)[number];
+/** Durasi cepat yang tampil di layar: 1 bulan · 3 bulan · 6 bulan · 1 tahun. */
+export const PLAN_OPTIONS = [1, 3, 6, 12] as const;
+
+/** Durasi bebas -- petugas boleh menyusun sendiri (mis. 2 bulan atau 7 bulan). */
+export type PlanMonths = number;
+
+/** Batas durasi, harus sama dengan AdminMemberController::PLAN_MAX_MONTHS. */
+export const PLAN_MAX_MONTHS = 24;
+
+/** 1 -> "1 bulan", 12 -> "1 tahun", 24 -> "2 tahun". */
+export function planLabel(months: number): string {
+  if (months === 12) return "1 tahun";
+  if (months > 12 && months % 12 === 0) return `${months / 12} tahun`;
+  return `${months} bulan`;
+}
 
 export async function fetchMembers(params: {
   q?: string;
@@ -98,6 +111,18 @@ export function previewExpiry(months: number, from: Date = new Date()): Date {
   const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
   target.setDate(Math.min(day, lastDay));
   return target;
+}
+
+/**
+ * Date -> "2027-03-27" memakai tanggal LOKAL.
+ *
+ * Jangan pakai toISOString(): nilai itu UTC, jadi di WIB (UTC+7) tengah malam lokal terbaca
+ * sebagai hari sebelumnya ("28 Nov" jadi "27 Nov").
+ */
+export function toISODate(date: Date): string {
+  const bulan = String(date.getMonth() + 1).padStart(2, "0");
+  const hari = String(date.getDate()).padStart(2, "0");
+  return `${date.getFullYear()}-${bulan}-${hari}`;
 }
 
 /** 2026-11-28 -> "28 Nov 2026". */

@@ -9,7 +9,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 
 /**
  * Manajemen member oleh admin — PRD-001 (docs/prd/001-admin-manajemen-member.md).
@@ -24,8 +23,14 @@ use Illuminate\Validation\Rule;
  */
 class AdminMemberController extends Controller
 {
-    /** Pilihan durasi yang boleh dipakai. Sengaja sempit: ini MVP member bulanan. */
-    private const PLAN_CHOICES = [1, 3, 6];
+    /** Pilihan durasi cepat yang tampil di layar. Durasi lain boleh -- lihat PLAN_MAX_MONTHS. */
+    private const PLAN_CHOICES = [1, 3, 6, 12];
+
+    /**
+     * Batas atas durasi dalam bulan. Bukan untuk menahan orang, tapi menahan salah ketik:
+     * tanpa batas, "240" akan membuat masa aktif 20 tahun dan tidak ada yang curiga.
+     */
+    private const PLAN_MAX_MONTHS = 24;
 
     public function index(Request $request): JsonResponse
     {
@@ -90,12 +95,13 @@ class AdminMemberController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'min:2', 'max:80'],
             'phone' => ['required', 'string', 'max:20'],
-            'plan_months' => ['nullable', 'integer', Rule::in(self::PLAN_CHOICES)],
+            'plan_months' => ['nullable', 'integer', 'min:1', 'max:'.self::PLAN_MAX_MONTHS],
         ], [
             'name.required' => 'Nama member wajib diisi.',
             'name.min' => 'Nama member minimal 2 huruf.',
             'phone.required' => 'Nomor HP wajib diisi.',
-            'plan_months.in' => 'Durasi hanya boleh 1, 3, atau 6 bulan.',
+            'plan_months.min' => 'Durasi paling singkat 1 bulan.',
+            'plan_months.max' => 'Durasi paling lama 24 bulan (2 tahun).',
         ]);
 
         if ($validator->fails()) {
@@ -239,10 +245,11 @@ class AdminMemberController extends Controller
     public function renew(Request $request, Member $member): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'plan_months' => ['required', 'integer', Rule::in(self::PLAN_CHOICES)],
+            'plan_months' => ['required', 'integer', 'min:1', 'max:'.self::PLAN_MAX_MONTHS],
         ], [
             'plan_months.required' => 'Pilih durasi perpanjangan.',
-            'plan_months.in' => 'Durasi hanya boleh 1, 3, atau 6 bulan.',
+            'plan_months.min' => 'Durasi paling singkat 1 bulan.',
+            'plan_months.max' => 'Durasi paling lama 24 bulan (2 tahun).',
         ]);
 
         if ($validator->fails()) {

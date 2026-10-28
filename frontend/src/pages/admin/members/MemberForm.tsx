@@ -7,10 +7,13 @@ import {
   PLAN_OPTIONS,
   createMember,
   formatDate,
+  planLabel,
   previewExpiry,
+  toISODate,
   type Member,
   type PlanMonths,
 } from "@/lib/services/members";
+import { MonthStepper } from "./MonthStepper";
 
 interface Props {
   open: boolean;
@@ -162,9 +165,15 @@ export function MemberForm({ open, onOpenChange, onCreated, onOpenExisting }: Pr
             )}
           </div>
 
-          <fieldset className="space-y-1.5">
+          <fieldset className="space-y-2">
             <legend className="text-sm font-medium text-foreground">Durasi</legend>
-            <div className="flex gap-2" role="radiogroup" aria-label="Durasi masa aktif">
+
+            {/* Pilihan cepat. Angka yang tampil = total yang akan disimpan. */}
+            <div
+              className="grid grid-cols-2 gap-2 sm:grid-cols-4"
+              role="radiogroup"
+              aria-label="Durasi masa aktif"
+            >
               {PLAN_OPTIONS.map((months) => (
                 <Button
                   key={months}
@@ -173,14 +182,26 @@ export function MemberForm({ open, onOpenChange, onCreated, onOpenExisting }: Pr
                   aria-checked={plan === months}
                   variant={plan === months ? "default" : "outline"}
                   onClick={() => setPlan(months)}
-                  className="h-11 flex-1 rounded border-border"
+                  className="h-11 rounded border-border"
                 >
-                  {months} bulan
+                  {planLabel(months)}
                 </Button>
               ))}
             </div>
+
+            {/* Di luar pilihan cepat: susun sendiri, totalnya kelihatan sebelum disimpan. */}
+            <div className="space-y-2 rounded-md border border-border p-3">
+              <p className="text-xs text-muted-foreground">
+                Durasi lain &mdash; tekan + untuk menambah satu bulan sampai totalnya pas.
+              </p>
+              <MonthStepper value={plan} onChange={setPlan} />
+            </div>
+
             <p className="text-sm text-muted-foreground">
-              Masa aktif berakhir <span className="text-foreground">{formatDate(expiry.toISOString().slice(0, 10))}</span>
+              Masa aktif {planLabel(plan)} · berakhir{" "}
+              <span className="text-foreground">
+                {formatDate(toISODate(expiry))}
+              </span>
             </p>
           </fieldset>
 

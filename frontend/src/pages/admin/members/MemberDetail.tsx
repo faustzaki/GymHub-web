@@ -9,13 +9,17 @@ import {
   PLAN_OPTIONS,
   fetchMember,
   formatDate,
+  planLabel,
+  previewExpiry,
   renewMember,
+  toISODate,
   setMemberActive,
   type Member,
   type MemberDetail,
   type PlanMonths,
 } from "@/lib/services/members";
 import { STATUS_CLASS, STATUS_LABEL } from "./status";
+import { MonthStepper } from "./MonthStepper";
 
 interface Props {
   memberId: number | null;
@@ -34,6 +38,9 @@ export function MemberDetail({ memberId, onClose, onChanged }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<PlanMonths | "toggle" | null>(null);
   const [confirmDeactivate, setConfirmDeactivate] = useState(false);
+  // Durasi untuk mode "atur sendiri": dikumpulkan dulu, baru dikonfirmasi.
+  const [customMonths, setCustomMonths] = useState(3);
+  const [showCustom, setShowCustom] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
@@ -45,7 +52,11 @@ export function MemberDetail({ memberId, onClose, onChanged }: Props) {
 
     fetchMember(memberId)
       .then((data) => {
-        if (!cancelled) setDetail(data);
+        if (cancelled) return;
+        setDetail(data);
+        // Mode susun-sendiri mulai dari durasi yang terakhir dipakai member ini.
+        setCustomMonths(data.plan_months ?? 3);
+        setShowCustom(false);
       })
       .catch((err) => {
         if (!cancelled) {
@@ -60,6 +71,15 @@ export function MemberDetail({ memberId, onClose, onChanged }: Props) {
       cancelled = true;
     };
   }, [memberId, reloadKey]);
+
+  /**
+   * Dasar hitung perpanjangan, sama dengan aturan backend: masih aktif -> dari tanggal berakhir
+   * lama (sisa hari tidak hangus); sudah lewat -> dari hari ini. Dipakai untuk pratinjau saja.
+   */
+  const dasarPerpanjang =
+    detail?.is_active && detail.membership_expires_at
+      ? new Date(detail.membership_expires_at)
+      : new Date();
 
   const perpanjang = async (months: PlanMonths) => {
     if (!detail || busy) return;
@@ -164,19 +184,52 @@ export function MemberDetail({ memberId, onClose, onChanged }: Props) {
                 Masih aktif: ditambahkan dari tanggal berakhir lama, sisa waktu tidak dipotong.
                 Sudah kadaluarsa: dihitung dari hari ini.
               </p>
-              <div className="flex gap-2">
+              {/* Tiap tombol sudah menyebut tanggal berakhir barunya, jadi tidak ada
+                  perpanjangan yang diklik tanpa tahu hasilnya. */}
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {PLAN_OPTIONS.map((months) => (
                   <Button
                     key={months}
                     variant="outline"
-                    className="h-11 flex-1 rounded border-border"
+                    className="h-auto flex-col items-start gap-0.5 rounded border-border py-2"
                     disabled={busy !== null}
                     onClick={() => perpanjang(months)}
                   >
-                    {busy === months ? "..." : `+${months} bulan`}
+                    <span className="text-sm">{busy === months ? "..." : `+${planLabel(months)}`}</span>
+                    <span className="text-xs font-normal text-muted-foreground">
+                      {formatDate(toISODate(previewExpiry(months, dasarPerpanjang)))}
+                    </span>
                   </Button>
                 ))}
               </div>
+
+              <Button
+                variant="ghost"
+                className="h-9 rounded px-2 text-xs"
+                disabled={busy !== null}
+                onClick={() => setShowCustom((nilai) => !nilai)}
+              >
+                {showCustom ? "Tutup susun sendiri" : "Atur sendiri (mis. 2 atau 7 bulan)"}
+              </Button>
+
+              {showCustom && (
+                <div className="space-y-2 rounded-md border border-border bg-card p-3">
+                  <MonthStepper value={customMonths} onChange={setCustomMonths} />
+                  <p className="text-sm text-muted-foreground">
+                    Total {planLabel(customMonths)} · berakhir{" "}
+                    <span className="text-foreground">
+                      {formatDate(toISODate(previewExpiry(customMonths, dasarPerpanjang)))}
+                    </span>
+                  </p>
+                  <Button
+                    className="h-11 w-full rounded"
+                    disabled={busy !== null}
+                    onClick={() => perpanjang(customMonths)}
+                  >
+                    {busy === customMonths ? "Menyimpan..." : `Konfirmasi +${planLabel(customMonths)}`}
+                  </Button>
+                </div>
+              )}
             </div>
 
             <Separator />

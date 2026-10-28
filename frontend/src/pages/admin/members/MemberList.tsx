@@ -148,7 +148,6 @@ export function MemberList({ state, onAdd, onOpen }: Props) {
                   <TableHead>Mulai</TableHead>
                   <TableHead>Berakhir</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -176,22 +175,6 @@ export function MemberList({ state, onAdd, onOpen }: Props) {
                       <Badge variant="outline" className={STATUS_CLASS[member.status]}>
                         {STATUS_LABEL[member.status]}
                       </Badge>
-                    </TableCell>
-                    {/* Perpanjang di baris membuka panel detail yang sama -- di sana tanggal
-                        berakhir baru sudah tampil sebelum disimpan, jadi tidak ada perpanjangan
-                        yang terjadi tanpa dilihat dulu. */}
-                    <TableCell className="text-right">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="rounded"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          onOpen(member);
-                        }}
-                      >
-                        Perpanjang
-                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
