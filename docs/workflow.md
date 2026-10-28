@@ -156,3 +156,25 @@ Tiga sebab yang pernah terukur, dan di mana obatnya:
 | Muat pertama berat (3,4 MB / 70 permintaan) | dev menyajikan modul satu per satu, tidak digabung | itu memang harga dev. Untuk versi ringan: `npm run build` lalu `npm run preview` (293 KB / 30 permintaan). Build tidak punya masuk-otomatis — masuk sekali dengan akun dev |
 
 Mengukur, jangan menebak: `playwright` + `performance.getEntriesByType('resource')` — hitung panggilan `/api/`, ukuran unduhan, dan waktu sampai data benar-benar muncul di layar.
+
+## Data Dummy untuk Layar yang Masih Kosong
+
+```bash
+php scripts/data-dummy.php isi      # 78 anggota + riwayat pembayaran (bawaan)
+php scripts/data-dummy.php isi 20   # sesuaikan jumlahnya
+php scripts/data-dummy.php cek      # lihat jumlah sekarang, tidak mengubah apa pun
+php scripts/data-dummy.php bersih   # hapus PERSIS yang dibuat skrip ini
+```
+
+- Nomor HP semua berawalan **0899** — kelihatan sekali kalau itu data dummy.
+- Id yang dibuat dicatat di `storage/app/dummy-ids.json`, jadi `bersih` tidak pernah menyentuh data
+  asli (`GH-0001`…`GH-0015`).
+- Aturan yang dipegang skrip, supaya angkanya tidak jadi omong kosong:
+  - pembayaran **tidak pernah bertanggal masa depan** (uang yang belum diterima tidak dicatat);
+  - `membership_expires_at` = pembayaran terakhir + durasi yang dibeli, jadi masa aktif selalu
+    cocok dengan riwayatnya;
+  - status (aktif / akan berakhir / nonaktif) muncul dari tanggal itu, bukan ditempel;
+  - beberapa anggota sengaja membayar **hari ini**, supaya kartu "Hari ini" dan "Minggu ini" di
+    halaman Uang Masuk tidak Rp 0;
+  - `created_at` diatur lewat query builder — kolom itu bukan fillable, jadi `create()` menimpanya
+    dengan waktu sekarang dan semua anggota akan tampak "baru bulan ini".
