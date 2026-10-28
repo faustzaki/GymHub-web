@@ -153,13 +153,17 @@ export default function OwnerLayout() {
 
           <div className="flex items-center gap-2">
             <LoncengNotifikasi />
+            {/* Dulu tombol tanpa aksi berlabel "Panel owner" -- padahal kita SUDAH di panel owner.
+                Sekarang menuju pengaturan web: satu pintu yang memang sering dibuka pemilik. */}
             <Button
+              asChild
               variant="ghost"
               size="icon"
               className="w-9 h-9 rounded-full bg-red-600/10 text-red-500 border border-red-600/20"
-              aria-label="Panel owner"
             >
-              <Crown size={16} />
+              <Link to="/owner/pengaturan" aria-label="Pengaturan web" title="Pengaturan web">
+                <Settings size={16} />
+              </Link>
             </Button>
           </div>
         </header>

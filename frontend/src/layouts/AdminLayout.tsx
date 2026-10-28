@@ -167,12 +167,17 @@ export default function AdminLayout() {
           {/* Right Actions */}
           <div className="flex items-center gap-2">
             <LoncengNotifikasi />
+            {/* Ikon perisai ini dulu tombol tanpa aksi. Sekarang ia melakukan apa yang
+                digambarkan: pindah ke panel owner, sama dengan tautan di sidebar. */}
             <Button
+              asChild
               variant="ghost"
               size="icon"
               className="w-9 h-9 rounded-full bg-red-600/10 text-red-500 border border-red-600/20"
             >
-              <Shield size={16} />
+              <Link to="/owner" aria-label="Buka panel owner" title="Buka panel owner">
+                <Shield size={16} />
+              </Link>
             </Button>
           </div>
         </header>
