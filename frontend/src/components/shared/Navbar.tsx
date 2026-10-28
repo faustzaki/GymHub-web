@@ -5,11 +5,16 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import logoImg from "@/assets/Gemini_Generated_Image_kmomnfkmomnfkmom-removebg-preview.png";
 
-/** Anchor mengikuti urutan seksi landing (docs/landing-direction.md §5). */
+/**
+ * Urutan tautan mengikuti urutan seksi di DOM pada HomePage, supaya mengikuti menu
+ * berarti berjalan turun melewati halaman.
+ * `#alat` mencakup Fasilitas + seksi "Kenapa di sini" yang bertetangga (#kenapa).
+ */
 const NAV_LINKS = [
-  { label: "Ruang", href: "#ruang" },
-  { label: "Alat", href: "#alat" },
+  { label: "Fasilitas", href: "#alat" },
+  { label: "Latihan", href: "#ruang" },
   { label: "Jadwal", href: "#jadwal" },
+  { label: "Coach", href: "#pt" },
   { label: "Biaya", href: "#membership" },
   { label: "Kontak", href: "#contact" },
 ] as const;
@@ -18,19 +23,18 @@ const NAV_LINKS = [
  * Navbar publik.
  *
  * - Transparan di atas hero, solid + blur saat scroll (slot glass ke-2 dari 2).
- * - Menghilang saat scroll ke bawah, muncul saat scroll ke atas.
+ * - Selalu terlihat: posisinya menetap di atas halaman, tidak ikut menghilang saat scroll.
  * - Mobile: panel dropdown; fokus keyboard tetap terlihat di setiap target.
  */
 export default function Navbar() {
-  const { isScrolled, isVisible } = useScrollNavbar(50);
+  const { isScrolled } = useScrollNavbar(50);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
   return (
     <nav
       className={cn(
-        "fixed inset-x-0 top-0 z-[100] transition-[transform,background-color,box-shadow] duration-300 ease-in-out",
-        isVisible ? "translate-y-0" : "-translate-y-full",
+        "fixed inset-x-0 top-0 z-[100] transition-[background-color,box-shadow] duration-300 ease-in-out",
         isScrolled
           ? "bg-background/90 shadow-lg shadow-black/30 backdrop-blur-md"
           : isMobileMenuOpen
@@ -39,10 +43,10 @@ export default function Navbar() {
       )}
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-14 items-center justify-between lg:h-16">
+        <div className="flex h-nav items-center justify-between lg:h-nav-lg">
           <a href="#home" className="flex h-11 shrink-0 items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
             <img src={logoImg} alt="" className="h-8 w-auto object-contain lg:h-9" />
-            <span className="text-xl font-extrabold uppercase tracking-tight text-foreground">
+            <span className="text-xl font-extrabold tracking-tight text-foreground">
               Gym<span className="text-primary">Hub</span>
             </span>
           </a>
@@ -67,7 +71,7 @@ export default function Navbar() {
               asChild
               className="hidden h-11 rounded bg-primary px-5 text-xs font-bold uppercase tracking-widest text-primary-foreground hover:bg-primary/90 sm:inline-flex"
             >
-              <Link to="/register">Bergabung Sekarang</Link>
+              <Link to="/login">Masuk Member</Link>
             </Button>
 
             <button
@@ -110,8 +114,8 @@ export default function Navbar() {
             asChild
             className="mt-3 h-12 w-full rounded bg-primary text-xs font-bold uppercase tracking-widest text-primary-foreground hover:bg-primary/90"
           >
-            <Link to="/register" onClick={closeMobileMenu}>
-              Bergabung Sekarang
+            <Link to="/login" onClick={closeMobileMenu}>
+              Masuk Member
             </Link>
           </Button>
         </div>

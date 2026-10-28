@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -18,20 +18,22 @@ const ProtectedRoute = lazy(() => import("@/routes/ProtectedRoute"));
 
 // Lazy-loaded pages
 const LoginPage = lazy(() => import("@/pages/auth/LoginPage"));
-const RegisterPage = lazy(() => import("@/pages/auth/RegisterPage"));
 const NotFoundPage = lazy(() => import("@/pages/auth/NotFoundPage"));
 const MemberOverviewPage = lazy(() => import("@/pages/member/overview/MemberOverviewPage"));
-const AdminOverviewPage = lazy(() => import("@/pages/admin/overview/AdminOverviewPage"));
+// Halaman ringkasan admin tidak lagi dipakai sebagai halaman pertama (petugas langsung ke
+// daftar anggota). Berkasnya sengaja dibiarkan di repositori untuk dashboard owner nanti.
+// const AdminOverviewPage = lazy(() => import("@/pages/admin/overview/AdminOverviewPage"));
 const CoachOverviewPage = lazy(() => import("@/pages/coach/overview/CoachOverviewPage"));
-const UserManagementPage = lazy(() => import("@/pages/admin/users/UserManagementPage").then((m) => ({ default: m.UserManagementPage })));
+const MemberManagementPage = lazy(() =>
+  import("@/pages/admin/members/MemberManagementPage").then((m) => ({ default: m.MemberManagementPage }))
+);
 const CoachManagementPage = lazy(() => import("@/pages/admin/coaches/CoachManagementPage").then((m) => ({ default: m.CoachManagementPage })));
 const CoachFormPage = lazy(() => import("@/pages/admin/coaches/CoachFormPage").then((m) => ({ default: m.CoachFormPage })));
 
 /**
  * App Component
- * 
- * Bertindak sebagai Router Hub.
- * Memetakan URL path ke Layout dan Page yang sesuai.
+ *
+ * Bertindak sebagai Router Hub. Memetakan URL ke Layout + Page.
  */
 function App() {
   const checkAuth = useAuthStore((state) => state.checkAuth);
@@ -54,11 +56,11 @@ function App() {
 
         {/* =========================================
             AUTH ROUTES
-            Menggunakan AuthLayout (Split-screen Form)
+            Pendaftaran mandiri sudah dimatikan (PRD-001 K1): /register dialihkan.
         ========================================= */}
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/register" element={<Navigate to="/login" replace />} />
         </Route>
 
         {/* =========================================
@@ -77,7 +79,7 @@ function App() {
 
         {/* =========================================
             COACH DASHBOARD ROUTES
-            Menggunakan CoachLayout (Sidebar Coach dengan aksen Teal)
+            Menggunakan CoachLayout (Sidebar Coach dengan aksen merah)
         ========================================= */}
         <Route path="/coach" element={<CoachLayout />}>
           <Route index element={<CoachOverviewPage />} />
@@ -89,23 +91,22 @@ function App() {
         </Route>
 
         {/* =========================================
-            ADMIN DASHBOARD ROUTES
-            Menggunakan AdminLayout (Sidebar Admin)
+            ADMIN DASHBOARD ROUTES (PROTECTED, role=admin)
         ========================================= */}
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<AdminOverviewPage />} />
-          {/* Placeholder for future pages */}
-          {/* <Route element={<ProtectedRoute requiredRole="admin" />}> */}
-            <Route path="users" element={<UserManagementPage />} />
-          {/* </Route> */}
-          <Route path="coaches" element={<CoachManagementPage />} />
+        <Route element={<ProtectedRoute requiredRole="admin" />}>
+          <Route path="/admin" element={<AdminLayout />}>
+            {/* Petugas mendarat langsung di daftar anggota (keputusan josjis 2026-10-28).
+                Halaman ringkasan tidak dibuang -- disimpan untuk dashboard owner. */}
+            <Route index element={<Navigate to="members" replace />} />
+            <Route path="members" element={<MemberManagementPage />} />
+            <Route path="coaches" element={<CoachManagementPage />} />
             <Route path="coaches/create" element={<CoachFormPage />} />
             <Route path="coaches/:id/edit" element={<CoachFormPage />} />
-          <Route path="courses" element={<div className="p-4">Manajemen Kursus (Coming Soon)</div>} />
-          <Route path="schedule" element={<div className="p-4">Jadwal & Kalender (Coming Soon)</div>} />
-          <Route path="finance" element={<div className="p-4">Laporan Keuangan (Coming Soon)</div>} />
-          <Route path="reports" element={<div className="p-4">Laporan Ops (Coming Soon)</div>} />
-          <Route path="settings" element={<div className="p-4">Pengaturan (Coming Soon)</div>} />
+            <Route path="courses" element={<div className="p-4">Manajemen Kursus (Coming Soon)</div>} />
+            <Route path="schedule" element={<div className="p-4">Jadwal & Kalender (Coming Soon)</div>} />
+            <Route path="reports" element={<div className="p-4">Laporan Ops (Coming Soon)</div>} />
+            <Route path="settings" element={<div className="p-4">Pengaturan (Coming Soon)</div>} />
+          </Route>
         </Route>
 
         {/* 404 Fallback */}

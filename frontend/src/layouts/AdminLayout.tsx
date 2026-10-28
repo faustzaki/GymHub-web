@@ -1,16 +1,10 @@
 import { useState } from "react";
 import { Outlet, NavLink, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useAuthStore } from "@/store/useAuthStore";
 import logoImg from "@/assets/Gemini_Generated_Image_kmomnfkmomnfkmom-removebg-preview.png";
 import {
-  LayoutDashboard,
   Users,
-  GraduationCap,
-  BookOpen,
-  DollarSign,
-  CalendarDays,
-  BarChart3,
-  Settings,
   LogOut,
   Menu,
   X,
@@ -21,22 +15,12 @@ import {
 /**
  * Menu sidebar untuk Admin Dashboard.
  *
- * Perbedaan dengan DashboardLayout (Member):
- * - Ada menu "Manajemen User", "Keuangan", dan "Laporan".
- * - Tidak ada "Progres Latihan" atau "To-Do List" (itu milik member).
- *
- * Pemisahan ini memastikan hak akses (privileges) antara
- * Admin dan User benar-benar terpisah dari sisi UI.
+ * Sengaja pendek. Keputusan josjis 2026-10-28: yang tampil hanya yang benar-benar dipakai --
+ * menu "Coming Soon" (Coach, Kursus, Jadwal, Laporan, Pengaturan) dibuang dari sidebar karena
+ * bikin panel terlihat belum jadi. Rutenya masih ada di App.tsx kalau nanti dikerjakan.
  */
 const ADMIN_MENU = [
-  { label: "Overview", href: "/admin", icon: LayoutDashboard },
-  { label: "Manajemen User", href: "/admin/users", icon: Users },
-  { label: "Manajemen Coach", href: "/admin/coaches", icon: GraduationCap },
-  { label: "Manajemen Kursus", href: "/admin/courses", icon: BookOpen },
-  { label: "Jadwal & Kalender", href: "/admin/schedule", icon: CalendarDays },
-  { label: "Keuangan", href: "/admin/finance", icon: DollarSign },
-  { label: "Laporan", href: "/admin/reports", icon: BarChart3 },
-  { label: "Pengaturan", href: "/admin/settings", icon: Settings },
+  { label: "Anggota Gym", href: "/admin/members", icon: Users },
 ] as const;
 
 /**
@@ -49,6 +33,7 @@ const ADMIN_MENU = [
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const logout = useAuthStore((state) => state.logout);
 
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
   const closeSidebar = () => setSidebarOpen(false);
@@ -99,10 +84,7 @@ export default function AdminLayout() {
         {/* Navigation Menu */}
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {ADMIN_MENU.map((item) => {
-            const isActive =
-              item.href === "/admin"
-                ? location.pathname === "/admin"
-                : location.pathname.startsWith(item.href);
+            const isActive = location.pathname.startsWith(item.href);
 
             return (
               <NavLink
@@ -130,7 +112,8 @@ export default function AdminLayout() {
         <div className="px-3 pb-4 border-t border-white/[0.06] pt-4">
           <Button
             variant="ghost"
-            className="w-full justify-start gap-3 text-white/50 hover:text-red-500 hover:bg-red-600/5 h-10"
+            onClick={() => logout()}
+            className="w-full justify-start gap-3 text-white/70 hover:text-white hover:bg-white/[0.04] h-11"
           >
             <LogOut size={18} />
             Keluar

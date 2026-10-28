@@ -151,6 +151,25 @@
 }
 
 /* ---------------------------------------------------------------------------
+ * Tinggi navbar & pendaratan anchor.
+ *
+ * Satu sumber untuk tinggi navbar (Navbar.tsx memakai `h-nav` / `lg:h-nav-lg`),
+ * scroll-padding, dan scroll-margin seksi. `--nav-landing` = celah napas antara
+ * bawah navbar dan judul seksi saat anchor dituju.
+ *
+ * Kenapa seksi butuh scroll-margin negatif: anchor menunjuk `<section>`, dan
+ * seksi punya padding-block sendiri (--rhythm-1..3). Tanpa kompensasi,
+ * scroll-padding hanya merapatkan kotak seksi ke bawah navbar sehingga judul
+ * tertinggal sejauh padding itu — celah kosong yang terlihat "terlalu ke atas".
+ * ------------------------------------------------------------------------- */
+@theme static {
+  --spacing-nav: 3.5rem; /* = h-14 di Navbar.tsx */
+  --spacing-nav-lg: 4rem; /* = lg:h-16 di Navbar.tsx */
+  --nav-landing: 2rem; /* 32px celah judul di bawah navbar */
+}
+
+
+/* ---------------------------------------------------------------------------
  * Micro-detail & aksesibilitas lanjutan (docs/landing-polish.md item 7 & 8).
  *
  * Satu pola fokus untuk seluruh aplikasi: garis 2px `--ring` (merah) dengan
@@ -182,41 +201,33 @@
   }
 }
 
-/* ---------------------------------------------------------------------------
- * Pantulan pelat (docs/landing-polish.md item 3).
- * Tujuan UX: satu sinyal bahwa tumpukan sudah terkunci di langkah terdekat —
- * sekali per seret, bukan loop. Dimatikan total saat reduced-motion.
- * ------------------------------------------------------------------------- */
-@keyframes plate-settle {
-  0% { transform: translateY(0); }
-  40% { transform: translateY(3px); }
-  100% { transform: translateY(0); }
-}
-
 @layer utilities {
-  .plate-settle {
-    animation: plate-settle 220ms var(--ease-out-quint) 1;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .plate-settle {
-      animation: none;
-    }
-  }
-}
-
-@layer utilities {
-  /* Below-fold sections: skip layout until near viewport.
-     contain-intrinsic-size keeps CLS near zero. */
+  /* Seksi di bawah lipatan: tata letak ditunda sampai dekat viewport.
+     `contain-intrinsic-size: auto <taksiran>` WAJIB: tanpa taksiran, seksi
+     yang belum pernah dirender berukuran 0px sehingga offset anchor meleset.
+     `.cv-trigger` (lihat base) mematikan containment selama animasi transisi
+     halaman supaya view transition punya snapshot tata letak yang utuh. */
   .cv-auto {
     content-visibility: auto;
     contain-intrinsic-size: auto 800px;
+  }
+  html.cv-trigger,
+  html.cv-trigger * {
+    content-visibility: visible;
+    contain: none;
   }
 }
 
 @layer base {
   html {
     scroll-behavior: smooth;
-    scroll-padding-top: 5rem; /* anchor tidak tertutup navbar */
+    /* Anchor berhenti di bawah navbar (tinggi asli) + celah napas. */
+    scroll-padding-top: calc(var(--spacing-nav) + var(--nav-landing));
+  }
+  @media (width >= 64rem) {
+    html {
+      scroll-padding-top: calc(var(--spacing-nav-lg) + var(--nav-landing));
+    }
   }
   @media (prefers-reduced-motion: reduce) {
     html {

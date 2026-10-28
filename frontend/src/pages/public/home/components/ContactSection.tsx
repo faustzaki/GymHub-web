@@ -68,7 +68,7 @@ export default function ContactSection() {
     <section
       id="contact"
       className="cv-auto relative overflow-hidden bg-background"
-      style={{ paddingBlock: "var(--rhythm-3)" }}
+      style={{ paddingBlock: "var(--rhythm-3)", scrollMarginTop: "calc(-1 * var(--rhythm-3))" }}
     >
       <div className="mx-auto w-full max-w-7xl px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-16">

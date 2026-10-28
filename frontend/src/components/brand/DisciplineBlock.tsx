@@ -57,7 +57,13 @@ export function DisciplineBlock({
       id={id}
       data-discipline={discipline}
       className={cn("cv-auto relative overflow-hidden", tone === "raised" ? "bg-card" : "bg-background", className)}
-      style={{ paddingBlock: `var(${rhythmVar})`, ["--local-dur" as string]: `${meta.duration}ms` }}
+      style={{
+        paddingBlock: `var(${rhythmVar})`,
+        /* Anchor menunjuk <section>; padding atasnya harus dimaafkan supaya judul
+           mendarat tepat di bawah navbar, bukan sejauh padding itu. */
+        scrollMarginTop: `calc(-1 * var(${rhythmVar}))`,
+        ["--local-dur" as string]: `${meta.duration}ms`,
+      }}
     >
       <div className="relative mx-auto w-full max-w-7xl px-6 lg:px-8">
         <header className="mb-12 flex flex-col gap-4 lg:mb-16">

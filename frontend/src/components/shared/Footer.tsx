@@ -21,10 +21,12 @@ const IconX = ({ className = "" }: { className?: string }) => (
   </svg>
 );
 
+// Urutan sama dengan Navbar dan urutan seksi di DOM halaman beranda.
 const FOOTER_NAV = [
-  { label: "Ruang latihan", href: "#ruang" },
-  { label: "Alat", href: "#alat" },
+  { label: "Fasilitas", href: "#alat" },
+  { label: "Latihan", href: "#ruang" },
   { label: "Jadwal", href: "#jadwal" },
+  { label: "Coach", href: "#pt" },
   { label: "Biaya", href: "#membership" },
   { label: "Kontak", href: "#contact" },
 ] as const;
@@ -45,7 +47,7 @@ export default function Footer() {
           <div className="space-y-6 lg:col-span-5">
             <a href="#home" className="inline-flex items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
               <img src={logoImg} alt="" className="h-12 w-auto object-contain" />
-              <span className="text-2xl font-extrabold uppercase tracking-tight">
+              <span className="text-2xl font-extrabold tracking-tight">
                 Gym<span className="text-primary">Hub</span>
               </span>
             </a>

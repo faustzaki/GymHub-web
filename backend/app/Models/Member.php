@@ -42,14 +42,19 @@ class Member extends Model
     }
 
     /**
-     * Kode rujukan admin, mis. BFG-0012. Berurutan dari id supaya tidak bentrok dan tetap
-     * enak dibacakan lewat telepon.
+     * Kode rujukan admin, mis. GH-0012. Berurutan dan enak dibacakan lewat telepon.
+     *
+     * Dihitung dari kode tertinggi yang sudah ada, BUKAN dari id baris: kalau memakai id, satu kali
+     * hapus data akan melompatkan penomoran (GH-0001 lalu GH-0022) karena id tidak pernah mundur.
      */
     public static function nextMemberCode(): string
     {
-        $urut = (int) static::max('id') + 1;
+        $tertinggi = static::query()
+            ->pluck('member_code')
+            ->map(fn (?string $kode): int => (int) preg_replace('/\D/', '', (string) $kode))
+            ->max() ?? 0;
 
-        return 'BFG-'.str_pad((string) $urut, 4, '0', STR_PAD_LEFT);
+        return 'GH-'.str_pad((string) ($tertinggi + 1), 4, '0', STR_PAD_LEFT);
     }
 
     /** aktif / akan_berakhir / kadaluarsa / nonaktif — PRD-001 §7. */

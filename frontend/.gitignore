@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Berkas rahasia lokal (jangan di-commit)
+.env.local
+.env.*.local
