@@ -204,15 +204,18 @@
 @layer utilities {
   /* Seksi di bawah lipatan: tata letak ditunda sampai dekat viewport.
      `contain-intrinsic-size: auto <taksiran>` WAJIB: tanpa taksiran, seksi
-     yang belum pernah dirender berukuran 0px sehingga offset anchor meleset.
-     `.cv-trigger` (lihat base) mematikan containment selama animasi transisi
-     halaman supaya view transition punya snapshot tata letak yang utuh. */
+     yang belum pernah dirender berukuran 0px sehingga offset anchor meleset. */
   .cv-auto {
     content-visibility: auto;
     contain-intrinsic-size: auto 800px;
   }
-  html.cv-trigger,
-  html.cv-trigger * {
+
+  /* Selama pendaratan hash (SectionScrollLanding.tsx) containment dimatikan
+     sementara supaya seluruh tata letak final sebelum browser memulihkan
+     posisi hash. Tanpa ini, seksi yang baru ditata di tengah lompatan membuat
+     dokumen memanjang sesudah offset tujuan dihitung → judul meleset. */
+  html.cv-landing,
+  html.cv-landing * {
     content-visibility: visible;
     contain: none;
   }

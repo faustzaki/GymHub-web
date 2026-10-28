@@ -9,6 +9,7 @@ import TestimonialsSection from "./components/TestimonialsSection";
 import CommunitySection from "./components/CommunitySection";
 import ContactSection from "./components/ContactSection";
 import StickyCTA from "./components/StickyCTA";
+import SectionScrollLanding from "./components/SectionScrollLanding";
 
 /**
  * HomePage — landing GymHub.
@@ -42,6 +43,8 @@ export default function HomePage() {
       {/* Penutup — lokasi, jam buka, kontak */}
       <ContactSection />
       <StickyCTA />
+      {/* Pendaratan anchor saat muat dingin; scroll biasa tetap tanpa JavaScript. */}
+      <SectionScrollLanding />
     </>
   );
 }

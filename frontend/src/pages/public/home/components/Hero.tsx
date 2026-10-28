@@ -107,9 +107,7 @@ const Hero = () => {
   return (
     <section
       id="home"
-      /* `contain-none` membatalkan containment dari `.cv-auto` milestone yang
-         ditambahkan <html>; hero tidak boleh tunduk pada containment apa pun. */
-      className="contain-none relative flex min-h-[100svh] w-full flex-col justify-end overflow-hidden bg-background pb-10 pt-24"
+      className="relative flex min-h-[100svh] w-full flex-col justify-end overflow-hidden bg-background pb-10 pt-24"
       style={{ ["--local-dur" as string]: `${meta.duration}ms` }}
     >
       {/* Media: satu video per ruang, crossfade opacity. Di belakangnya poster
