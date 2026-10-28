@@ -1,58 +1,43 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# GymHub — Backend
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+API Laravel 13 untuk aplikasi manajemen anggota gym. Hanya API: tidak ada tampilan server-side.
 
-## About Laravel
-
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
-
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Menjalankan
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+composer install
+cp .env.example .env      # isi DB_* sesuai Laragon; APP_TIMEZONE tetap Asia/Jakarta
+php artisan key:generate
+php artisan migrate
+php artisan db:seed       # AdminSeeder + DemoMemberSeeder (15 anggota contoh)
+php artisan serve --port=8001
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Port **8001** (8000 pernah dijajah proses lain dan bikin API tampak hidup tapi tidak menjawab).
 
-## Contributing
+## Isi Penting
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+| Lokasi | Isi |
+| --- | --- |
+| `app/Http/Controllers/AdminMemberController.php` | Seluruh fitur manajemen anggota: daftar, cari, filter, tambah, perpanjang, nonaktifkan |
+| `app/Http/Controllers/AuthController.php` | Masuk, keluar, `me` |
+| `app/Http/Middleware/EnsureRole.php` | Penjaga peran; balasannya JSON 401/403 |
+| `app/Models/Member.php` | `status()` dan `nextMemberCode()` — dua tempat paling gampang salah |
+| `database/migrations/` | **Sumber kebenaran skema** |
+| `database/seeders/DemoMemberSeeder.php` | 15 anggota contoh, empat keadaan berbeda |
+| `scripts/api-proof.py` | 16 pemeriksaan endpoint |
+| `scripts/status-check.php` | 7 pemeriksaan batas status |
 
-## Code of Conduct
+## Aturan yang Mudah Terlupakan
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+- **Zona waktu `Asia/Jakarta`.** Menggantinya ke UTC membuat status dan tanggal pendaftaran
+  meleset tiap 00:00–07:00 WIB — lihat `docs/decisions/002-zona-waktu-dan-status.md`.
+- **Status anggota tiga: `aktif` · `akan_berakhir` · `nonaktif`**, dihitung di `Member::status()`,
+  bukan kolom (ADR-003). Filter `?status=` menolak nilai lain dengan 422.
+- **Nomor HP unik dan dinormalisasi** ke bentuk `08…`. Duplikat dibalas 409, bukan 422.
+- **Nonaktif = soft delete akun.** Filter `nonaktif` wajib melepas scope soft delete, kalau tidak
+  anggotanya hilang dari daftar tepat saat dicari.
+- **Perpanjangan menyambung** dari tanggal berakhir lama; sisa hari tidak hangus.
+- **Tidak ada tabel pembayaran.** Daftar = otomatis sudah dibayar.
 
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Setup lengkap, port, dan pemeriksaan: `../docs/workflow.md`.

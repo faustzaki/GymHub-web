@@ -1,4 +1,4 @@
-# landing-direction.md — arah visual & tata letak landing GymHub
+# arah-desain-landing.md — arah visual & tata letak landing GymHub
 
 Dokumen ini adalah **perintah kerja**, bukan catatan. Diambil dari brief pemilik + `PRODUCT.md` +
 `DESIGN.md`, lalu diterjemahkan jadi keputusan visual yang bisa dieksekusi. Yang tidak diatur di
@@ -100,7 +100,7 @@ Dibuat dengan CSS/SVG di komponen, satu tempat khusus `src/components/brand/`:
 
 1. `npm run build` (tsc + vite) hijau; `npm run lint` **tidak menambah** dari 14 error bawaan.
 2. `impeccable detect` (dari root repo): 0 error. Warning yang disengaja dicatat alasannya di
-   `docs/landing-notes.md`.
+   `catatan-landing.md`.
 3. Kontras: setiap elemen teks ≥4.5:1 (≥3:1 bila ≥24px/19px bold), diukur dari halaman jadi.
 4. A11y: urutan heading tanpa lompat level, tiap gambar punya `alt` bermakna, `:focus-visible`
    terlihat, target sentuh ≥44px, tab bisa sampai CTA utama.

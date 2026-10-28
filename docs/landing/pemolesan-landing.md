@@ -1,7 +1,7 @@
-# landing-polish.md — dari 8 ke 9,5 (tanpa aset baru)
+# pemolesan-landing.md — dari 8 ke 9,5 (tanpa aset baru)
 
-Dasar: penilaian pemilik 8/10 + kritik yang sudah diukur (`landing-notes.md`). Semua item di sini
-pakai aset yang sudah ada. Aturan main tetap: `DESIGN.md`, `docs/landing-direction.md`,
+Dasar: penilaian pemilik 8/10 + kritik yang sudah diukur (`catatan-landing.md`). Semua item di sini
+pakai aset yang sudah ada. Aturan main tetap: `DESIGN.md`, `arah-desain-landing.md`,
 `.agents/rules/*`, nol dependensi baru, build hijau, lint tidak menambah dari 14.
 
 ## 1. Satu bahasa permukaan

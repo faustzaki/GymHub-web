@@ -51,7 +51,8 @@ sungguhan; FE jalan sendiri di atas data mock.
 - Basis data dev sekarang **cocok dengan migrasi**, dan `migrate:fresh --seed` bisa diulang kapan
   saja tanpa error.
 - 12 endpoint hidup dan terbukti lewat `curl` (bukti 15/15 di `docs/prd/001-...`): login admin,
-  penjaga peran 401/403, daftar member, tolak nomor duplikat (409), perpanjangan 1/3/6 bulan.
+  penjaga peran 401/403, daftar member, tolak nomor duplikat (409), perpanjangan bulanan
+  (waktu itu 1/3/6 bulan; sekarang 1–24 bulan — lihat PRD-001 v1.2).
 - Nama basis data masih `gymhub_gymwebsite` — memakai nama lama yang dilarang brand. Tidak
   diubah sekarang (butuh menyunting `.env` + membuat DB baru); masuk daftar bersih-bersih.
 - Aturan baru: kalau backend memberi "500 misterius" setelah penyuntingan model, **jalankan

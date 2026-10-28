@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 /**
  * Kolom masa aktif member (PRD-001 §7).
  *
- * - `member_code` dibuat otomatis oleh aplikasi (BFG-0001) untuk rujukan admin, tidak ditanyakan
+ * - `member_code` dibuat otomatis oleh aplikasi (GH-0001) untuk rujukan admin, tidak ditanyakan
  *   ke member (keputusan K6). Nullable supaya baris lama tidak gagal; baris baru selalu diisi.
  * - `membership_started_at` + `plan_months` adalah dasar perhitungan. Tidak ada tabel paket dan
  *   tidak ada harga: MVP hanya member bulanan, dan status "sudah bayar" dianggap otomatis saat

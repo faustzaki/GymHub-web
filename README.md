@@ -1,46 +1,45 @@
-# GymHub — Platform Manajemen Gym Digital
+# GymHub — Manajemen Anggota Gym
 
-Platform manajemen gym digital-first untuk komunitas lokal. Member bisa akses jadwal latihan, progres harian, dan materi pelatihan secara online. Coach kelola kurikulum. Admin pantau operasional dan keuangan.
+Aplikasi web pengganti pencatatan anggota gym secara manual: petugas mendaftarkan anggota,
+memperpanjang masa aktif, dan menonaktifkan yang sudah berhenti. Owner melihat ringkasannya.
 
-## Tech Stack
+Fase pertama **hanya mengurus keanggotaan** — jadwal, progres, dan materi latihan belum masuk
+lingkup (lihat PRD-001).
 
-| Layer | Teknologi |
-|-------|-----------|
-| Frontend | React 19 + Vite 8 + Tailwind CSS v4 + shadcn/ui |
-| State | Zustand 5 |
-| Backend | Laravel 13 + Sanctum |
-| Database | MySQL (local: Laragon) |
+## Tumpukan
+
+| Lapis | Teknologi |
+| --- | --- |
+| Frontend | React 19 + Vite 8 + TypeScript + Tailwind 4 + shadcn/ui, Zustand |
+| Backend | Laravel 13 + Sanctum (API saja) |
+| Basis data | MySQL (Laragon lokal), zona waktu **Asia/Jakarta** |
 | Font | Plus Jakarta Sans |
 
-## Setup
+## Menjalankan
 
-Lihat [docs/workflow.md](docs/workflow.md) untuk instruksi lengkap.
-
-**TL;DR:**
 ```bash
-# Backend
+# Backend (port 8001)
 cd backend && composer install && cp .env.example .env
-php artisan key:generate && php artisan migrate && php artisan serve
+php artisan key:generate && php artisan migrate && php artisan db:seed
+php artisan serve --port=8001
 
-# Frontend
+# Frontend (port 5178)
 cd frontend && cp .env.example .env.local && npm install && npm run dev
 ```
 
-## Status Modul
+Langkah lengkap, port, dan pemeriksaannya: [docs/workflow.md](docs/workflow.md).
 
-Landing publik sudah jadi dan terukur. Dashboard member/coach/admin masih memakai data mock dan
-belum tersambung backend. Fitur yang sedang dikerjakan: **PRD-001 Admin: Manajemen Member**
-([docs/prd/001-admin-manajemen-member.md](docs/prd/001-admin-manajemen-member.md)).
-Keadaan teknis terkini ada di [AGENTS.md](AGENTS.md).
+## Keadaan Sekarang
+
+- **Panel petugas (`/admin/members`)** — daftar anggota, pendaftaran, perpanjangan, nonaktifkan.
+  Sudah tersambung API dan teruji. Ini bagian yang paling matang.
+- **Landing publik (`/`)** — tampil, tapi **angkanya masih contoh**. Data gym sebenarnya (biaya,
+  alat, PT, alamat, jam) belum masuk; lihat [PRODUCT.md](PRODUCT.md) bagian Data yang belum ada.
+- **Panel owner (`/owner`)**, **dashboard member**, **dashboard coach** — belum dibangun.
+- **Masuk otomatis saat mode pengembangan**, supaya tidak bolak-balik login saat mengerjakan
+  tampilan. Mati sendiri di build produksi — jangan diandalkan sebagai pengaman.
 
 ## Dokumentasi
 
-| File | Isi |
-|------|-----|
-| [PRODUCT.md](PRODUCT.md) | Produk: pengguna, tujuan, batasan, prinsip |
-| [DESIGN.md](DESIGN.md) | Brand, visual, tone |
-| [docs/prd/](docs/prd/) | PRD per fitur |
-| [docs/db-schema.md](docs/db-schema.md) | Skema database |
-| [docs/api-contract.md](docs/api-contract.md) | Endpoint API + konvensi |
-| [docs/workflow.md](docs/workflow.md) | Setup lokal + konvensi kode |
-| [AGENTS.md](AGENTS.md) | Panduan untuk AI coding agent |
+Mulai dari **[docs/README.md](docs/README.md)**: daftar semua dokumen, mana yang hidup, mana yang
+arsip, dan urutan membacanya. Untuk AI coding agent: [AGENTS.md](AGENTS.md).

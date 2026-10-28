@@ -3,144 +3,107 @@
 ## Konvensi Global
 
 ### Base URL
-- Development: `http://localhost:8000/api`
-- Frontend mengambil dari env var `VITE_API_BASE_URL` (bukan hardcode)
 
-### Format Response Standar
+- Development: `http://127.0.0.1:8001/api`
+- Frontend mengambil dari `VITE_API_BASE_URL` di `frontend/.env.local` — **jangan hardcode**.
 
-**Sukses:**
+### Bentuk Respons
+
+**Sukses**
 ```json
-{
-  "status": "success",
-  "message": "Deskripsi singkat",
-  "data": {}
-}
+{ "status": "success", "message": "Deskripsi singkat", "data": {} }
 ```
 
-**Error validasi (422):**
+**Gagal validasi (422)**
 ```json
-{
-  "status": "error",
-  "message": "Validasi gagal",
-  "errors": {
-    "field": ["Pesan error"]
-  }
-}
+{ "status": "error", "message": "Validasi gagal", "errors": { "nama_field": ["Pesan galat"] } }
 ```
 
-**Error umum (401/403/404/500):**
+**Gagal lain (401 / 403 / 404 / 409 / 500)**
 ```json
-{
-  "status": "error",
-  "message": "Deskripsi error"
-}
+{ "status": "error", "message": "Deskripsi galat" }
 ```
+
+Semua pesan galat **berbahasa Indonesia dan menyebut apa yang harus dilakukan**, bukan kode.
 
 ### Autentikasi
-- Semua route protected: header `Authorization: Bearer {token}`
-- Token dari Laravel Sanctum (`createToken('auth_token')->plainTextToken`)
+
+- Route terproteksi memakai header `Authorization: Bearer <token>`.
+- Token dari Sanctum (`createToken('auth_token')->plainTextToken`).
+- Penjaga peran: middleware `role:admin` (alias didaftarkan di `bootstrap/app.php`). Balasannya JSON —
+  **401** belum masuk, **403** peran salah. Bukan pengalihan ke halaman login.
 
 ### Pagination
-Semua list endpoint yang bisa besar menggunakan:
+
 ```json
 {
   "status": "success",
   "data": {
     "items": [],
-    "meta": {
-      "current_page": 1,
-      "last_page": 5,
-      "per_page": 15,
-      "total": 73
-    }
+    "meta": { "current_page": 1, "last_page": 5, "per_page": 15, "total": 73 }
   }
 }
 ```
 
 ---
 
-## Endpoint Skeleton
+## Endpoint yang Sudah Ada
 
-### Auth (Public)
-| Method | Path | Controller | Keterangan |
-|--------|------|------------|------------|
-| POST | `/api/register` | AuthController@register | Buat user + member record |
-| POST | `/api/login` | AuthController@login | Kembalikan token Sanctum |
+### Auth
 
-### Auth (Protected — semua role)
-| Method | Path | Controller | Keterangan |
-|--------|------|------------|------------|
-| GET | `/api/me` | AuthController@me | Data user + relasi (member/coach) |
-| POST | `/api/logout` | AuthController@logout | Hapus semua token |
+| Method | Path | Keterangan |
+| --- | --- | --- |
+| POST | `/api/login` | `email`, `password` → `access_token` |
+| POST | `/api/logout` | Hapus token yang sedang dipakai |
+| GET | `/api/me` | Pengguna yang sedang masuk + relasinya |
+| POST | `/api/register` | **Ada di backend, sengaja tidak dipakai FE.** Pendaftaran hanya oleh petugas (PRODUCT.md) |
 
-### Member (role=member)
-| Method | Path | Controller | Keterangan |
-|--------|------|------------|------------|
-| GET | `/api/member/profile` | MemberController@profile | Data profil + membership |
-| PUT | `/api/member/profile` | MemberController@update | Update height/weight/goal |
-| GET | `/api/member/schedules` | ScheduleController@index | Jadwal milik member |
-| POST | `/api/member/schedules` | ScheduleController@store | Buat jadwal mandiri |
-| PUT | `/api/member/schedules/{id}` | ScheduleController@update | Update status/jadwal |
-| DELETE | `/api/member/schedules/{id}` | ScheduleController@destroy | Hapus jadwal |
-| GET | `/api/member/progress` | ProgressController@index | Log progres (paginated) |
-| POST | `/api/member/progress` | ProgressController@store | Catat log baru |
-| GET | `/api/member/todos` | TodoController@index | Daftar to-do |
-| POST | `/api/member/todos` | TodoController@store | Buat to-do |
-| PUT | `/api/member/todos/{id}` | TodoController@update | Toggle done / update |
-| DELETE | `/api/member/todos/{id}` | TodoController@destroy | Hapus to-do |
-| GET | `/api/member/materials` | MaterialController@index | Materi yang bisa diakses |
+### Admin — manajemen anggota (`role:admin`)
 
-### Coach (role=coach)
-| Method | Path | Controller | Keterangan |
-|--------|------|------------|------------|
-| GET | `/api/coach/profile` | CoachController@profile | Profil coach |
-| PUT | `/api/coach/profile` | CoachController@update | Update bio/foto/sosmed |
-| GET | `/api/coach/members` | CoachController@members | Member yang ditangani |
-| GET | `/api/coach/schedules` | ScheduleController@coachIndex | Jadwal semua member coach ini |
-| GET | `/api/coach/materials` | MaterialController@coachIndex | Materi milik coach |
-| POST | `/api/coach/materials` | MaterialController@store | Upload materi (multipart) |
-| PUT | `/api/coach/materials/{id}` | MaterialController@update | Update materi |
-| DELETE | `/api/coach/materials/{id}` | MaterialController@destroy | Hapus materi |
+| Method | Path | Keterangan |
+| --- | --- | --- |
+| GET | `/api/admin/members` | Daftar. Parameter: `q` (nama / kode / nomor), `status`, `page`, `per_page` (maks 100) |
+| POST | `/api/admin/members` | Daftarkan: `name`, `phone`, `plan_months` |
+| GET | `/api/admin/members/{id}` | Detail + riwayat perpanjangan |
+| PATCH | `/api/admin/members/{id}` | Koreksi `name` / `phone` |
+| POST | `/api/admin/members/{id}/renew` | Perpanjang: `plan_months` |
+| POST | `/api/admin/members/{id}/deactivate` | Nonaktifkan (soft delete akun) |
+| POST | `/api/admin/members/{id}/reactivate` | Aktifkan kembali |
 
-### Admin (role=admin)
-| Method | Path | Controller | Keterangan |
-|--------|------|------------|------------|
-| GET | `/api/admin/members` | AdminMemberController@index | List member (paginated, cari `q`, filter `status`) |
-| POST | `/api/admin/members` | AdminMemberController@store | Daftarkan member: `name`, `phone`, `plan_months` (1/3/6) |
-| GET | `/api/admin/members/{id}` | AdminMemberController@show | Detail + riwayat perpanjangan |
-| PATCH | `/api/admin/members/{id}` | AdminMemberController@update | Koreksi nama / nomor HP |
-| POST | `/api/admin/members/{id}/renew` | AdminMemberController@renew | Perpanjang; `plan_months` |
-| POST | `/api/admin/members/{id}/deactivate` | AdminMemberController@deactivate | Nonaktifkan (soft delete) |
-| POST | `/api/admin/members/{id}/reactivate` | AdminMemberController@reactivate | Aktifkan kembali |
+Aturan yang menempel di endpoint ini:
 
-Nomor HP duplikat dibalas **409** + `data.existing_member`, bukan 422, supaya UI bisa menawarkan
-"buka member itu". Status member (`aktif` / `akan_berakhir` / `nonaktif`) **dihitung**,
-tidak disimpan sebagai kolom. Rincian lengkap: `docs/prd/001-admin-manajemen-member.md`.
-| GET | `/api/admin/coaches` | AdminCoachController@index | List coach (paginated, filter) |
-| POST | `/api/admin/coaches` | AdminCoachController@store | Buat akun coach |
-| PUT | `/api/admin/coaches/{id}` | AdminCoachController@update | Update data coach |
-| DELETE | `/api/admin/coaches/{id}` | AdminCoachController@destroy | Nonaktifkan coach |
-| GET | `/api/admin/transactions` | TransactionController@index | Laporan keuangan |
-| GET | `/api/admin/stats` | AdminStatsController@index | Ringkasan dashboard admin |
+- **`status`** hanya menerima `aktif`, `akan_berakhir`, `nonaktif`. Nilai lain dibalas **422** —
+  bukan diabaikan, supaya salah ketik tidak diam-diam menampilkan seluruh anggota (ADR-003).
+- **`plan_months`** 1–24. Pilihan cepat di UI 1/3/6/12; di luar itu petugas menyusun sendiri.
+- **Nomor HP duplikat → 409** + `data.existing_member`, supaya UI bisa menawarkan "buka anggota itu".
+- Status anggota **dihitung** (`Member::status()`), bukan kolom. Rincian perilaku: PRD-001.
 
-### Public
-| Method | Path | Controller | Keterangan |
-|--------|------|------------|------------|
-| GET | `/api/trainers` | TrainerController@index | Data trainer untuk landing page |
-| POST | `/api/contact` | ContactController@store | Kirim pesan kontak (email) |
+### Sisa yang harus dibersihkan
+
+| Method | Path | Kenapa |
+| --- | --- | --- |
+| GET | `/api/test-integration` | Route contoh dari awal proyek |
+| GET | `/api/user` | Bawaan Sanctum, tidak dipakai |
+
+Dua-duanya **hapus sebelum produksi**.
 
 ---
 
-## Middleware yang Harus Ada
-```php
-// app/Http/Middleware/EnsureRole.php
-// Dipakai di routes: ->middleware('role:admin') atau ->middleware('role:coach')
-// SUDAH ADA: app/Http/Middleware/EnsureRole.php, alias 'role' didaftarkan di bootstrap/app.php
-// Balasannya JSON (401 kalau belum login, 403 kalau perannya salah) -- bukan redirect.
-// Diuji: token member biasa -> 403 "Akses ditolak. Halaman ini hanya untuk admin."'
-```
+## Masih Rencana — Belum Ada di Kode
 
-Route grouping di `api.php`:
+Jangan membangun layar yang memanggil endpoint di bawah ini sebelum endpoint-nya ada. Daftar ini
+rencana, bukan janji: yang dibangun berikutnya ditentukan PRD.
+
+| Kelompok | Rencana |
+| --- | --- |
+| Panel owner | Ringkasan: jumlah aktif / akan berakhir / nonaktif, daftar yang paling perlu ditagih |
+| Ekspor | Unduh daftar anggota (CSV/Excel) — `xlsx` sudah terpasang, belum dipakai |
+| Anggota | Profil, jadwal, progres, materi (dashboard member) |
+| Coach | Profil, materi, anggota yang ditangani |
+| Landing | Data gym sebenarnya (harga, alat, PT, jadwal, kontak) |
+
+Grup middleware yang direncanakan:
+
 ```php
 Route::middleware(['auth:sanctum', 'role:member'])->prefix('member')->group(...);
 Route::middleware(['auth:sanctum', 'role:coach'])->prefix('coach')->group(...);

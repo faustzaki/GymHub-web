@@ -120,7 +120,7 @@ menandainya sebagai slop), grain dari `feTurbulence`. Aset tekstur yang di-gener
 
 ## 7. Aset yang perlu di-generate
 
-Daftar lengkap + prompt siap-tempel: **`docs/asset-prompts.md`**.
+Daftar lengkap + prompt siap-tempel: **`prompt-aset.md`**.
 
 Ringkas: 3 video hero (`hero-iron/yoga/muaythai.mp4`, 8 detik, tanpa audio, loop mulus) +
 3 poster frame + 3 foto disiplin + 4 foto alat + 1 foto komunitas + 3 potret coach + 2 tekstur.
@@ -149,7 +149,7 @@ Aset yang tidak dipakai (masih di `Downloads`, tidak dihapus): 9 potret latar ka
 ## 8. Verifikasi sebelum dibilang selesai
 
 1. `npm run build` lulus (tsc + vite) + `npm run lint` **tidak menambah** dari baseline 14 error bawaan.
-2. Aturan diperiksa dari `.agents/rules/*` (10 file) + `DESIGN.md` + `docs/landing-direction.md`.
+2. Aturan diperiksa dari `.agents/rules/*` (10 file) + `DESIGN.md` + `arah-desain-landing.md`.
 3. Detector `impeccable detect` — error 0; warning/advisory dijelaskan alasannya.
 4. Audit kontras: setiap pasangan teks/latar dilaporkan angkanya (target >=4.5:1 body; >=3:1 teks besar).
 5. Screenshot 390 / 768 / 1440 untuk tiap disiplin (3 × 3 = 9 gambar) + laporan apa yang belum.
@@ -168,7 +168,7 @@ Aset yang tidak dipakai (masih di `Downloads`, tidak dihapus): 9 potret latar ka
   Catatan: `antislop.md` + `skills/antislop-*` yang disebut blok `<!-- antislop -->` di `AGENTS.md`
   **tidak ada di repo** — belum dibuat; penggantinya sementara `DESIGN.md` + detector impeccable.
 - **`PRODUCT.md`** dibuat (asumsi dilabeli; interview `init` tidak dijalankan atas permintaan pemilik).
-- **`docs/landing-direction.md`** dibuat: dunia visual "Satu Jembatan, Tiga Ruang", token, elemen
+- **`arah-desain-landing.md`** dibuat: dunia visual "Satu Jembatan, Tiga Ruang", token, elemen
   buatan sendiri (BridgeSpan, bg-forge, ChalkField, pola SVG, grain), 10 blok, aturan gerak, terima jadi.
 - **Eksekusi**: omp (`ninerouter/ds41`) membangun 10 blok + komponen brand + store disiplin.
   **Verifikasi**: `cache/scratch/gym_verify.py` — kontras per elemen, a11y, layout 3 viewport,

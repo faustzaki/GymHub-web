@@ -1,155 +1,102 @@
-> **Sumber kebenaran skema adalah folder `backend/database/migrations/`.** Dokumen ini ringkasan
-> bacaan saja. Kalau berbeda, migrasi yang benar — dan dokumen ini yang harus diperbarui.
-> Per 2026-10-28 database dev pernah **menyimpang** dari migrasi (kolom `role`, `phone`, `status`,
-> `subscription_plan` ada di DB tapi tidak ada di migrasi mana pun); penyimpangan itu sudah
-> diselesaikan dengan `migrate:fresh`. Jangan tambah kolom lewat phpMyAdmin.
-
 # Database Schema — GymHub
 
-## Tabel yang SUDAH ADA (migrasi sudah ada)
+> **Sumber kebenaran skema adalah `backend/database/migrations/`.** Dokumen ini ringkasan bacaan
+> saja; kalau berbeda, migrasi yang benar dan dokumen ini yang harus diperbarui.
+> Jangan menambah kolom lewat phpMyAdmin — lihat `decisions/001-skema-drift-dan-sumber-kebenaran.md`.
 
-### users
-| Kolom | Tipe | Keterangan |
-|-------|------|------------|
-| id | bigint PK | |
-| name | varchar(255) | |
-| email | varchar(255) UNIQUE | |
-| email_verified_at | timestamp nullable | |
-| password | varchar(255) hashed | |
-| remember_token | varchar(100) nullable | |
-| created_at / updated_at | timestamps | |
-
-> **Gap kritis**: Kolom `role` belum ada. Harus ditambah via migration baru.
-
-### members
-| Kolom | Tipe | Keterangan |
-|-------|------|------------|
-| id | bigint PK | |
-| user_id | bigint FK → users.id CASCADE | |
-| height | decimal(5,2) nullable | cm |
-| weight | decimal(5,2) nullable | kg |
-| goal | varchar nullable | |
-| membership_expires_at | timestamp nullable | |
-| created_at / updated_at | timestamps | |
+Zona waktu aplikasi **`Asia/Jakarta`**. Kolom bertipe `date` dibaca sebagai tanggal lokal; jangan
+menghitung selisih hari dengan UTC (ADR-002).
 
 ---
 
-## Tabel yang HARUS DIBUAT (belum ada migration)
+## Tabel yang Ada
 
-Buat migration terpisah untuk setiap tabel di bawah. Urutan migration mengikuti dependensi FK.
+### `users` — akun, termasuk petugas dan (nanti) pemilik
 
-### (1) Tambah kolom role ke users — migration terpisah
-```php
-// Migration: add_role_to_users_table
-$table->enum('role', ['member', 'coach', 'admin'])->default('member')->after('email');
+Dari `0001_01_01_000000_create_users_table` + `add_member_management_fields_to_users_table`.
+
+| Kolom | Tipe | Keterangan |
+| --- | --- | --- |
+| id | bigint PK | |
+| name | varchar(255) | |
+| email | varchar(255) unique, **nullable** | Anggota yang belum pernah masuk tidak punya email |
+| email_verified_at | timestamp nullable | |
+| password | varchar(255), **nullable** | Anggota baru belum punya sandi sampai kredensialnya diterbitkan |
+| role | enum(`member`,`coach`,`admin`), default `member`, index | Peran; `admin` = petugas. Pemilik (`owner`) **belum** ada di enum |
+| phone | varchar(20) unique, nullable | Identitas anggota. Disimpan ternormalisasi: `081299998888` |
+| credential_issued_at | timestamp nullable | Kapan kredensial masuk diberikan ke anggota |
+| created_by_user_id | bigint FK → users.id, nullOnDelete | Petugas yang mendaftarkan |
+| deleted_at | timestamp nullable | Soft delete = **dinonaktifkan**. Anggota yang dimatikan tidak dihapus sungguhan |
+| remember_token, created_at, updated_at | | |
+
+### `members` — data keanggotaan
+
+Dari `create_members_table` + `add_membership_fields_to_members_table`.
+
+| Kolom | Tipe | Keterangan |
+| --- | --- | --- |
+| id | bigint PK | |
+| user_id | bigint FK → users.id, cascade | |
+| member_code | varchar(12) unique, nullable | Nomor anggota, mis. `GH-0001`. Dihitung dari kode tertinggi yang ada |
+| membership_started_at | date nullable | Awal masa aktif yang sedang berjalan |
+| membership_expires_at | timestamp nullable | Akhir masa aktif. **Kosong = nonaktif** |
+| plan_months | unsignedSmallInteger, default 1 | Paket terakhir, dalam bulan |
+| height | decimal(5,2) nullable | cm |
+| weight | decimal(5,2) nullable | kg |
+| goal | varchar nullable | |
+| created_at, updated_at | | |
+
+**Status anggota tidak disimpan sebagai kolom** — dihitung dari tanggal + soft delete di
+`Member::status()`. Nilainya tiga: `aktif` · `akan_berakhir` (≤7 hari lagi) · `nonaktif`
+(lewat tenggat atau akunnya dimatikan) — ADR-003.
+Batas 24 bulan pada `plan_months` dijaga di controller, bukan di kolom.
+
+### `membership_renewals` — riwayat perpanjangan
+
+Dari `create_membership_renewals_table`. Ditulis otomatis oleh endpoint perpanjang, tidak pernah
+diisi manual.
+
+| Kolom | Tipe | Keterangan |
+| --- | --- | --- |
+| id | bigint PK | |
+| member_id | bigint FK → members.id, cascade | |
+| started_from | date | Tanggal berakhir yang lama — perpanjangan menyambung dari sini, sisa hari tidak hangus |
+| expires_at_after | date | Tanggal berakhir setelah perpanjangan |
+| created_by_user_id | bigint FK → users.id, nullOnDelete | Petugas yang memproses |
+| created_at, updated_at | | |
+
+### Tabel bawaan Laravel
+
+`password_reset_tokens`, `sessions`, `cache`, `cache_locks`, `jobs`, `job_batches`, `failed_jobs`,
+`personal_access_tokens` (token Sanctum). Tidak perlu disentuh.
+
+---
+
+## Yang **Tidak** Dibangun
+
+Ada di rencana lama, tapi **di luar lingkup sekarang** — jangan dibuat tanpa PRD:
+
+| Tabel | Kenapa ditunda |
+| --- | --- |
+| `coaches`, `coach_certifications`, `coach_social_media` | Peran coach belum dipakai |
+| `schedules`, `progress_logs`, `todos`, `materials`, `member_materials` | Dashboard anggota & coach — fase berikutnya |
+| `transactions` | Pendaftaran dianggap sudah dibayar; **tidak ada pencatatan pembayaran** di fase ini |
+
+Data lama dari buku/Excel **tidak diimpor**.
+
+---
+
+## Relasi
+
+```
+User 1—1 Member        (user_id) — role 'member'
+User 1—N Member        (created_by_user_id) — petugas yang mendaftarkan
+Member 1—N MembershipRenewal
 ```
 
-### (2) coaches
-| Kolom | Tipe | Keterangan |
-|-------|------|------------|
-| id | bigint PK | |
-| user_id | bigint FK → users.id CASCADE | Akun login coach |
-| nama | varchar(255) | Nama lengkap |
-| tanggal_lahir | date nullable | |
-| jenis_kelamin | enum('Laki-laki','Perempuan') nullable | |
-| no_hp | varchar(20) nullable | |
-| spesialisasi | json | Array string spesialisasi |
-| bio | text nullable | |
-| foto_url | varchar nullable | Laravel Storage path |
-| status | enum('Aktif','Nonaktif') default 'Aktif' | |
-| created_at / updated_at | timestamps | |
+## Aturan yang Menjaga Data
 
-### (3) coach_certifications
-| Kolom | Tipe | Keterangan |
-|-------|------|------------|
-| id | bigint PK | |
-| coach_id | bigint FK → coaches.id CASCADE | |
-| name | varchar(255) | Nama sertifikasi |
-| file_path | varchar | Laravel Storage path |
-| created_at / updated_at | timestamps | |
-
-### (4) coach_social_media
-| Kolom | Tipe | Keterangan |
-|-------|------|------------|
-| id | bigint PK | |
-| coach_id | bigint FK → coaches.id CASCADE | |
-| platform | enum('instagram','youtube','tiktok') | |
-| url | varchar(500) | |
-| created_at / updated_at | timestamps | |
-
-### (5) schedules (jadwal latihan)
-| Kolom | Tipe | Keterangan |
-|-------|------|------------|
-| id | bigint PK | |
-| member_id | bigint FK → members.id CASCADE | |
-| coach_id | bigint FK → coaches.id nullable | null = jadwal mandiri |
-| title | varchar(255) | Nama sesi/latihan |
-| scheduled_at | datetime | |
-| duration_minutes | integer nullable | |
-| status | enum('scheduled','done','cancelled') default 'scheduled' | |
-| notes | text nullable | |
-| created_at / updated_at | timestamps | |
-
-### (6) progress_logs (progres harian)
-| Kolom | Tipe | Keterangan |
-|-------|------|------------|
-| id | bigint PK | |
-| member_id | bigint FK → members.id CASCADE | |
-| logged_at | date | |
-| weight_kg | decimal(5,2) nullable | |
-| body_fat_pct | decimal(4,1) nullable | |
-| notes | text nullable | |
-| created_at / updated_at | timestamps | |
-
-### (7) todos
-| Kolom | Tipe | Keterangan |
-|-------|------|------------|
-| id | bigint PK | |
-| member_id | bigint FK → members.id CASCADE | |
-| title | varchar(255) | |
-| is_done | boolean default false | |
-| due_date | date nullable | |
-| created_at / updated_at | timestamps | |
-
-### (8) materials (materi/modul)
-| Kolom | Tipe | Keterangan |
-|-------|------|------------|
-| id | bigint PK | |
-| coach_id | bigint FK → coaches.id CASCADE | Upload oleh coach |
-| title | varchar(255) | |
-| description | text nullable | |
-| file_path | varchar nullable | Laravel Storage |
-| type | enum('video','pdf','article') | |
-| is_published | boolean default false | |
-| created_at / updated_at | timestamps | |
-
-### (9) member_materials (akses member ke materi)
-| Kolom | Tipe | Keterangan |
-|-------|------|------------|
-| id | bigint PK | |
-| member_id | bigint FK → members.id CASCADE | |
-| material_id | bigint FK → materials.id CASCADE | |
-| viewed_at | timestamp nullable | |
-| created_at / updated_at | timestamps | |
-
-### (10) transactions (keuangan)
-| Kolom | Tipe | Keterangan |
-|-------|------|------------|
-| id | bigint PK | |
-| member_id | bigint FK → members.id nullable | |
-| type | enum('membership','course','other') | |
-| amount | decimal(12,2) | |
-| status | enum('pending','paid','failed') default 'pending' | |
-| paid_at | timestamp nullable | |
-| notes | text nullable | |
-| created_at / updated_at | timestamps | |
-
-## Relasi Utama
-- User hasOne Member (role=member)
-- User hasOne Coach (role=coach)
-- Member hasMany Schedule
-- Member hasMany ProgressLog
-- Member hasMany Todo
-- Coach hasMany Material
-- Coach hasMany Schedule
-- Member belongsToMany Material via member_materials
+- **Nomor HP unik.** Pendaftaran dengan nomor yang sudah terpakai dibalas **409** + data anggota
+  yang sudah ada, supaya petugas ditawari membuka anggota itu, bukan membuat kembaran.
+- **Nonaktif = soft delete**, bukan hapus. Riwayat perpanjangan tetap utuh.
+- **Kode anggota tidak pernah dipakai ulang.** Dihitung dari kode tertinggi, bukan dari `id` baris.

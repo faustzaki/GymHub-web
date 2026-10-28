@@ -1,104 +1,120 @@
 # Workflow & Setup — GymHub
 
-## Setup Lokal (Laragon)
+## Port yang Dipakai
 
-### Backend (Laravel)
+| Layanan | Port | Catatan |
+| --- | --- | --- |
+| Frontend (Vite) | **5178** | `npm run dev`, dari `frontend/` |
+| API (Laravel) | **8001** | `php artisan serve --port=8001`, dari `backend/` |
+| MySQL | 3306 | Laragon; basis data `gymhub_gymwebsite` |
+
+Port 8000 dan 5173 pernah dipakai proses lain. Port 8000 sekarang menyisakan **socket mati** yang
+masih terlihat `LISTENING` — jangan pakai port itu untuk API; permintaan ke sana dijawab 404/405
+dan bikin bingung ("route-nya ada kok"). API **selalu 8001**.
+Kalau ada yang aneh, **cek port dulu** sebelum curiga ke kode.
+
+## Pertama Kali
+
 ```bash
-# Di folder /backend
+# Backend
+cd backend
 composer install
-cp .env.example .env          # lalu isi DB_DATABASE, DB_USERNAME, DB_PASSWORD sesuai Laragon
+cp .env.example .env            # isi DB_* sesuai Laragon
 php artisan key:generate
 php artisan migrate
-php artisan db:seed            # seed user test
-php artisan serve              # running di http://localhost:8000
-```
+php artisan db:seed             # akun petugas + 15 anggota contoh
+php artisan serve --port=8001
 
-Konfigurasi `.env` minimum untuk Laragon:
-```
-APP_URL=http://localhost:8000
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=bifrost_gym
-DB_USERNAME=root
-DB_PASSWORD=
-```
-
-CORS: pastikan `config/cors.php` ada. Di Laravel 11+, jalankan:
-```bash
-php artisan config:publish --tag=cors
-```
-Lalu set `allowed_origins` ke `['http://localhost:5173']` dan `supports_credentials` ke `true`.
-
-### Frontend (React/Vite)
-```bash
-# Di folder /frontend
-cp .env.example .env.local     # buat file ini dulu
+# Frontend (terminal lain)
+cd frontend
+cp .env.example .env.local
 npm install
-npm run dev                    # running di http://localhost:5173
+npm run dev                     # http://127.0.0.1:5178
 ```
 
-Isi `frontend/.env.local`:
-```
-VITE_API_BASE_URL=http://localhost:8000/api
+Node: repo ini memakai `engine-strict` dan menolak Node 22. Pakai Node v24.22.1 portabel di
+`C:/Users/faust/AppData/Local/hermes/tools/node-v24.22.1-win-x64`.
+
+## Masuk Saat Pengembangan
+
+Supaya tidak bolak-balik login saat mengerjakan tampilan, aplikasi masuk sendiri saat dijalankan
+`npm run dev`. Bukan pengaman — hanya kenyamanan, dan **mati sendiri di build produksi**.
+
+- `frontend/.env.local` (masuk `.gitignore`, jangan di-commit) memuat
+  `VITE_DEV_ADMIN_EMAIL` dan `VITE_DEV_ADMIN_PASSWORD` dari akun hasil seeder.
+- Penjaganya bisa dipaksa hidup untuk menguji ulang: jalankan dev dengan `VITE_DEV_BYPASS_AUTH=0`.
+
+## Perintah Harian
+
+```bash
+# dari frontend/
+npm run dev
+npm run build     # tsc -b && vite build -- WAJIB hijau sebelum bilang selesai
+npm run lint      # baseline 14 error; jangan menambah
+
+# dari backend/
+php artisan migrate
+php artisan db:seed --class=DemoMemberSeeder --force   # ulang data contoh saja
+php -l app/Models/Member.php                           # cek sintaks satu berkas
+php scripts/api-proof.py                               # 16 pemeriksaan endpoint
+php scripts/status-check.php                           # 7 pemeriksaan batas status
 ```
 
-> Catatan: `lib/axios.ts` harus diubah dari hardcode `http://localhost:8000/api` ke `import.meta.env.VITE_API_BASE_URL`.
+`DemoMemberSeeder` menghapus dan menulis ulang 15 anggota contoh (`GH-0001`…`GH-0015`).
+Jangan dijalankan di basis data yang sudah memuat data sungguhan.
 
 ## Struktur Folder
 
 ```
-bifrost-gym/ (root)
-├── AGENTS.md              ← Entry file semua rules agent
-├── DESIGN.md              ← Design direction (brand, visual, tone)
-├── README.md              ← Overview proyek untuk manusia
+GymHub-web/
+├── AGENTS.md                 pintu masuk AI agent
+├── PRODUCT.md  DESIGN.md     produk  ·  visual
 ├── docs/
-│   ├── db-schema.md       ← Skema database lengkap
-│   ├── api-contract.md    ← Endpoint skeleton + konvensi response
-│   └── workflow.md        ← File ini
-├── frontend/              ← React + Vite
+│   ├── README.md             peta dokumen (mulai dari sini)
+│   ├── workflow.md           berkas ini
+│   ├── api-contract.md       endpoint
+│   ├── db-schema.md          skema
+│   ├── prd/                  satu berkas per fitur
+│   ├── decisions/            ADR
+│   └── landing/              catatan proses landing (arsip)
+├── frontend/
 │   └── src/
-│       ├── components/    ← UI components (shadcn/ui + custom)
-│       ├── pages/         ← Route-level pages
-│       ├── layouts/       ← Layout wrappers (PublicLayout, DashboardLayout, dll)
-│       ├── hooks/         ← Custom React hooks (logika dipisah dari UI)
-│       ├── store/         ← Zustand stores (global state)
-│       ├── lib/
-│       │   ├── axios.ts   ← Konfigurasi axios global
-│       │   ├── services/  ← Service layer (ganti mock ke API call di sini)
-│       │   └── mock/      ← TEMPORARY — hapus saat backend siap
-│       └── assets/        ← Gambar statis
-└── backend/               ← Laravel
-    ├── app/
-    │   ├── Http/
-    │   │   ├── Controllers/   ← Satu file per resource
-    │   │   └── Middleware/    ← EnsureRole.php wajib ada
-    │   └── Models/            ← Eloquent models
-    ├── database/
-    │   ├── migrations/        ← Satu migration per tabel/perubahan
-    │   └── seeders/           ← Seed data test realistis (bukan dummy Barat)
-    └── routes/
-        └── api.php            ← Semua route API (hapus /test-integration sebelum production)
+│       ├── pages/            admin/ · auth/ · coach/ · member/ · public/
+│       ├── layouts/          PublicLayout, AuthLayout, AdminLayout, ...
+│       ├── hooks/            data server (useMembers, ...)
+│       ├── store/            Zustand (auth, ...)
+│       ├── lib/services/     panggilan API per resource
+│       └── components/ui/    shadcn/ui — jangan ditulis ulang
+└── backend/
+    ├── app/Http/Controllers/ satu berkas per resource
+    ├── app/Models/           Eloquent
+    ├── database/migrations/  SUMBER KEBENARAN SKEMA
+    ├── database/seeders/     AdminSeeder, DemoMemberSeeder
+    └── scripts/              api-proof.py, status-check.php
 ```
 
 ## Konvensi Kode
 
-### Frontend
-- Nama file komponen: PascalCase (`HeroSection.tsx`)
-- Nama file hook: camelCase dengan prefix `use` (`useScrollNavbar.ts`)
-- Semua teks UI dalam Bahasa Indonesia (kecuali label teknis)
-- Import shadcn/ui dari `@/components/ui/*`
-- Styling hanya Tailwind utility class, tidak boleh inline style kecuali nilai dinamis (transform, dll)
+**Frontend**
+- Komponen `PascalCase` (`MemberList.tsx`), hook `useCamelCase` (`useMembers.ts`).
+- Semua teks UI berbahasa Indonesia.
+- Tailwind utility + token di `index.css`; tidak ada CSS per komponen.
+- Impor shadcn/ui dari `@/components/ui/*`.
+- Berkas `.tsx` memakai CRLF.
 
-### Backend
-- Satu controller per resource, method standar: `index`, `show`, `store`, `update`, `destroy`
-- Response selalu gunakan format standar (lihat `docs/api-contract.md`)
-- Validasi di controller menggunakan `Validator::make()` atau Form Request class
-- Nama tabel: snake_case plural (`progress_logs`, `coach_certifications`)
-- Kolom FK: `{singular_table}_id` (`member_id`, `coach_id`)
+**Backend**
+- Satu controller per resource; `index`/`show`/`store`/`update`/`destroy` + method aksi.
+- Balasan selalu berbentuk `{status, message, data}` — lihat `api-contract.md`.
+- Validasi di controller; pesan galat berbahasa Indonesia yang menyebut apa yang harus diperbaiki.
+- Migrasi adalah sumber kebenaran skema. **Jangan tambah atau ubah kolom lewat phpMyAdmin** —
+  lihat `decisions/001-skema-drift-dan-sumber-kebenaran.md`.
 
-## Catatan Kritis Saat Ini
-- `backend/app/Models/User.php` punya parse error (baris duplikat setelah closing brace). Perbaiki sebelum apapun.
-- Auth frontend MASIH MOCK. Jangan deploy atau demo ke klien sebelum auth diganti ke API nyata.
-- Route `/api/test-integration` harus dihapus sebelum production.
-- Mock data di `frontend/src/lib/mock/` bersifat sementara; jangan tambah file baru di sana.
+## Kalau Ada yang Aneh
+
+| Gejala | Periksa dulu |
+| --- | --- |
+| API menjawab 500 tanpa jejak | `php -l` di berkas yang terakhir diubah — satu kurung nyasar mematikan seluruh app |
+| Layar nyangkut di kerangka memuat | dua permintaan jalan bareng; cek hook yang memanggil |
+| Tanggal tampil bergeser sehari | ada `toISOString()` untuk tanggal tampilan; itu UTC, pakai tanggal lokal |
+| Status anggota meleset | `app.timezone` harus `Asia/Jakarta` (ADR-002) |
+| Frontend tidak lihat perubahan | proses `vite` basi menahan port 5178 |

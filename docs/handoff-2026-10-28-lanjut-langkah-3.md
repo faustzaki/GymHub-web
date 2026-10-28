@@ -2,6 +2,12 @@
 
 **Tanggal:** 2026-10-28 · **Sumber:** sesi Hermes josjis (dipindah ke Orca)
 
+> **ARSIP — jangan dipakai sebagai rujukan keadaan sekarang.** Ini catatan serah-terima
+> pagi 2026-10-28. Sebagian isinya sudah berubah sejak itu: kode anggota sekarang `GH-`
+> (dulu `BFG-`), status anggota tinggal tiga — `aktif` · `akan_berakhir` · `nonaktif`
+> (ADR-003), durasi 1–24 bulan, zona waktu `Asia/Jakarta` (ADR-002), dan masuk saat
+> pengembangan sudah otomatis. Keadaan terkini: `AGENTS.md` dan `docs/README.md`.
+
 ## Peta cepat
 
 | Hal | Nilai |

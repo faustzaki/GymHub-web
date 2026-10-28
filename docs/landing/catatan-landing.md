@@ -1,4 +1,4 @@
-# landing-notes.md — catatan verifikasi landing GymHub
+# catatan-landing.md — catatan verifikasi landing GymHub
 
 Semua angka di bawah berasal dari render nyata (`vite dev` di :5178 + Chromium headless),
 bukan dari membaca kode. Skrip: `cache/scratch/gym_verify.py` (kontras, a11y, layout, gerak),

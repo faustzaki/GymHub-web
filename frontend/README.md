@@ -1,73 +1,56 @@
-# React + TypeScript + Vite
+# GymHub — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 19 + Vite 8 + TypeScript + Tailwind 4 + shadcn/ui. Satu aplikasi berisi landing publik dan
+panel petugas.
 
-Currently, two official plugins are available:
+## Menjalankan
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+cp .env.example .env.local   # VITE_API_BASE_URL=http://127.0.0.1:8001/api
+npm run dev                  # http://127.0.0.1:5178
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Node: repo ini `engine-strict` dan menolak Node 22 — pakai **v24.22.1** portabel
+(`C:/Users/faust/AppData/Local/hermes/tools/node-v24.22.1-win-x64`).
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Perintah
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run dev      # dev server, port 5178
+npm run build    # tsc -b && vite build -- wajib hijau sebelum bilang selesai
+npm run lint     # baseline 14 error; jangan menambah
 ```
+
+## Masuk Saat Pengembangan
+
+`npm run dev` masuk sendiri supaya tidak bolak-balik login saat mengerjakan tampilan:
+
+- `VITE_DEV_ADMIN_EMAIL` + `VITE_DEV_ADMIN_PASSWORD` di `.env.local` (masuk `.gitignore`).
+- Penjaga rute (`routes/ProtectedRoute.tsx`) dilewati hanya ketika `import.meta.env.DEV` benar.
+- **Build produksi selalu meminta login** — bypass tidak ikut terbawa.
+- Untuk menguji penjaganya: jalankan dev dengan `VITE_DEV_BYPASS_AUTH=0`.
+
+## Susunan
+
+| Folder | Isi |
+| --- | --- |
+| `src/pages/public/` | Landing publik |
+| `src/pages/admin/members/` | Panel petugas — modul yang sudah tersambung API |
+| `src/pages/admin/overview/` | Ringkasan admin — belum dirutekan, disiapkan untuk panel owner |
+| `src/pages/auth/` | Halaman masuk |
+| `src/pages/member/`, `src/pages/coach/` | Sisa fase lama, belum dipakai |
+| `src/layouts/` | PublicLayout, AuthLayout, AdminLayout, DashboardLayout, CoachLayout |
+| `src/hooks/` | Data server (`useMembers`, …) |
+| `src/lib/services/` | Panggilan API per resource; status dan tanggal dibentuk di sini |
+| `src/components/ui/` | shadcn/ui — pakai apa adanya, jangan ditulis ulang |
+
+## Aturan
+
+- Status anggota dihitung backend; FE hanya menerjemahkan ke label dan warna
+  (`pages/admin/members/status.ts`).
+- Tanggal tampilan **jangan** lewat `toISOString()` — itu UTC dan menggeser hari di WIB.
+- Berkas `.tsx` memakai CRLF.
+- Semua teks UI berbahasa Indonesia.
+
+Setup lengkap dan daftar masalah yang sering muncul: `../docs/workflow.md`.

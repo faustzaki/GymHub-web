@@ -1,83 +1,78 @@
 # Product
 
 ## Platform
-web
 
-## Stack
+Web. Dipakai di komputer meja gym dan di ponsel petugas.
+
+## Tumpukan
+
 React 19 + Vite 8 + TypeScript, Tailwind CSS v4 (`@tailwindcss/vite`), shadcn/ui (Radix),
 Zustand 5, react-router-dom 7, sonner. Backend Laravel 13 + Sanctum, MySQL (Laragon lokal).
-Font Plus Jakarta Sans. Repo: `website-gym`.
+Font Plus Jakarta Sans. Repo: `GymHub-web`.
 
-## Users
-- **Calon member (pengunjung landing)**: pekerja kantoran 25–40 di Jakarta Selatan yang ingin kuat,
-  bukan sekadar kurus. Datang dari Instagram/WhatsApp, sering buka di HP, sedikit waktu.
-- **Member aktif**: sudah bergabung, memakai dashboard untuk jadwal, progres, materi.
-- **Coach**: mengelola kelas yang diampu dan peserta.
-- **Admin**: mengelola user, coach, operasional, keuangan.
+## Masalah yang Dipecahkan
 
-## Product Purpose
-Platform manajemen gym digital-first untuk komunitas lokal: jadwal latihan, progres harian, dan
-materi pelatihan dapat dipantau online. Landing page publik adalah pintu masuknya — ia harus
-meyakinkan calon member untuk datang mencoba, lalu mengantarnya ke pendaftaran.
+Pencatatan anggota gym masih di buku dan Excel: masa aktif habis tanpa ada yang sadar, anggota
+yang sudah berhenti tetap tercatat aktif, dan tidak ada satu orang pun yang tahu berapa anggota
+aktif hari ini. Petugas harus mengingat sendiri siapa yang harus ditagih.
 
-## Positioning
-Gym lokal yang serius soal hasil tapi tidak mengintimidasi — **satu atap, tiga ruang**: angkat
-beban (Iron), yoga, dan muaythai, dengan komunitas yang aktif dan coach bersertifikat.
-Pembeda mekanisnya: seluruh pengalaman latihan (jadwal, progres, materi) tercatat digital, dan
-tiga disiplin itu dikelola dalam satu sistem yang sama, bukan tiga tempat terpisah.
+## Pengguna
 
-## Operating Context
-- Lokasi: Jakarta Selatan. Buka 05.00–23.00.
-- Kelas berkelompok dengan kuota kecil; jadwal harian menjadi acuan utama member.
-- Calon member butuh kepastian biaya dan jadwal sebelum datang; pertanyaan berulang lewat WhatsApp.
-- Repo ini memuat frontend (landing + dashboard) dan backend Laravel yang belum semua endpointnya siap
-  (sebagian data masih mock).
+- **Petugas (peran `admin`)** — orang yang duduk di meja gym. Mendaftarkan anggota baru,
+  memperpanjang, dan menonaktifkan. Ini pengguna utama dan satu-satunya yang panelnya sudah jadi.
+- **Owner** — pemilik gym. Butuh ringkasan: berapa anggota aktif, berapa yang akan habis, siapa
+  yang paling perlu ditagih. Panelnya belum dibangun.
+- **Anggota** — belum punya akun dan belum butuh. Pendaftaran **hanya oleh petugas di gym**; tidak
+  ada pendaftaran daring.
 
-## Capabilities and Constraints
-- Landing page publik (surface utama yang sedang dikerjakan): alat yang tersedia, keunggulan,
-  membership, coach & PT profesional, jadwal, komunitas, testimoni, kontak.
-- Dashboard 3 peran: member, coach, admin.
-- Data yang belum ada di backend **ditandai** (komentar `// dummy`, `[angka nyata]`), tidak boleh
-  menyamar sebagai fakta produksi.
-- Palet dibatasi: dark `#121212`, surface `#1E1E1E`, satu aksen merah `#DC2626`, netral putih/`#a3a3a3`.
-  Merah tidak dipakai sebagai warna body text (rasio 3,88:1 — di bawah AA untuk teks kecil).
-- Tanpa dependensi baru kecuali ada alasan tertulis.
-- Motor: `prefers-reduced-motion` wajib dihormati; video hero punya poster sebagai fallback.
+Peran `coach` ada di skema database (enum `users.role`) tapi belum dipakai di fitur mana pun.
 
-## Brand Commitments
-- Nama resmi **GymHub** (bukan GymHub / GymPro). GymHub = pintu masuk kebugaran.
-- Motif identitas: heading uppercase tebal + baris italic ringan di bawahnya.
-- Motif "Satu Jembatan, Tiga Ruang": tiga disiplin sebagai tiga suara dari satu sistem.
-- Nada copy: langsung, motivasional, bahasa Indonesia nyata. Tanpa buzzword ("seamless",
-  "revolutionary"), tanpa emoji di UI, tanpa CTA generik ("Get Started", "Learn More").
-- Tidak mengintimidasi, tidak elitis, tidak bergaya militer.
+## Lingkup Fase Sekarang
 
-## Evidence on Hand
-- Aset di `frontend/public/assets/`: 3 video hero 1920x1080 (Iron/Yoga/Muaythai, 7-8 detik, tanpa audio,
-  sumber Mixkit — lihat `docs/asset-credits.md`) + 3 poster, 3 foto disiplin, 4 foto alat,
-  1 foto komunitas, 3 potret coach, 2 tekstur (chalk, grain).
-  Semua satu grade: near-black + rim merah. Tanpa watermark.
-- `DESIGN.md` (aturan brand lengkap), `docs/landing-plan.md` (rencana landing),
-  `docs/asset-prompts.md` (prompt aset), `docs/db-schema.md`, `docs/api-contract.md`.
-- Belum ada: foto ruangan nyata per-disiplin yang sempurna (foto yoga paling lemah), angka
-  operasional final, testimoni asli.
+Satu fitur: **manajemen anggota** (PRD-001). Petugas bisa melihat daftar anggota, mencari,
+menyaring per status, mendaftarkan anggota baru, memperpanjang masa aktif, dan menonaktifkan yang
+sudah berhenti. Selesai berarti buku catatan manual tidak perlu lagi dibuka untuk pertanyaan
+"berapa lama lagi masa aktif anggota ini?".
 
-## Product Principles
-1. Bukti di atas klaim: angka, jadwal, harga, sertifikasi — bukan kata sifat.
-2. Satu sistem, tiga ruang: apa pun yang dibuat harus bekerja untuk Iron, Yoga, dan Muaythai
-   tanpa menambah warna atau bahasa desain baru.
-3. Kalau belum ada datanya, tandai — jangan dikarang.
-4. Kejelasan dulu, ekspresi kemudian; ekspresi tidak boleh mengorbankan kontras, fokus, atau kecepatan.
+Di luar lingkup sekarang — **jangan dikerjakan dulu**: dashboard anggota (jadwal, progres, materi),
+dashboard coach, keuangan/pembayaran, pendaftaran daring.
 
-## Accessibility & Inclusion
-- Kontras teks >=4.5:1 (>=3:1 untuk teks besar); merah hanya untuk elemen/teks besar.
-- `:focus-visible` terlihat, navigasi keyboard penuh sampai CTA.
-- HTML semantik tanpa lompat level heading, `alt` deskriptif, target sentuh >=44px.
-- Teks dapat membesar sampai 200% tanpa kehilangan konten; animasi dihentikan saat
-  `prefers-reduced-motion`.
+## Keputusan yang Sudah Dikunci
+
+- Nomor HP adalah identitas anggota. Daftar = otomatis sudah bayar; **tidak ada tabel pembayaran**.
+- Status anggota tiga: aktif · akan berakhir (≤7 hari) · nonaktif (habis masa aktif atau dimatikan).
+- Perpanjangan menyambung dari tanggal berakhir lama; sisa hari tidak hangus.
+- Data lama (buku/Excel) **tidak diimpor** — mulai dari nol.
+
+## Data yang Belum Ada
+
+Halaman landing **wajib memakai angka nyata**, dan angka itu belum dikirim pemilik gym. Yang masih
+contoh di kode: biaya pendaftaran, iuran bulanan, harga paket, daftar alat, daftar PT beserta tarif,
+alamat, jam buka, dan nomor WhatsApp. Selama belum ada, biarkan ditandai `// dummy` — jangan
+ditunggu, jangan dikarang, jangan dihapus tanpa diganti.
+
+Yang juga belum diverifikasi: klaim "tiga disiplin" (angkat beban, yoga, muaythai), foto ruangan
+sebenarnya, dan angka operasional. Kalau pemilik gym ternyata tidak punya tiga disiplin itu,
+landing-nya yang menyesuaikan — bukan sebaliknya.
+
+## Prinsip Produk
+
+1. **Bukti di atas klaim.** Angka, tanggal, harga — bukan kata sifat.
+2. **Petugas mengetik sesedikit mungkin.** Satu anggota baru = nama + nomor HP + durasi.
+3. **Kalau belum ada datanya, tandai** — jangan dikarang.
+4. **Kejelasan dulu, ekspresi kemudian.** Ekspresi tidak boleh mengorbankan kontras, fokus,
+   atau kecepatan.
+5. **Sistem harus selalu bisa dipakai.** Setiap perubahan ditinggalkan dalam keadaan jalan —
+   tidak ada langkah setengah jadi di `main`.
+
+## Aksesibilitas
+
+Kontras teks ≥ 4,5:1 (≥ 3:1 untuk teks besar; merah hanya untuk elemen atau teks besar);
+`:focus-visible` terlihat; navigasi keyboard penuh sampai tombol aksi; HTML semantik tanpa lompat
+level heading; `alt` deskriptif; target sentuh ≥ 44 px; teks membesar sampai 200% tanpa kehilangan
+konten; animasi berhenti saat `prefers-reduced-motion`.
 
 ---
 
-_Asumsi: ditulis dari brief pemilik (chat) + dokumen repo, karena interview init tidak dijalankan
-atas permintaan eksplisit "lanjutkan semuanya". Fakta produk yang belum ada ditandai di
-`## Evidence on Hand`, bukan dikarang._
+_Ringkasan fakta di berkas ini berasal dari keputusan tertulis, bukan dari wawancara pemilik gym
+yang belum pernah dijalankan._

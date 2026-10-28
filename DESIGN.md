@@ -110,7 +110,7 @@ Aset di-generate manual oleh pemilik; agen menyiapkan **prompt siap-pakai** (sat
 - Elemen buatan sendiri (SVG) tetap wajib sebagai pasangan: diagram tata letak alat, badge disiplin, kartu member, motif span.
 
 ## Hal yang DILARANG di GymHub
-- Nama brand lain: GymHub, GymPro, GymHub-app — gunakan **GymHub**
+- Nama brand lain (**Bifrost Gym**, GymPro, `bifrost-gym`) — yang benar hanya **GymHub**.
 - Emoji dekoratif di heading atau tombol UI
 - Merah sebagai warna body text (lihat tabel rasio di atas)
 - CTA generik: "Get Started", "Learn More", "Try Now"

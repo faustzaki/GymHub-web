@@ -29,8 +29,9 @@ import time
 import urllib.error
 import urllib.request
 
+import subprocess
 import sys
-PORT = sys.argv[1] if len(sys.argv) > 1 else "8000"
+PORT = sys.argv[1] if len(sys.argv) > 1 else "8001"
 BASE = f"http://127.0.0.1:{PORT}/api"
 HASIL = []
 
@@ -168,5 +169,18 @@ st, r = call("POST", f"/admin/members/{id_baru}/reactivate", token=token_admin)
 cek("POST reactivate", st, 200, f"| is_active={(r.get('data') or {}).get('is_active')}")
 
 print(f"\nRINGKASAN: {sum(HASIL)}/{len(HASIL)} uji lulus")
+
+# Uji ini MEMBUAT data. Kalau dibiarkan, database dev perlahan penuh anggota palsu dan daftar
+# anggota di layar jadi menyesatkan -- jadi sisanya dibersihkan sendiri di sini.
 if kode_baru:
-    print(f"catatan: member uji {kode_baru} (id {id_baru}) tetap ada di database dev")
+    bersih = (
+        "$m = App\\Models\\Member::where('member_code','" + str(kode_baru) + "')->first();"
+        " if ($m) { $m->user?->forceDelete(); $m->delete(); }"
+        " $u = App\\Models\\User::where('email','" + EMAIL_UJI + "')->first();"
+        " if ($u) { $u->member?->delete(); $u->forceDelete(); }"
+        " echo App\\Models\\Member::count();"
+    )
+    hasil = subprocess.run(["php", "artisan", "tinker", "--execute", bersih],
+                           capture_output=True, text=True)
+    sisa = hasil.stdout.strip().splitlines()[-1].strip() if hasil.stdout.strip() else "?"
+    print(f"data uji dibersihkan ({kode_baru}, id {id_baru}, akun {EMAIL_UJI}) -- sisa anggota: {sisa}")

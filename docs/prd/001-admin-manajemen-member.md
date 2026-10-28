@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | **v1.1** — skema + endpoint admin sudah jalan (2026-10-28) |
+| **Status** | **v1.2** — sudah jalan **dan teruji** (2026-10-28). Revisi v1.2: status tinggal tiga (ADR-003), durasi 1–24 bulan, kode anggota `GH-`, `plan_days` jadi `plan_months`, `added_days` tidak dipakai |
 | **Pemilik** | josjis |
 | **Fase** | 1 dari urutan baru: **satu fitur, FE + API bareng** |
 | **Permukaan** | Dashboard admin (`/admin/members`) — desktop & HP |
@@ -18,7 +18,7 @@
 | K1b | **Tidak ada pencatatan pembayaran.** Begitu admin mendaftarkan, member dianggap sudah bayar | MVP. Tidak ada tabel `payments`, tidak ada status Lunas/separuh |
 | K2 | Admin hanya menanyakan **nama** dan **nomor telepon**. Tidak ada field lain yang wajib | Member berdiri di depan; makin sedikit yang diketik, makin kecil salahnya |
 | K3 | Member baru **tidak diberi kata sandi** di fase ini. Akses login dibuat nanti saat dashboard member dibangun (§12) | Kata sandi hanya berguna kalau ada layar yang dipakai member. Sekarang belum ada |
-| K4 | Masa aktif = **bulanan**. Default 1 bulan, admin boleh langsung pilih **3** atau **6** bulan | Tidak ada tabel paket: MVP hanya member bulanan. Tombol, bukan kolom ketik |
+| K4 | Masa aktif dihitung **bulan**. Pilihan cepat 1 / 3 / 6 / 12 bulan, dan admin boleh menyusun sendiri sampai **24 bulan** | Tidak ada tabel paket: MVP hanya member bulanan. Tombol, bukan kolom ketik. Batas 24 bulan penahan salah ketik, bukan penahan orang |
 | K5 | Nomor telepon = **identitas unik**. Nama boleh kembar, dipakai sebagai username tampilan | "Budi" bisa ada tiga; nomor HP tidak |
 | K6 | `member_code` dibuat otomatis di belakang layar untuk rujukan admin, **tidak ditanyakan** ke member | Berguna untuk struk/laporan, tanpa menambah beban admin |
 
@@ -107,7 +107,7 @@ Ditulis eksplisit supaya tidak melebar seperti kemarin:
 
 - [ ] Kotak cari menyaring di sisi server (bukan menyaring 1 halaman di browser).
 - [ ] Bisa mencari pakai **sebagian** nomor HP, mis. `8123` menemukan `0812…`.
-- [ ] Filter status: `Aktif` / `Akan berakhir (≤7 hari)` / `Kadaluarsa` / `Nonaktif`.
+- [ ] Filter status: `Aktif` / `Akan berakhir (≤7 hari)` / `Nonaktif`. Nilai lain ditolak server dengan 422 (ADR-003).
 - [ ] Daftar dimuat per halaman 15 baris dengan nomor halaman.
 - [ ] Keadaan yang wajib ada semua: memuat (skeleton), kosong, kosong-karena-filter,
       gagal memuat + tombol coba lagi.
@@ -121,7 +121,7 @@ Ditulis eksplisit supaya tidak melebar seperti kemarin:
       dan catatan "Belum punya akses login".
 - [ ] Tombol "Perpanjang" menambah durasi dari:
       - **tanggal berakhir lama** kalau masih aktif (tidak memotong sisa waktu), atau
-      - **hari ini** kalau sudah kadaluarsa.
+      - **hari ini** kalau masa aktifnya sudah lewat tenggat.
       Aturan yang dipakai **tertulis di panel** supaya admin tahu.
 - [ ] Setiap perpanjangan tercatat: siapa adminnya, kapan, jadi tanggal berapa.
 - [ ] Nama dan nomor HP bisa dikoreksi dari panel ini (kasus salah ketik di US-1).
@@ -160,9 +160,9 @@ Perubahan pada skema yang ada (bukan tabel baru, kecuali yang disebut).
 
 | Kolom | Tipe | Kenapa |
 |---|---|---|
-| `member_code` | varchar(12) unique | Dibuat otomatis (`BFG-0001`) untuk rujukan admin. **Tidak ditanyakan** ke member (K6) |
+| `member_code` | varchar(12) unique | Dibuat otomatis (`GH-0001`) untuk rujukan admin. **Tidak ditanyakan** ke member (K6) |
 | `membership_started_at` | date nullable | Dasar perhitungan sisa waktu & perpanjangan |
-| `plan_days` | integer nullable default 30 | Durasi paket terakhir; dasar perpanjangan (K4) |
+| `plan_months` | unsignedSmallInteger default 1 | Durasi paket terakhir dalam bulan; dasar perpanjangan (K4) |
 | `membership_expires_at` | timestamp nullable | **Sudah ada.** Tetap jadi sumber status |
 
 Kolom lama `height` / `weight` / `goal` tetap, tetap opsional — dipakai fitur lain nanti.
@@ -171,10 +171,11 @@ Kolom lama `height` / `weight` / `goal` tetap, tetap opsional — dipakai fitur 
 
 | Status | Aturan |
 |---|---|
-| Nonaktif | `deleted_at` terisi |
-| Kadaluarsa | berakhir < hari ini |
-| Akan berakhir | berakhir antara hari ini s/d +7 hari |
-| Aktif | berakhir > +7 hari |
+| `nonaktif` | `deleted_at` terisi, **atau** masa aktifnya sudah lewat tenggat, **atau** tanggal berakhirnya kosong |
+| `akan_berakhir` | berakhir antara hari ini s/d +7 hari (hari berakhirnya sendiri masih terhitung di sini) |
+| `aktif` | berakhir > +7 hari |
+
+Tiga nilai, bukan empat: `kadaluarsa` dilebur ke `nonaktif` — dari sisi petugas di meja gym, anggota yang masa aktifnya habis dan anggota yang dimatikan sama-sama tidak boleh masuk (ADR-003). Bedanya tetap terbaca dari tanggal berakhirnya.
 
 Alasan: kolom status yang bisa ditulis akan selalu basi — waktu berjalan tanpa ada yang mengubahnya.
 
@@ -184,7 +185,6 @@ Alasan: kolom status yang bisa ditulis akan selalu basi — waktu berjalan tanpa
 |---|---|
 | id | bigint PK |
 | member_id | FK members.id CASCADE |
-| added_days | integer |
 | started_from | date |
 | expires_at_after | date |
 | created_by_user_id | FK users.id nullable |
@@ -202,10 +202,10 @@ galat validasi 422 `errors`). Semua endpoint di bawah `auth:sanctum` + `role:adm
 | Method | Path | Keterangan |
 |---|---|---|
 | GET | `/api/admin/members` | List + cari & filter. Query: `q`, `status`, `per_page`, `page` |
-| POST | `/api/admin/members` | Daftarkan member baru. Body: `name`, `phone`, `plan_months` (opsional, default 1; hanya 1/3/6) |
+| POST | `/api/admin/members` | Daftarkan member baru. Body: `name`, `phone`, `plan_months` (opsional, default 1; 1–24) |
 | GET | `/api/admin/members/{id}` | Detail + riwayat perpanjangan |
 | PATCH | `/api/admin/members/{id}` | Koreksi nama / nomor HP |
-| POST | `/api/admin/members/{id}/renew` | Perpanjang; body: `plan_months` (1/3/6) |
+| POST | `/api/admin/members/{id}/renew` | Perpanjang; body: `plan_months` (1–24) |
 | POST | `/api/admin/members/{id}/deactivate` | Soft delete |
 | POST | `/api/admin/members/{id}/reactivate` | Batal soft delete |
 
@@ -214,7 +214,7 @@ Jawaban satu baris member:
 ```json
 {
   "id": 12,
-  "member_code": "BFG-0012",
+  "member_code": "GH-0012",
   "name": "Budi Santoso",
   "phone": "08123456789",
   "membership_started_at": "2026-10-28",
@@ -236,7 +236,7 @@ Jawaban satu baris member:
 |---|---|---|
 | `name` | wajib, 2–80 karakter, **tidak** harus unik | "Nama member wajib diisi." |
 | `phone` | wajib; setelah normalisasi `^08[0-9]{7,12}$`; unik di `users` | "Nomor HP ini sudah dipakai <Nama>. Buka member itu?" |
-| `plan_months` | opsional, hanya `1`, `3`, atau `6`; default 1 | "Durasi hanya boleh 1, 3, atau 6 bulan." |
+| `plan_months` | opsional, `1`–`24`; default 1 | "Durasi 1 sampai 24 bulan." |
 
 Prinsip pesan galat: **menyebut apa yang harus dilakukan**, bukan mengulang nama kolom database.
 
@@ -244,18 +244,16 @@ Prinsip pesan galat: **menyebut apa yang harus dilakukan**, bukan mengulang nama
 
 Bukan menambah di atas mock, tapi menggantinya. Daftar kerja konkret:
 
-- [ ] `lib/mock/dummy-users.ts` — hapus
-- [ ] `store/useUserManagementStore.ts` — hapus. Ini **sumber kebenaran kedua** untuk data yang
-      sama dengan `hooks/useUserManagement.ts`; pilih **satu**: data server di hook, sisanya state UI lokal
-- [ ] `pages/admin/users/*` — ganti jadi `pages/admin/members/*`, komponen tabel/filter/panel dipertahankan
-      (sudah bagus) tetapi disambungkan ke API nyata
-- [ ] Halaman `/register` publik — arahkan ke "datang langsung ke gym" atau matikan; yang
-      mendaftar adalah admin (K1). `POST /api/register` ikut dinonaktifkan kalau halaman itu mati
-- [ ] `lib/axios.ts` — `baseURL` dari `import.meta.env.VITE_API_BASE_URL` (sekarang hardcode
-      `http://localhost:8000/api`, mati saat di-deploy); kunci token `gymhub_token` → `bifrost_token`
-- [ ] `App.tsx` — pindahkan `/admin` ke dalam `<ProtectedRoute>` dan aktifkan penjaga peran admin
-      (sekarang dikomentari, jadi `/admin/users` bisa dibuka siapa saja)
-- [ ] Tambah `EnsureRole` middleware di backend (sudah direncanakan di `docs/api-contract.md`, belum ada)
+- [x] `lib/mock/dummy-users.ts` — hapus
+- [x] `store/useUserManagementStore.ts` — hapus. Data server di hook (`hooks/useMembers.ts`), sisanya state UI lokal
+- [x] `pages/admin/users/*` — ganti jadi `pages/admin/members/*`, disambungkan ke API nyata
+
+- [x] Halaman `/register` publik — rute dialihkan ke `/login`; member didaftarkan admin (K1).
+      **`POST /api/register` belum dimatikan** — perlu keputusan terpisah
+- [x] `lib/axios.ts` — `baseURL` dari `import.meta.env.VITE_API_BASE_URL` (cadangan
+      `http://127.0.0.1:8001/api`); kunci token tetap `gymhub_token` karena itu nama brand resmi
+- [x] `App.tsx` — `/admin` di dalam `<ProtectedRoute requiredRole="admin">`
+- [x] `EnsureRole` middleware di backend — ada dan diuji (401 tanpa token, 403 role salah)
 
 ## 11. Non-fungsional
 
@@ -298,12 +296,16 @@ Tidak ada lagi. Pembayaran sudah dijawab di K1b: tidak dicatat di MVP, semua mem
       + soft delete di `users`, kolom baru di `members`, tabel `membership_renewals` — `migrate:fresh --seed` bersih
 - [x] Seeder akun admin (`admin@gymhub.local`), bisa login, `role = admin`
 - [x] 7 endpoint §8 hidup, diuji lewat `curl` dengan token admin — **15/15 uji lulus** (2026-10-28)
-- [ ] `/admin/members` bisa dibuka **hanya** oleh admin; member biasa dapat 403 (dibuktikan, bukan diasumsikan)
-- [ ] US-1 dijalankan di browser sungguhan: **2 field saja**, member muncul lagi setelah **refresh**
-- [ ] Nomor HP duplikat ditolak dengan menyebut nama pemilik nomor itu (diuji)
-- [ ] `dummy-users.ts` dan `useUserManagementStore.ts` hilang dari repo
-- [ ] Build hijau, lint **tidak menambah** dari baseline 14
-- [ ] Tangkapan layar: daftar (desktop + HP), form tambah, panel detail, perpanjang, keadaan kosong, keadaan gagal
+- [x] `/admin/members` bisa dibuka **hanya** oleh admin; member biasa mendapat layar penolakan
+      (browser, 2026-10-28). Otorisasi akhir tetap middleware `role:admin` → 403 dari API
+- [x] US-1 dijalankan di browser sungguhan: **2 field saja**, member muncul lagi setelah **refresh**
+      (dulu `BFG-0021` … 28 Apr 2027 bertahan setelah muat ulang)
+- [x] Nomor HP duplikat ditolak dengan menyebut nama pemilik nomor itu (diuji: "Nomor ini sudah
+      dipakai Budi Uji Langkah3 (GH-0021)")
+- [x] `dummy-users.ts` dan `useUserManagementStore.ts` hilang dari repo
+- [x] Build hijau, lint **tidak menambah** dari baseline 14 — turun ke 6
+- [x] Tangkapan layar: daftar (desktop + HP) ✔, form tambah ✔, panel detail ✔, perpanjang ✔,
+      keadaan kosong ✔ (filter tanpa hasil), keadaan gagal ✔ (API dimatikan → "Coba lagi")
 
 ## 14. Urutan kerja (satu fitur, FE + API bareng)
 
