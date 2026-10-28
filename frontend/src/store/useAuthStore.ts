@@ -1,9 +1,6 @@
 import { create } from "zustand";
 import api, { TOKEN_KEY } from "@/lib/axios";
-
-/** [DEV-SAJA] Akun untuk masuk otomatis selama pengembangan. Diisi dari frontend/.env.local. */
-const DEV_EMAIL = import.meta.env.VITE_DEV_ADMIN_EMAIL as string | undefined;
-const DEV_PASSWORD = import.meta.env.VITE_DEV_ADMIN_PASSWORD as string | undefined;
+import { DEV_BYPASS_AUTH, DEV_EMAIL, DEV_PASSWORD } from "@/lib/devMode";
 
 /** Role yang dikenal backend (users.role). */
 export type Role = "member" | "coach" | "admin" | "owner";
@@ -89,10 +86,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   checkAuth: async () => {
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token) {
-      // [DEV-SAJA] Halaman masuk dilewati selama pengembangan: masuk otomatis memakai akun admin
+      // [DEV-SAJA] Halaman masuk dilewati selama pengembangan: masuk otomatis memakai akun
       // yang tertulis di frontend/.env.local (berkas itu diabaikan git, jadi sandinya tidak ikut
-      // terunggah). Tidak aktif di build produksi karena import.meta.env.DEV bernilai false.
-      if (import.meta.env.DEV && DEV_EMAIL && DEV_PASSWORD) {
+      // terunggah). Ikut mati kalau VITE_DEV_BYPASS_AUTH=0 -- kalau tidak, penjaga halaman masuk
+      // mustahil diuji karena sesinya selalu dibuat sendiri.
+      if (DEV_BYPASS_AUTH && DEV_EMAIL && DEV_PASSWORD) {
         const hasil = await useAuthStore.getState().login(DEV_EMAIL, DEV_PASSWORD);
         if (!hasil.ok) {
           console.warn("[DEV] Masuk otomatis gagal:", hasil.message);
@@ -107,8 +105,28 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true });
     try {
       const response = await api.get("/me");
+      const akun = response.data.data;
+
+      // [DEV-SAJA] Sesi lama bisa saja milik akun lain -- dulu masuk otomatis memakai
+      // admin@gymhub.local, dan token itu masih tersimpan di peramban. Akibatnya semua endpoint
+      // /owner/* menjawab 403 ("Akses ditolak. Halaman ini hanya untuk owner") dan layarnya tampak
+      // rusak, padahal yang salah cuma sesi basi. Kalau akunnya bukan akun dev, sesi itu dibuang
+      // dan diganti dengan akun dev.
+      if (DEV_BYPASS_AUTH && DEV_EMAIL && DEV_PASSWORD && akun.email !== DEV_EMAIL) {
+        console.warn(
+          `[DEV] Sesi lama milik ${akun.email ?? "akun lain"} diganti dengan ${DEV_EMAIL} ` +
+            "(akun dev). Set VITE_DEV_BYPASS_AUTH=0 kalau memang ingin menguji sebagai akun lain."
+        );
+        localStorage.removeItem(TOKEN_KEY);
+        const hasil = await useAuthStore.getState().login(DEV_EMAIL, DEV_PASSWORD);
+        if (!hasil.ok) {
+          set({ user: null, token: null, isAuthenticated: false, isLoading: false });
+        }
+        return;
+      }
+
       set({
-        user: response.data.data,
+        user: akun,
         token,
         isAuthenticated: true,
         isLoading: false,
