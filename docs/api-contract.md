@@ -95,7 +95,7 @@ Semua baca-saja. Owner **tidak** punya endpoint tulis untuk anggota — pekerjaa
 | Method | Path | Keterangan |
 | --- | --- | --- |
 | GET | `/api/owner/summary` | Jumlah aktif / akan berakhir / nonaktif · anggota baru & berhenti bulan ini · uang masuk bulan ini · `harga_terisi` |
-| GET | `/api/owner/revenue?months=6` | Uang masuk per bulan: total, jumlah transaksi, pecahan cash/qris |
+| GET | `/api/owner/revenue?group=harian\|mingguan\|bulanan&jumlah=14` | Uang masuk per kelompok waktu: total, jumlah transaksi, pecahan cash/qris. `group` bawaan `bulanan`; `jumlah` bawaan harian 14 · mingguan 8 · bulanan 6, dibatasi 31/26/24. `periode` berbentuk `2026-10-28` / `2026-W44` / `2026-10`. Kelompok tak dikenal → 422 |
 | GET | `/api/owner/growth?months=6` | Anggota baru per bulan |
 | GET | `/api/owner/priorities` | 10 anggota teratas untuk ditagih: yang habis ≤14 hari dulu, baru yang lewat ≤30 hari, berikut nilai paketnya |
 | GET | `/api/owner/settings` | Semua pengaturan + siapa dan kapan terakhir mengubah |

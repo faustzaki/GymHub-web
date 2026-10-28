@@ -23,6 +23,13 @@ use Illuminate\Support\Carbon;
  */
 class OwnerController extends Controller
 {
+    /**
+     * Kelompok waktu halaman Uang Masuk -> batas paling banyak periode yang boleh diminta.
+     * Batas ini juga yang menahan `?jumlah=99999` supaya tidak ada yang bisa memaksa server
+     * menghitung ribuan titik data sekali klik.
+     */
+    private const KELOMPOK_WAKTU = ['harian' => 31, 'mingguan' => 26, 'bulanan' => 24];
+
     public function summary(): JsonResponse
     {
         // Status tetap lewat Member::status() per anggota -- satu sumber kebenaran. Versi SQL
@@ -92,27 +99,55 @@ class OwnerController extends Controller
         ]);
     }
 
+    /**
+     * Uang masuk per kelompok waktu: harian, mingguan, atau bulanan.
+     *
+     * Keputusan josjis 2026-10-28: halaman Uang Masuk harus bisa dilihat harian dan mingguan,
+     * bukan cuma bulanan. Yang memilih kelompok waktunya layar, bukan server: satu endpoint dengan
+     * parameter `group`, supaya menambah kelompok baru tidak perlu rute baru.
+     *
+     * Periode tanpa transaksi tetap muncul bernilai 0 -- grafik yang bolong-bolong lebih sulit
+     * dibaca daripada grafik berisi nol.
+     */
     public function revenue(Request $request): JsonResponse
     {
-        $jumlah = $this->jumlahBulan($request);
-        $mulai = now()->startOfMonth()->subMonths($jumlah - 1);
+        $kelompok = (string) $request->query('group', 'bulanan');
 
-        $bulanan = Payment::query()
+        if (! array_key_exists($kelompok, self::KELOMPOK_WAKTU)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Kelompok waktu tidak dikenal. Pilih: '
+                    .implode(' / ', array_keys(self::KELOMPOK_WAKTU)).'.',
+            ], 422);
+        }
+
+        $bawaan = ['harian' => 14, 'mingguan' => 8, 'bulanan' => 6][$kelompok];
+        $banyak = max(1, min(self::KELOMPOK_WAKTU[$kelompok], (int) $request->query('jumlah', $bawaan)));
+
+        [$ekspresi, $mulai] = match ($kelompok) {
+            'harian' => ["DATE_FORMAT(paid_at, '%Y-%m-%d')", now()->startOfDay()->subDays($banyak - 1)],
+            'mingguan' => ["DATE_FORMAT(paid_at, '%x-W%v')", now()->startOfWeek()->subWeeks($banyak - 1)],
+            default => ["DATE_FORMAT(paid_at, '%Y-%m')", now()->startOfMonth()->subMonths($banyak - 1)],
+        };
+
+        // `%x-W%v` = tahun-minggu ISO 8601, sama persis dengan bentuk Carbon 'o-\WW' yang dipakai
+        // waktu menyusun deret kosong di bawah. Kalau keduanya beda, grafiknya jadi nol semua.
+        $tercatat = Payment::query()
             ->where('paid_at', '>=', $mulai->toDateString())
-            ->selectRaw("DATE_FORMAT(paid_at, '%Y-%m') as bulan")
+            ->selectRaw("$ekspresi as periode")
             ->selectRaw('COALESCE(SUM(amount), 0) as total')
             ->selectRaw('COUNT(*) as transaksi')
             ->selectRaw("COALESCE(SUM(CASE WHEN method = 'cash' THEN amount END), 0) as cash")
             ->selectRaw("COALESCE(SUM(CASE WHEN method = 'qris' THEN amount END), 0) as qris")
-            ->groupBy('bulan')
+            ->groupBy('periode')
             ->get()
-            ->keyBy('bulan');
+            ->keyBy('periode');
 
         $items = [];
-        foreach ($this->deretBulan($mulai, $jumlah) as $label) {
-            $baris = $bulanan->get($label);
+        foreach ($this->deretPeriode($kelompok, $mulai, $banyak) as $label) {
+            $baris = $tercatat->get($label);
             $items[] = [
-                'bulan' => $label,
+                'periode' => $label,
                 'total' => (float) ($baris->total ?? 0),
                 'transaksi' => (int) ($baris->transaksi ?? 0),
                 'cash' => (float) ($baris->cash ?? 0),
@@ -122,7 +157,7 @@ class OwnerController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'data' => ['months' => $jumlah, 'items' => $items],
+            'data' => ['group' => $kelompok, 'jumlah' => $banyak, 'items' => $items],
         ]);
     }
 
@@ -203,6 +238,35 @@ class OwnerController extends Controller
     private function jumlahBulan(Request $request): int
     {
         return max(1, min(24, (int) $request->query('months', 6)));
+    }
+
+    /**
+     * Deret periode waktu yang berurutan dan tidak bolong: harian (tanggal), mingguan (tahun-minggu
+     * ISO), atau bulanan (tahun-bulan). Bentuknya harus sama persis dengan hasil DATE_FORMAT di
+     * kueri, karena label inilah kunci pencocokannya.
+     */
+    private function deretPeriode(string $kelompok, Carbon $mulai, int $banyak): array
+    {
+        [$format, $kursor] = match ($kelompok) {
+            'harian' => ['Y-m-d', $mulai->copy()->startOfDay()],
+            'mingguan' => ['o-\WW', $mulai->copy()->startOfWeek()],
+            default => ['Y-m', $mulai->copy()->startOfMonth()],
+        };
+
+        $labels = [];
+        for ($i = 0; $i < $banyak; $i++) {
+            $labels[] = $kursor->format($format);
+
+            if ($kelompok === 'harian') {
+                $kursor->addDay();
+            } elseif ($kelompok === 'mingguan') {
+                $kursor->addWeek();
+            } else {
+                $kursor->addMonth();
+            }
+        }
+
+        return $labels;
     }
 
     /** @return list<string> label `YYYY-MM` kontinu mulai dari $mulai sebanyak $jumlah */

@@ -129,6 +129,77 @@ export function monthLabel(bulan: string): string {
   return new Date(tahun, angka - 1, 1).toLocaleDateString("id-ID", { month: "short" });
 }
 
+/** Kelompok waktu halaman Uang Masuk. Harus sama dengan `KELOMPOK_WAKTU` di OwnerController. */
+export type GrupWaktu = "harian" | "mingguan" | "bulanan";
+
+/**
+ * Satu titik uang masuk. `periode` berbentuk 2026-10-28 (harian), 2026-W44 (mingguan), atau
+ * 2026-10 (bulanan) — bentuk mesin, labelnya diurus `periodeLabel`/`periodeJudul`.
+ */
+export interface MoneyPoint {
+  periode: string;
+  total: number;
+  cash: number;
+  qris: number;
+  transaksi: number;
+}
+
+/** Senin dari "tahun-minggu" ISO 8601 (mis. 2026-W44). Dipakai untuk label minggu yang bisa dibaca. */
+function seninDariIso(tahun: number, minggu: number): Date {
+  const jan4 = new Date(tahun, 0, 4); // ISO: minggu 1 selalu memuat 4 Januari
+  const geser = (jan4.getDay() + 6) % 7; // Senin = 0
+  const seninPekan1 = new Date(tahun, 0, 4 - geser);
+  return new Date(seninPekan1.getFullYear(), seninPekan1.getMonth(), seninPekan1.getDate() + (minggu - 1) * 7);
+}
+
+/** Label pendek untuk grafik: "28 Okt" · "Mgg 44" · "Okt". */
+export function periodeLabel(periode: string, grup: GrupWaktu): string {
+  if (grup === "bulanan") return monthLabel(periode);
+
+  if (grup === "mingguan") {
+    const minggu = Number(periode.split("-W")[1]);
+    return minggu ? `Mgg ${minggu}` : periode;
+  }
+
+  const [tahun, bulan, hari] = periode.split("-").map(Number);
+  if (!tahun || !bulan || !hari) return periode;
+  return new Date(tahun, bulan - 1, hari).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+  });
+}
+
+/** Keterangan panjang untuk tabel & tooltip: "Rabu, 28 Okt 2026" · "26 Okt – 1 Nov 2026" · "Okt 2026". */
+export function periodeJudul(periode: string, grup: GrupWaktu): string {
+  if (grup === "bulanan") {
+    const [tahun, bulan] = periode.split("-").map(Number);
+    if (!tahun || !bulan) return periode;
+    return new Date(tahun, bulan - 1, 1).toLocaleDateString("id-ID", {
+      month: "long",
+      year: "numeric",
+    });
+  }
+
+  if (grup === "mingguan") {
+    const [tahun, angkaMinggu] = periode.split("-W").map(Number);
+    if (!tahun || !angkaMinggu) return periode;
+    const senin = seninDariIso(tahun, angkaMinggu);
+    const minggu = new Date(senin.getFullYear(), senin.getMonth(), senin.getDate() + 6);
+    const hari = (d: Date) =>
+      d.toLocaleDateString("id-ID", { day: "numeric", month: "short" });
+    return `${hari(senin)} – ${hari(minggu)} ${minggu.getFullYear()}`;
+  }
+
+  const [tahun, bulan, tanggal] = periode.split("-").map(Number);
+  if (!tahun || !bulan || !tanggal) return periode;
+  return new Date(tahun, bulan - 1, tanggal).toLocaleDateString("id-ID", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
 /**
  * Nomor untuk `https://wa.me/62...`. Nomor lokal 08xx -> 628xx; selain itu dipakai apa adanya
  * selama bentuknya masuk akal. `null` kalau nomornya tidak bisa dihubungi sama sekali.
@@ -210,10 +281,19 @@ export async function fetchGrowth(): Promise<MonthPoint[]> {
   return data.data.items;
 }
 
-/** Uang masuk per bulan + pecahan cash/qris. */
-export async function fetchRevenue(): Promise<MonthPoint[]> {
-  const { data } = await api.get<{ data: { items: MonthPoint[] } }>("/owner/revenue", {
-    params: { months: 6 },
+/**
+ * Uang masuk per kelompok waktu. `jumlah` opsional — kalau kosong, server memakai bawaannya
+ * (harian 14 · mingguan 8 · bulanan 6).
+ *
+ * Harian & mingguan ditambahkan atas permintaan josjis 2026-10-28: uang masuk harian itu yang
+ * dipakai membayar listrik & gaji, jadi angkanya perlu kelihatan tanpa menunggu akhir bulan.
+ */
+export async function fetchRevenue(
+  group: GrupWaktu = "bulanan",
+  jumlah?: number
+): Promise<MoneyPoint[]> {
+  const { data } = await api.get<{ data: { items: MoneyPoint[] } }>("/owner/revenue", {
+    params: { group, ...(jumlah ? { jumlah } : {}) },
   });
   return data.data.items;
 }

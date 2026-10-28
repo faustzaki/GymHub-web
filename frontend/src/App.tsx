@@ -113,7 +113,10 @@ function App() {
         <Route element={<ProtectedRoute requiredRole="owner" />}>
           <Route path="/owner" element={<OwnerLayout />}>
             <Route index element={<OwnerOverviewPage />} />
-            <Route path="uang" element={<RevenuePage />} />
+            <Route path="revenue" element={<RevenuePage />} />
+            {/* Alamat lama /owner/uang dipindah ke /owner/revenue (istilah Inggris, konsisten
+                dengan /owner/settings di API). Tautan atau bookmark lama jangan jadi 404. */}
+            <Route path="uang" element={<Navigate to="/owner/revenue" replace />} />
             <Route path="pengaturan" element={<WebSettingsPage />} />
           </Route>
         </Route>

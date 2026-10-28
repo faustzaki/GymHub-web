@@ -14,7 +14,7 @@ import { LayoutDashboard, Wallet, Settings, ArrowRightLeft, LogOut, Menu, X, Cro
  */
 const OWNER_MENU = [
   { label: "Ringkasan", href: "/owner", icon: LayoutDashboard, exact: true },
-  { label: "Uang Masuk", href: "/owner/uang", icon: Wallet, exact: false },
+  { label: "Uang Masuk", href: "/owner/revenue", icon: Wallet, exact: false },
   { label: "Pengaturan Web", href: "/owner/pengaturan", icon: Settings, exact: false },
 ] as const;
 
