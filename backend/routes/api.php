@@ -40,6 +40,9 @@ Route::middleware(['auth:sanctum', 'role:admin,owner'])->prefix('admin')->group(
 // dua tempat berarti dua aplikasi untuk pekerjaan yang sama.
 Route::middleware(['auth:sanctum', 'role:owner'])->prefix('owner')->group(function () {
     Route::get('/summary', [OwnerController::class, 'summary']);
+    // Satu permintaan untuk seluruh layar Ringkasan: server dev melayani satu permintaan sekaligus,
+    // jadi empat permintaan berarti kartu di layar menunggu antrean (lihat OwnerController::dashboard).
+    Route::get('/dashboard', [OwnerController::class, 'dashboard']);
     Route::get('/revenue', [OwnerController::class, 'revenue']);
     Route::get('/growth', [OwnerController::class, 'growth']);
     Route::get('/priorities', [OwnerController::class, 'priorities']);

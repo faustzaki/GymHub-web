@@ -178,6 +178,27 @@ class OwnerController extends Controller
         ]);
     }
 
+    /**
+     * Seluruh isi layar Ringkasan dalam SATU permintaan.
+     *
+     * Sebabnya bukan gaya: server dev di Windows (`php -S`) melayani satu permintaan sekaligus, jadi
+     * empat permintaan berarti empat kali antre dan kartu di layar menunggu yang paling belakang.
+     * Terukur di browser: satu permintaan ±0,1 detik, empat permintaan berbaris ±1,3 detik.
+     * Endpoint terpisah tetap ada untuk pemakaian lain (grafik di halaman Uang Masuk, dsb).
+     */
+    public function dashboard(Request $request): JsonResponse
+    {
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'summary' => $this->summary()->getData(true)['data'],
+                'growth' => $this->growth($request)->getData(true)['data'],
+                'priorities' => $this->priorities()->getData(true)['data'],
+                'settings' => Setting::publicPayload(),
+            ],
+        ]);
+    }
+
     /** Batas 1-24 bulan: sama dengan batas durasi paket. Salah ketik diperedam, bukan 500. */
     private function jumlahBulan(Request $request): int
     {

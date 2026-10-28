@@ -168,6 +168,40 @@ export async function fetchOwnerSummary(): Promise<OwnerSummary> {
   return data.data;
 }
 
+/** Seluruh isi layar Ringkasan sekaligus -- satu permintaan, bukan empat. */
+export interface OwnerDashboard {
+  summary: OwnerSummary;
+  growth: MonthPoint[];
+  priorities: PriorityMember[];
+  settings: PublicSettings;
+}
+
+/**
+ * Satu permintaan untuk SELURUH layar Ringkasan.
+ *
+ * Bukan gaya: server dev di Windows (`php -S`) melayani satu permintaan sekaligus, jadi empat
+ * permintaan berbaris membuat kartu menunggu yang paling belakang (±1,3 detik jadi ±0,1).
+ * Endpoint terpisah tetap dipakai halaman lain (Uang Masuk, Pengaturan Web).
+ */
+export async function fetchOwnerDashboard(): Promise<OwnerDashboard> {
+  const { data } = await api.get<{
+    data: {
+      summary: OwnerSummary;
+      growth: { months: number; items: MonthPoint[] };
+      priorities: { months?: number; items: PriorityMember[] };
+      settings: PublicSettings;
+    };
+  }>("/owner/dashboard", { params: { months: 6 } });
+
+  // Backend mengirim deret mentah (bulan + items); di sini dibuka supaya layar tinggal pakai.
+  return {
+    summary: data.data.summary,
+    growth: data.data.growth.items,
+    priorities: data.data.priorities.items,
+    settings: data.data.settings,
+  };
+}
+
 /** Anggota baru per bulan, deret kontinu (bulan kosong tetap muncul bernilai 0). */
 export async function fetchGrowth(): Promise<MonthPoint[]> {
   const { data } = await api.get<{ data: { items: MonthPoint[] } }>("/owner/growth", {

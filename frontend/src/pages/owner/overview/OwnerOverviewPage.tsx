@@ -5,10 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { STATUS_CLASS, STATUS_LABEL } from "@/pages/admin/members/status";
 import {
   BELUM_DIISI,
-  fetchGrowth,
-  fetchOwnerSummary,
-  fetchPriorities,
-  fetchPublicSettings,
+  fetchOwnerDashboard,
   formatRupiah,
   formatTanggal,
   monthLabel,
@@ -43,19 +40,18 @@ export default function OwnerOverviewPage() {
       );
     };
 
-    fetchOwnerSummary()
-      .then((hasil) => !cancelled && setRingkasan(hasil))
+    // Satu permintaan untuk seluruh layar: server dev melayani satu permintaan sekaligus, jadi
+    // empat permintaan berbaris membuat kartu menunggu yang paling belakang (±1,3 detik jadi ±0,1).
+    fetchOwnerDashboard()
+      .then((hasil) => {
+        if (cancelled) return;
+        setRingkasan(hasil.summary);
+        setTren(hasil.growth);
+        setPrioritas(hasil.priorities);
+        // Nama gym hanya dipakai pesan tagihan, jadi boleh kosong tanpa mengganggu layar.
+        setNamaGym(hasil.settings["gym.name"] ?? null);
+      })
       .catch(gagal);
-    fetchGrowth()
-      .then((hasil) => !cancelled && setTren(hasil))
-      .catch(gagal);
-    fetchPriorities()
-      .then((hasil) => !cancelled && setPrioritas(hasil))
-      .catch(gagal);
-    // Nama gym hanya dipakai pesan tagihan; gagal memuatnya tidak boleh mengganggu layar.
-    fetchPublicSettings()
-      .then((publik) => !cancelled && setNamaGym(publik["gym.name"] ?? null))
-      .catch(() => undefined);
 
     return () => {
       cancelled = true;
