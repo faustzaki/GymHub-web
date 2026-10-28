@@ -173,11 +173,17 @@ export function RevenueChart({ points }: { points: MoneyPoint[] }) {
           </text>
         ))}
 
+        {/* Garis buntut kursor. Digambar di x=0 lalu DIGESER lewat `transform`: posisi X pada
+            `line x1/x2` tidak bisa dianimasikan halus seperti transform bisa. Tanpa transisi,
+            garis ini melompat dari titik ke titik mengikuti indeks, bukan mengikuti kursor --
+            mata membacanya sebagai patah-patah, bukan gerak. */}
         {aktif && (
-          <>
+          <g
+            style={{ transform: `translateX(${aktif.x}px)`, transition: "transform 140ms ease-out" }}
+          >
             <line
-              x1={aktif.x}
-              x2={aktif.x}
+              x1={0}
+              x2={0}
               y1={PAD.atas}
               y2={H - PAD.bawah}
               className="stroke-foreground"
@@ -185,8 +191,8 @@ export function RevenueChart({ points }: { points: MoneyPoint[] }) {
               strokeWidth={1}
               opacity={0.5}
             />
-            <circle cx={aktif.x} cy={aktif.y} r={4.5} className="fill-foreground" />
-          </>
+            <circle cx={0} cy={aktif.y} r={4.5} className="fill-foreground" />
+          </g>
         )}
       </svg>
 
@@ -210,6 +216,7 @@ export function RevenueChart({ points }: { points: MoneyPoint[] }) {
             // Tooltip dijauhkan dari tepi supaya tidak terpotong kartu di titik paling kiri/kanan.
             left: `${Math.min(72, Math.max(0, (aktif.x / W) * 100))}%`,
             top: 0,
+            transition: "left 140ms ease-out",
           }}
         >
           <p className="font-bold uppercase tracking-wide text-foreground">

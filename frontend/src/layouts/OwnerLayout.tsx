@@ -3,7 +3,8 @@ import { Outlet, NavLink, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/useAuthStore";
 import logoImg from "@/assets/logo-gymhub.png";
-import { LayoutDashboard, Wallet, Settings, ArrowRightLeft, LogOut, Menu, X, Crown } from "lucide-react";
+import { LayoutDashboard, Wallet, Settings, ArrowRightLeft, LogOut, Menu, X, Crown, Mail, ScanLine } from "lucide-react";
+import { LoncengNotifikasi } from "@/components/shared/LoncengNotifikasi";
 
 /**
  * Menu sidebar Panel Owner.
@@ -16,6 +17,7 @@ const OWNER_MENU = [
   { label: "Dashboard", href: "/owner", icon: LayoutDashboard, exact: true },
   { label: "Uang Masuk", href: "/owner/revenue", icon: Wallet, exact: false },
   { label: "Pengaturan Web", href: "/owner/pengaturan", icon: Settings, exact: false },
+  { label: "Pesan", href: "/owner/messages", icon: Mail, exact: false },
 ] as const;
 
 /**
@@ -107,6 +109,17 @@ export default function OwnerLayout() {
             <ArrowRightLeft size={18} />
             Buka Panel Petugas
           </Link>
+          {/* Absen juga pekerjaan meja, tapi tidak masuk menu panel petugas dari sini: pintu
+              "Panel Petugas" sudah membawa ke sana, dan menu kembar membuat owner bingung
+              mana yang sedang dibuka. */}
+          <Link
+            to="/admin/absen"
+            onClick={() => setSidebarOpen(false)}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-white/60 hover:text-white hover:bg-white/[0.04] transition-all duration-200"
+          >
+            <ScanLine size={18} />
+            Absen Masuk
+          </Link>
         </nav>
 
         {/* Logout */}
@@ -139,6 +152,7 @@ export default function OwnerLayout() {
           </div>
 
           <div className="flex items-center gap-2">
+            <LoncengNotifikasi />
             <Button
               variant="ghost"
               size="icon"

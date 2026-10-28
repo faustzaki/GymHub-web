@@ -26,6 +26,8 @@ const CoachOverviewPage = lazy(() => import("@/pages/coach/overview/CoachOvervie
 const MemberManagementPage = lazy(() =>
   import("@/pages/admin/members/MemberManagementPage").then((m) => ({ default: m.MemberManagementPage }))
 );
+const AbsenPage = lazy(() => import("@/pages/admin/attendance/AbsenPage"));
+const MessagesPage = lazy(() => import("@/pages/admin/messages/MessagesPage"));
 const OwnerOverviewPage = lazy(() => import("@/pages/owner/overview/OwnerOverviewPage"));
 const RevenuePage = lazy(() => import("@/pages/owner/revenue/RevenuePage"));
 const WebSettingsPage = lazy(() => import("@/pages/owner/settings/WebSettingsPage"));
@@ -102,6 +104,8 @@ function App() {
             {/* Alamat eksplisit /admin/dashboard, sama isinya dengan /admin. */}
             <Route path="dashboard" element={<AdminDashboardPage />} />
             <Route path="members" element={<MemberManagementPage />} />
+            <Route path="absen" element={<AbsenPage />} />
+            <Route path="messages" element={<MessagesPage />} />
           </Route>
         </Route>
 
@@ -118,6 +122,10 @@ function App() {
                 dengan /owner/settings di API). Tautan atau bookmark lama jangan jadi 404. */}
             <Route path="uang" element={<Navigate to="/owner/revenue" replace />} />
             <Route path="pengaturan" element={<WebSettingsPage />} />
+            {/* Pesan juga dibuka dari panel owner: lonceng di header owner menunjuk ke sini, dan
+                menu "Pesan" tidak boleh melempar pemilik ke panel petugas hanya untuk membaca
+                satu pesan kontak. Halaman yang sama, layout yang berbeda. */}
+            <Route path="messages" element={<MessagesPage />} />
           </Route>
         </Route>
 

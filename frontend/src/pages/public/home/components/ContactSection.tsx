@@ -1,11 +1,20 @@
 import { useEffect, useState } from "react";
-import { MapPin, Phone, Clock, Camera, Globe, Play, Music2, Send, ArrowUpRight, Loader2 } from "lucide-react";
+import { MapPin, Phone, Clock, Send, ArrowUpRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  IconFacebook,
+  IconInstagram,
+  IconTiktok,
+  IconYoutube,
+} from "@/components/brand/SocialIcons";
+import { kirimPesan } from "@/lib/services/messages";
+import {
   SETTING_KEYS,
   fetchPublicSettings,
+  petaEmbed,
+  petaLink,
   waNumber,
   type PublicSettings,
 } from "@/lib/services/owner";
@@ -15,46 +24,71 @@ import {
  *
  * Semua isinya dari `GET /settings/public`. Yang belum diisi owner TIDAK dirender -- tidak ada
  * alamat karangan, tidak ada tautan sosial yang mati, tidak ada "jam buka: –".
+ *
+ * Keputusan josjis 2026-10-29:
+ * - Ikon media sosial memakai glyph merek (digambar sendiri di `brand/SocialIcons`), bukan huruf.
+ * - Peta WAJIB menunjuk alamat gym. `petaEmbed()` yang memutuskan: sematan resmi dipakai apa
+ *   adanya, tautan peta biasa diturunkan jadi `maps?q=<alamat>&output=embed`.
+ * - Form kontak benar-benar mengirim pesan (dulu `// dummy`: pesan menguap, pengunjung mengira
+ *   sudah menghubungi gym).
  */
 const SOSIAL = [
-  // lucide 1.8 tidak punya ikon merek; dipakai ikon bentuk, bukan logo tiruan.
-  { key: SETTING_KEYS.instagram, label: "Instagram", Icon: Camera },
-  { key: SETTING_KEYS.tiktok, label: "TikTok", Icon: Music2 },
-  { key: SETTING_KEYS.facebook, label: "Facebook", Icon: Globe },
-  { key: SETTING_KEYS.youtube, label: "YouTube", Icon: Play },
+  { key: SETTING_KEYS.instagram, label: "Instagram", Icon: IconInstagram },
+  { key: SETTING_KEYS.tiktok, label: "TikTok", Icon: IconTiktok },
+  { key: SETTING_KEYS.facebook, label: "Facebook", Icon: IconFacebook },
+  { key: SETTING_KEYS.youtube, label: "YouTube", Icon: IconYoutube },
 ] as const;
 
 function useContactForm() {
   const [formData, setFormData] = useState({ name: "", email: "", message: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [galat, setGalat] = useState<string | null>(null);
 
   const updateField = (field: keyof typeof formData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const isValid =
-    formData.name.trim().length > 0 &&
+    formData.name.trim().length > 1 &&
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) &&
-    formData.message.trim().length > 0;
+    formData.message.trim().length > 4;
 
-  // dummy — belum ada endpoint kontak; perilaku & waktu kirim disimulasikan.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isValid) return;
+    if (!isValid || isSubmitting) return;
+
     setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-    setIsSubmitting(false);
-    setIsSubmitted(true);
-    setFormData({ name: "", email: "", message: "" });
+    setGalat(null);
+    try {
+      await kirimPesan({
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        message: formData.message.trim(),
+      });
+      setIsSubmitted(true);
+      setFormData({ name: "", email: "", message: "" });
+    } catch (err) {
+      const e = err as {
+        response?: { data?: { message?: string; errors?: Record<string, string[]> } };
+      };
+      setGalat(
+        Object.values(e.response?.data?.errors ?? {}).flat().join(" ") ||
+          e.response?.data?.message ||
+          "Pesan belum terkirim. Coba lagi, atau hubungi lewat WhatsApp."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  return { formData, updateField, isValid, isSubmitting, isSubmitted, handleSubmit };
+  return { formData, updateField, isValid, isSubmitting, isSubmitted, galat, handleSubmit };
 }
 
 /** Penutup: lokasi, jam buka, kanal kontak, dan form singkat. */
 export default function ContactSection() {
-  const { formData, updateField, isValid, isSubmitting, isSubmitted, handleSubmit } = useContactForm();
+  const { formData, updateField, isValid, isSubmitting, isSubmitted, galat, handleSubmit } =
+    useContactForm();
   const [settings, setSettings] = useState<PublicSettings | null>(null);
 
   useEffect(() => {
@@ -72,7 +106,9 @@ export default function ContactSection() {
   const alamat = settings?.[SETTING_KEYS.address] ?? null;
   const jam = settings?.[SETTING_KEYS.hours] ?? null;
   const nomorWa = waNumber(settings?.[SETTING_KEYS.whatsapp] ?? null);
-  const embed = settings?.[SETTING_KEYS.maps_embed] ?? null;
+  // Peta SELALU mengarah ke alamat, bukan ke kode sematan mentah.
+  const embed = petaEmbed(settings?.[SETTING_KEYS.maps_embed] ?? null, alamat);
+  const tautanPeta = petaLink(alamat);
 
   // Baris kosong dibuang seluruhnya: alamat "–" lebih buruk daripada tidak ada baris alamat.
   const kontak = [
@@ -80,7 +116,7 @@ export default function ContactSection() {
       Icon: MapPin,
       label: "Lokasi",
       value: alamat,
-      href: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(alamat)}`,
+      href: tautanPeta,
     },
     nomorWa && {
       Icon: Phone,
@@ -96,7 +132,10 @@ export default function ContactSection() {
     href: string | null;
   }[];
 
-  const sosial = SOSIAL.filter((s) => (settings?.[s.key] ?? null) !== null);
+  const sosial = SOSIAL.filter((s) => {
+    const isi = settings?.[s.key];
+    return typeof isi === "string" && isi.trim() !== "";
+  });
 
   return (
     <section
@@ -157,6 +196,8 @@ export default function ContactSection() {
                 <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                   Ikuti
                 </p>
+                {/* Ikon saja, dengan nama di `aria-label` + tooltip judul: empat kotak berikon
+                    lebih ringkas daripada empat tombol bertulisan yang memakan satu baris penuh. */}
                 <div className="mt-3 flex flex-wrap gap-2">
                   {sosial.map(({ key, label, Icon }) => (
                     <a
@@ -165,10 +206,10 @@ export default function ContactSection() {
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={label}
-                      className="flex min-h-11 items-center gap-2 border border-border px-3 text-sm text-foreground transition-colors hover:bg-accent"
+                      title={label}
+                      className="flex size-11 items-center justify-center border border-border text-foreground transition-colors hover:border-primary/60 hover:bg-primary/10 hover:text-primary-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
-                      <Icon className="size-4 text-primary" aria-hidden="true" />
-                      {label}
+                      <Icon className="size-[18px]" />
                     </a>
                   ))}
                 </div>
@@ -186,6 +227,17 @@ export default function ContactSection() {
                   referrerPolicy="no-referrer-when-downgrade"
                   allowFullScreen
                 />
+                {tautanPeta && (
+                  <a
+                    href={tautanPeta}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-between gap-2 border-t border-border px-4 py-3 text-sm text-foreground transition-colors hover:bg-accent"
+                  >
+                    Buka di Google Maps
+                    <ArrowUpRight className="size-4 text-muted-foreground" aria-hidden="true" />
+                  </a>
+                )}
               </div>
             )}
           </div>
@@ -198,6 +250,15 @@ export default function ContactSection() {
                   className="mb-6 border border-primary/60 bg-primary/10 px-4 py-3 text-sm text-foreground animate-in fade-in duration-200"
                 >
                   Pesanmu terkirim. Kami akan membalas ke email yang kamu tulis.
+                </p>
+              )}
+
+              {galat && (
+                <p
+                  role="alert"
+                  className="mb-6 border border-border bg-background px-4 py-3 text-sm text-foreground"
+                >
+                  {galat}
                 </p>
               )}
 

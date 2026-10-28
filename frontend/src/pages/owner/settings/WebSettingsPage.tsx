@@ -5,11 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { Building2, MapPin, Share2, Tag } from "lucide-react";
 import {
   BELUM_DIISI,
   SETTING_KEYS,
   fetchOwnerSettings,
   formatTanggal,
+  petaEmbed,
   saveOwnerSettings,
   settingsMap,
   type OwnerSettingsRow,
@@ -17,20 +19,38 @@ import {
 } from "@/lib/services/owner";
 
 /** Nominal rupiah yang disimpan sebagai teks angka ("200000"), bukan "Rp 200.000". */
-const HARGA: { key: string; label: string; bantuan: string }[] = [
+/** Satu warna per jenis biaya: harga gampang dibedakan sekilas, bukan satu blok abu-abu panjang. */
+const HARGA: { key: string; label: string; bantuan: string; nada: string }[] = [
   {
     key: SETTING_KEYS.registration,
     label: "Biaya pendaftaran",
+    nada: "border-l-2 border-l-amber-500",
     bantuan: "Sekali bayar saat anggota pertama kali masuk.",
   },
   {
     key: SETTING_KEYS.daily,
     label: "Biaya harian / visit",
+    nada: "border-l-2 border-l-sky-500",
     bantuan: "Sekali kunjungan untuk yang tidak berlangganan. Tidak menambah masa aktif.",
   },
-  { key: SETTING_KEYS.monthly, label: "1 bulan", bantuan: "Harga bulanan. Durasi 2–5 bulan dihitung dari sini." },
-  { key: SETTING_KEYS.months_6, label: "6 bulan", bantuan: "Kosongkan kalau memakai harga bulanan × 6." },
-  { key: SETTING_KEYS.months_12, label: "1 tahun", bantuan: "Kosongkan kalau memakai harga bulanan × 12." },
+  {
+    key: SETTING_KEYS.monthly,
+    label: "1 bulan",
+    bantuan: "Harga bulanan. Durasi 2–5 bulan dihitung dari sini.",
+    nada: "border-l-2 border-l-emerald-500",
+  },
+  {
+    key: SETTING_KEYS.months_6,
+    label: "6 bulan",
+    bantuan: "Kosongkan kalau memakai harga bulanan × 6.",
+    nada: "border-l-2 border-l-violet-500",
+  },
+  {
+    key: SETTING_KEYS.months_12,
+    label: "1 tahun",
+    bantuan: "Kosongkan kalau memakai harga bulanan × 12.",
+    nada: "border-l-2 border-l-rose-500",
+  },
 ];
 
 /**
@@ -148,6 +168,9 @@ export default function WebSettingsPage() {
 
   const embed = (nilai[SETTING_KEYS.maps_embed] ?? "").trim();
   const alamat = (nilai[SETTING_KEYS.address] ?? "").trim();
+  // Selalu ada pratinjau selama alamat terisi, walau kolom sematan kosong: alamat saja sudah
+  // cukup untuk peta yang benar.
+  const pratinjau = petaEmbed(embed === "" ? null : embed, alamat === "" ? null : alamat);
 
   return (
     <div className="space-y-6">
@@ -181,41 +204,56 @@ export default function WebSettingsPage() {
       ) : (
         <Tabs defaultValue="harga" className="space-y-4">
           <TabsList className="h-11 rounded border border-border bg-card p-1">
-            <TabsTrigger value="harga" className="h-9 rounded px-4 text-sm">
+            <TabsTrigger
+              value="harga"
+              className="h-9 rounded px-4 text-sm data-[state=active]:bg-primary/15 data-[state=active]:text-primary-text"
+            >
               Harga
             </TabsTrigger>
-            <TabsTrigger value="info" className="h-9 rounded px-4 text-sm">
+            <TabsTrigger
+              value="info"
+              className="h-9 rounded px-4 text-sm data-[state=active]:bg-sky-500/15 data-[state=active]:text-sky-500"
+            >
               Info Gym
             </TabsTrigger>
-            <TabsTrigger value="sosial" className="h-9 rounded px-4 text-sm">
+            <TabsTrigger
+              value="sosial"
+              className="h-9 rounded px-4 text-sm data-[state=active]:bg-amber-500/15 data-[state=active]:text-amber-500"
+            >
               Media Sosial
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="harga">
-            <Card className="rounded-xl border-border">
+            <Card className="overflow-hidden rounded-xl border-border">
+              <div className="h-0.5 w-full bg-primary" aria-hidden="true" />
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">Harga Member</CardTitle>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <span className="flex size-7 items-center justify-center rounded bg-primary/10 text-primary">
+                    <Tag size={15} aria-hidden="true" />
+                  </span>
+                  Harga Member
+                </CardTitle>
                 <p className="text-sm text-muted-foreground">
                   Nominal ini mengisi kolom pembayaran di panel petugas, dan tetap boleh diubah
                   saat transaksi.
                 </p>
               </CardHeader>
               <CardContent className="grid gap-4 sm:grid-cols-2">
-                {HARGA.map(({ key, label, bantuan }) => (
+                {HARGA.map(({ key, label, bantuan, nada }) => (
                   <div key={key} className="space-y-1.5">
                     <label htmlFor={key} className="text-sm font-medium text-foreground">
                       {label}
                     </label>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground">Rp</span>
+                      <span className="rounded bg-primary/10 px-2 py-1 text-xs font-bold text-primary-text">Rp</span>
                       <Input
                         id={key}
                         inputMode="numeric"
                         value={nilai[key] ?? ""}
                         onChange={(e) => ubah(key, e.target.value.replace(/\D/g, ""))}
                         placeholder={BELUM_DIISI}
-                        className="h-11 rounded-md border-border tabular-nums"
+                        className={`h-11 rounded-md border-border tabular-nums ${nada}`}
                       />
                     </div>
                     <p className="text-xs text-muted-foreground">{bantuan}</p>
@@ -226,9 +264,15 @@ export default function WebSettingsPage() {
           </TabsContent>
 
           <TabsContent value="info" className="space-y-4">
-            <Card className="rounded-xl border-border">
+            <Card className="overflow-hidden rounded-xl border-border">
+              <div className="h-0.5 w-full bg-sky-500" aria-hidden="true" />
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">Identitas gym</CardTitle>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <span className="flex size-7 items-center justify-center rounded bg-sky-500/10 text-sky-500">
+                    <Building2 size={15} aria-hidden="true" />
+                  </span>
+                  Identitas gym
+                </CardTitle>
                 <p className="text-sm text-muted-foreground">
                   Dipakai landing publik dan pesan WhatsApp ke anggota.
                 </p>
@@ -253,9 +297,15 @@ export default function WebSettingsPage() {
               </CardContent>
             </Card>
 
-            <Card className="rounded-xl border-border">
+            <Card className="overflow-hidden rounded-xl border-border">
+              <div className="h-0.5 w-full bg-emerald-500" aria-hidden="true" />
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">Peta lokasi</CardTitle>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <span className="flex size-7 items-center justify-center rounded bg-emerald-500/10 text-emerald-500">
+                    <MapPin size={15} aria-hidden="true" />
+                  </span>
+                  Peta lokasi
+                </CardTitle>
                 <p className="text-sm text-muted-foreground">
                   Buka Google Maps &rarr; cari lokasi gym &rarr; Bagikan &rarr; Sematkan peta
                   &rarr; salin kodenya, tempel di sini. Yang disimpan hanya alamat peta-nya.
@@ -279,10 +329,13 @@ export default function WebSettingsPage() {
                   </p>
                 </div>
 
-                {embed !== "" && (
+                {/* Pratinjau memakai aturan yang SAMA dengan landing (`petaEmbed`): kalau owner
+                    menempel tautan peta biasa, yang tampil di sini sudah versi yang benar-benar
+                    menunjuk alamat -- bukan peta kosong yang baru ketahuan salah di landing. */}
+                {pratinjau && (
                   <div className="overflow-hidden rounded-md border border-border">
                     <iframe
-                      src={embed.match(/src=["']([^"']+)["']/i)?.[1] ?? embed}
+                      src={pratinjau}
                       title="Pratinjau peta lokasi gym"
                       className="h-56 w-full border-0"
                       loading="lazy"
@@ -302,9 +355,15 @@ export default function WebSettingsPage() {
           </TabsContent>
 
           <TabsContent value="sosial">
-            <Card className="rounded-xl border-border">
+            <Card className="overflow-hidden rounded-xl border-border">
+              <div className="h-0.5 w-full bg-amber-500" aria-hidden="true" />
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">Media sosial</CardTitle>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <span className="flex size-7 items-center justify-center rounded bg-amber-500/10 text-amber-500">
+                    <Share2 size={15} aria-hidden="true" />
+                  </span>
+                  Media sosial
+                </CardTitle>
                 <p className="text-sm text-muted-foreground">
                   Ikon hanya muncul di landing kalau kolomnya diisi. Kolom kosong tidak
                   menampilkan apa pun &mdash; bukan tautan mati.

@@ -16,6 +16,10 @@ export interface Member {
   days_left: number;
   has_login: boolean;
   is_active: boolean;
+  /** ISO waktu pendaftaran. */
+  created_at: string | null;
+  /** Dihitung backend: terdaftar dalam 7 hari terakhir. Ambangnya jangan dihitung ulang di sini. */
+  baru: boolean;
 }
 
 export interface MemberRenewal {

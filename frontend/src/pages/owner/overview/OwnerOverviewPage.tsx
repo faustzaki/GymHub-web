@@ -16,6 +16,7 @@ import {
   type PriorityMember,
 } from "@/lib/services/owner";
 import { MessageCircle, Users, Clock, UserX, Wallet, UserPlus } from "lucide-react";
+import { useAngkaMemutar } from "@/hooks/useAngkaMemutar";
 import { RevenueChart } from "./components/RevenueChart";
 
 /**
@@ -87,28 +88,33 @@ export default function OwnerOverviewPage() {
       )}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-        <AngkaCard label="Aktif" value={ringkasan?.aktif} icon={Users} loading={memuat} />
+        <AngkaCard label="Aktif" value={ringkasan?.aktif} icon={Users} loading={memuat} nada="aktif" />
         <AngkaCard
           label="Akan berakhir"
           value={ringkasan?.akan_berakhir}
           icon={Clock}
           loading={memuat}
+          nada="soon"
         />
-        <AngkaCard label="Nonaktif" value={ringkasan?.nonaktif} icon={UserX} loading={memuat} />
+        <AngkaCard label="Nonaktif" value={ringkasan?.nonaktif} icon={UserX} loading={memuat} nada="off" />
         <AngkaCard
           label="Uang masuk bulan ini"
           value={
             ringkasan ? (uangBelumTercatat ? "–" : formatRupiah(ringkasan.uang_bulan_ini)) : undefined
           }
+          angka={ringkasan && !uangBelumTercatat ? ringkasan.uang_bulan_ini : undefined}
+          uang
           note={uangBelumTercatat ? BELUM_DIISI : undefined}
           icon={Wallet}
           loading={memuat}
+          nada="uang"
         />
         <AngkaCard
           label="Anggota baru bulan ini"
           value={ringkasan?.baru_bulan_ini}
           icon={UserPlus}
           loading={memuat}
+          nada="baru"
         />
       </div>
 
@@ -225,23 +231,57 @@ export default function OwnerOverviewPage() {
   );
 }
 
+/**
+ * Satu kartu angka dengan garis nada di tepi atas.
+ *
+ * Warna (permintaan josjis 2026-10-29): hijau = aktif, kuning = akan berakhir, abu = nonaktif,
+ * merah = uang, biru = anggota baru. Warnanya menempel di garis tipis + ikon, BUKAN di angka:
+ * nominal dan jumlah tetap teks netral supaya terbaca. DESIGN.md mengizinkan warna semantik
+ * selama bukan warna body text.
+ *
+ * Angka memutar naik saat halaman dibuka (permintaan yang sama), tapi hanya untuk nilai numerik.
+ * `–` (harga belum diisi) tidak dianimasikan: nilai yang tidak diketahui bukan nol.
+ */
+const NADA: Record<string, { garis: string; teks: string }> = {
+  aktif: { garis: "bg-emerald-500", teks: "text-emerald-500" },
+  soon: { garis: "bg-amber-500", teks: "text-amber-500" },
+  off: { garis: "bg-muted-foreground/50", teks: "text-muted-foreground" },
+  uang: { garis: "bg-primary", teks: "text-primary" },
+  baru: { garis: "bg-sky-500", teks: "text-sky-500" },
+};
+
 function AngkaCard({
   label,
   value,
+  angka,
+  uang,
   note,
   icon: Icon,
   loading,
+  nada,
 }: {
   label: string;
   value?: number | string;
+  /** Nilai mentah untuk animasi. `undefined` = jangan animasikan (mis. "–" karena belum diisi). */
+  angka?: number;
+  /** Nominal rupiah: angka yang berputar diformat sebagai uang. */
+  uang?: boolean;
   note?: string;
   icon: typeof Users;
   loading?: boolean;
+  nada?: keyof typeof NADA;
 }) {
+  const warna = nada ? NADA[nada] : null;
+  // Nilai numerik dianimasikan; teks seperti "–" dibiarkan apa adanya.
+  const mentah = angka ?? (typeof value === "number" ? value : null);
+  const berputar = useAngkaMemutar(mentah, label);
+  const tampil = mentah !== null && berputar !== null ? (uang ? formatRupiah(berputar) : berputar) : (value ?? "–");
+
   return (
-    <Card className="rounded-xl border-border">
+    <Card className="relative overflow-hidden rounded-xl border-border">
+      {warna && <span className={`absolute inset-x-0 top-0 h-0.5 ${warna.garis}`} aria-hidden="true" />}
       <CardContent className="space-y-1 p-4">
-        <div className="flex items-center gap-2 text-muted-foreground">
+        <div className={`flex items-center gap-2 ${warna?.teks ?? "text-muted-foreground"}`}>
           <Icon size={16} />
           <span className="text-[11px] font-bold uppercase tracking-widest">{label}</span>
         </div>
@@ -249,7 +289,7 @@ function AngkaCard({
           <Skeleton className="h-8 w-16" />
         ) : (
           <p className="text-2xl font-extrabold tracking-tight text-foreground tabular-nums">
-            {value ?? "–"}
+            {tampil}
           </p>
         )}
         {note && <p className="text-xs text-muted-foreground">{note}</p>}

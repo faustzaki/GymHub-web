@@ -11,6 +11,7 @@ import {
   type Member,
 } from "@/lib/services/members";
 import { BELUM_DIISI, formatRupiah, waLink } from "@/lib/services/owner";
+import { useAngkaMemutar } from "@/hooks/useAngkaMemutar";
 import {
   AlarmClock,
   ArrowRight,
@@ -108,10 +109,16 @@ export default function AdminDashboardPage() {
           }
           icon={Wallet}
           loading={memuat}
+          nada="uang"
+          angka={data && !uangBelumTercatat ? data.uang_hari_ini : undefined}
+          uang
         />
         <Kartu
           label="Uang masuk bulan ini"
           value={data ? formatRupiah(data.uang_bulan_ini) : undefined}
+          angka={data?.uang_bulan_ini}
+          uang
+          nada="uang"
           catatan={data ? `${data.transaksi_bulan_ini} transaksi` : undefined}
           icon={Banknote}
           loading={memuat}
@@ -123,6 +130,7 @@ export default function AdminDashboardPage() {
           icon={AlarmClock}
           loading={memuat}
           href="/admin/members?status=akan_berakhir"
+          nada="soon"
         />
         <Kartu
           label="Daftar hari ini"
@@ -130,6 +138,7 @@ export default function AdminDashboardPage() {
           catatan={data ? "anggota baru masuk hari ini" : undefined}
           icon={Users}
           loading={memuat}
+          nada="baru"
         />
       </div>
 
@@ -225,25 +234,45 @@ function BarisMember({ member, tautanWa }: { member: Member; tautanWa?: boolean 
   );
 }
 
+/** Nada kartu: garis tipis + ikon berwarna, angkanya tetap netral. Sama dengan panel owner. */
+const NADA: Record<string, { garis: string; teks: string }> = {
+  uang: { garis: "bg-primary", teks: "text-primary" },
+  soon: { garis: "bg-amber-500", teks: "text-amber-500" },
+  baru: { garis: "bg-sky-500", teks: "text-sky-500" },
+};
+
 function Kartu({
   label,
   value,
+  angka,
+  uang,
   catatan,
   icon: Icon,
   loading,
   href,
+  nada,
 }: {
   label: string;
   value?: number | string;
+  /** Nilai mentah untuk animasi angka; `undefined` = tidak dianimasikan. */
+  angka?: number;
+  uang?: boolean;
   catatan?: string;
   icon: typeof Users;
   loading: boolean;
   href?: string;
+  nada?: keyof typeof NADA;
 }) {
+  const warna = nada ? NADA[nada] : null;
+  const mentah = angka ?? (typeof value === "number" ? value : null);
+  const berputar = useAngkaMemutar(mentah, label);
+  const tampil = mentah !== null && berputar !== null ? (uang ? formatRupiah(berputar) : berputar) : (value ?? "–");
+
   const isi = (
-    <Card className="h-full rounded-xl border-border transition-colors hover:border-foreground/30">
+    <Card className="relative h-full overflow-hidden rounded-xl border-border transition-colors hover:border-foreground/30">
+      {warna && <span className={`absolute inset-x-0 top-0 h-0.5 ${warna.garis}`} aria-hidden="true" />}
       <CardContent className="space-y-1 p-4">
-        <div className="flex items-center gap-2 text-muted-foreground">
+        <div className={`flex items-center gap-2 ${warna?.teks ?? "text-muted-foreground"}`}>
           <Icon size={16} />
           <span className="text-[11px] font-bold uppercase tracking-widest">{label}</span>
         </div>
@@ -251,7 +280,7 @@ function Kartu({
           <Skeleton className="h-8 w-20" />
         ) : (
           <p className="text-2xl font-extrabold tracking-tight text-foreground tabular-nums">
-            {value ?? "–"}
+            {tampil}
           </p>
         )}
         {catatan && <p className="text-xs text-muted-foreground">{catatan}</p>}

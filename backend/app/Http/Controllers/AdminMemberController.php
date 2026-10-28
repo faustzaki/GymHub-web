@@ -34,6 +34,9 @@ class AdminMemberController extends Controller
      */
     private const PLAN_MAX_MONTHS = 24;
 
+    /** Ambang tanda "BARU" di tabel anggota. Tujuh hari = satu putaran tagihan pertama. */
+    private const BARU_HARI = 7;
+
     public function index(Request $request): JsonResponse
     {
         $perPage = min(max((int) $request->query('per_page', 15), 1), 100);
@@ -519,6 +522,11 @@ class AdminMemberController extends Controller
             'days_left' => $member->daysLeft(),
             'has_login' => (bool) $user?->canLogin(),
             'is_active' => ! ($user?->trashed() ?? false),
+            // Tanda "BARU" di tabel (permintaan josjis 2026-10-29). Ambangnya dikirim backend,
+            // bukan dihitung di peramban: dua tempat menghitung = dua jawaban berbeda.
+            'created_at' => $member->created_at?->toIso8601String(),
+            'baru' => $member->created_at !== null
+                && $member->created_at->greaterThan(now()->subDays(self::BARU_HARI)),
         ];
     }
 

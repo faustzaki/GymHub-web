@@ -2,15 +2,18 @@ import { useState } from "react";
 import { Outlet, NavLink, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/useAuthStore";
+import { LoncengNotifikasi } from "@/components/shared/LoncengNotifikasi";
 import logoImg from "@/assets/logo-gymhub.png";
 import {
   Users,
   LogOut,
   Menu,
   X,
-  Bell,
   Shield,
   LayoutDashboard,
+  ScanLine,
+  Mail,
+  Crown,
 } from "lucide-react";
 
 /**
@@ -18,11 +21,14 @@ import {
  *
  * Sengaja pendek. Keputusan josjis 2026-10-28: yang tampil hanya yang benar-benar dipakai -- menu
  * "Coming Soon" (Coach, Kursus, Jadwal, Laporan, Pengaturan) dibuang dari sidebar karena bikin
- * panel terlihat belum jadi.
+ * panel terlihat belum jadi. 2026-10-29: Absen dan Pesan ditambahkan karena layarnya sudah jadi
+ * (aturan menu: menu muncul hanya kalau layarnya ada).
  */
 const ADMIN_MENU = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard, exact: true },
   { label: "Anggota Gym", href: "/admin/members", icon: Users, exact: false },
+  { label: "Absen", href: "/admin/absen", icon: ScanLine, exact: false },
+  { label: "Pesan", href: "/admin/messages", icon: Mail, exact: false },
 ] as const;
 
 /**
@@ -36,6 +42,7 @@ export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const logout = useAuthStore((state) => state.logout);
+  const role = useAuthStore((state) => state.user?.role);
 
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
   const closeSidebar = () => setSidebarOpen(false);
@@ -110,6 +117,20 @@ export default function AdminLayout() {
               </NavLink>
             );
           })}
+
+          {/* Owner bertingkat: pintu kembali ke panel angka. Tanpa ini, owner yang masuk meja
+              petugas harus mengetik alamat /owner sendiri -- jalan buntu bagi siapa pun yang
+              melihat layar ini tanpa tahu struktur URL. */}
+          {role === "owner" && (
+            <Link
+              to="/owner"
+              onClick={closeSidebar}
+              className="flex items-center gap-3 px-3 py-2.5 mt-2 pt-3 rounded-lg text-sm font-medium text-white/60 hover:text-white hover:bg-white/[0.04] transition-all duration-200 border-t border-white/[0.06]"
+            >
+              <Crown size={18} />
+              Buka Panel Owner
+            </Link>
+          )}
         </nav>
 
         {/* Logout */}
@@ -145,14 +166,7 @@ export default function AdminLayout() {
 
           {/* Right Actions */}
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="relative w-9 h-9 text-muted-foreground hover:text-foreground"
-            >
-              <Bell size={18} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-600" />
-            </Button>
+            <LoncengNotifikasi />
             <Button
               variant="ghost"
               size="icon"

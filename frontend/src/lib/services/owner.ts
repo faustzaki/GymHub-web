@@ -159,13 +159,19 @@ function seninDariIso(tahun: number, minggu: number): Date {
   return new Date(seninPekan1.getFullYear(), seninPekan1.getMonth(), seninPekan1.getDate() + (minggu - 1) * 7);
 }
 
-/** Label pendek untuk grafik: "28 Okt" · "Mgg 44" · "Okt". */
+/** Label pendek untuk grafik: "28 Okt" · "28 Okt–3 Nov" · "Okt". */
 export function periodeLabel(periode: string, grup: GrupWaktu): string {
   if (grup === "bulanan") return monthLabel(periode);
 
   if (grup === "mingguan") {
-    const minggu = Number(periode.split("-W")[1]);
-    return minggu ? `Mgg ${minggu}` : periode;
+    // "Mgg 44" tidak menjawab pertanyaan yang sebenarnya: minggu yang mana? Rentang tanggalnya
+    // yang dibaca orang. Singkat bulan supaya 8 label masih muat di satu baris.
+    const [tahun, angkaMinggu] = periode.split("-W").map(Number);
+    if (!tahun || !angkaMinggu) return periode;
+    const senin = seninDariIso(tahun, angkaMinggu);
+    const minggu = new Date(senin.getFullYear(), senin.getMonth(), senin.getDate() + 6);
+    const hari = (d: Date) => d.toLocaleDateString("id-ID", { day: "numeric", month: "short" });
+    return `${hari(senin)}–${hari(minggu)}`;
   }
 
   const [tahun, bulan, hari] = periode.split("-").map(Number);
@@ -362,6 +368,53 @@ export async function fetchOwnerSettings(): Promise<OwnerSettingsRow[]> {
 export async function fetchPublicSettings(): Promise<PublicSettings> {
   const { data } = await getSekali<{ data: PublicSettings }>("/settings/public");
   return data.data;
+}
+
+/**
+ * Titik peta yang benar-benar menunjuk alamat gym.
+ *
+ * Dulu seksi kontak hanya menyematkan `gym.maps_embed` apa adanya. Kalau owner menempel tautan
+ * "sematan" yang salah (atau kosong), petanya menunjuk tempat lain -- dan tidak ada yang sadar,
+ * karena peta yang salah tetap tampil seperti peta yang benar (permintaan josjis 2026-10-29:
+ * "di Peta lokasi maps nya belum mengarah ke alamat tersebut").
+ *
+ * Aturannya:
+ * - `<iframe ...>` yang ditempel owner -> ambil `src`-nya saja.
+ * - URL `/maps/embed` dengan `pb=` -> pakai apa adanya.
+ * - URL peta biasa (`/maps/place/...`, `/maps?q=...`, tautan pendek) -> TIDAK disematkan; yang
+ *   dipakai `https://maps.google.com/maps?q=<alamat>&output=embed`, karena itu satu-satunya
+ *   bentuk yang dijamin menunjuk alamat tanpa perlu kunci API.
+ * - Tidak ada alamat -> `null`: peta tidak ditampilkan. Peta tanpa alamat = peta Jakarta yang
+ *   tidak ada hubungannya dengan gym.
+ */
+export function petaEmbed(embed: string | null, alamat: string | null): string | null {
+  const alamatBersih = (alamat ?? "").trim();
+  const mentah = (embed ?? "").trim();
+
+  const dariAlamat = () =>
+    alamatBersih === ""
+      ? null
+      : `https://maps.google.com/maps?q=${encodeURIComponent(alamatBersih)}&output=embed&z=16`;
+
+  if (mentah === "") return dariAlamat();
+
+  const isi = mentah.match(/src=["']([^"']+)["']/i)?.[1] ?? mentah;
+
+  // Sematan resmi Google lewat /maps/embed dengan `pb=` yang panjang (protobuf koordinat asli).
+  // Panjangnya diperiksa: nilai contoh seperti `pb=abc123` juga lolos pola URL, dan kalau dipercaya
+  // petanya menampilkan kotak abu-abu -- persis keluhan "maps-nya belum mengarah ke alamat".
+  const pb = isi.match(/[?&]pb=([^&]+)/)?.[1] ?? "";
+  if (/\/maps\/embed/i.test(isi) && pb.length >= 40) return isi;
+
+  // Tautan peta biasa tidak bisa disematkan (X-Frame-Options). Turunkan dari alamat.
+  return dariAlamat();
+}
+
+/** Tautan "buka di Google Maps", selalu dari alamat -- bukan dari kode sematan. */
+export function petaLink(alamat: string | null): string | null {
+  const bersih = (alamat ?? "").trim();
+  if (bersih === "") return null;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(bersih)}`;
 }
 
 /** Kirim pengaturan. `null` = kosongkan (belum diisi), bukan nol. */

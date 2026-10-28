@@ -30,6 +30,27 @@ interface Props {
 }
 
 /**
+ * Tanda "BARU" untuk anggota yang terdaftar dalam 7 hari terakhir.
+ *
+ * Ambangnya datang dari backend (`member.baru`), bukan dihitung di sini: dua tempat menghitung
+ * umur anggota = dua jawaban berbeda begitu zona waktunya berselisih.
+ *
+ * Denyutnya pelan (2,4 dtk) dan cuma satu titik kecil di baris itu -- cukup untuk menarik mata
+ * ke baris yang memang perlu diperhatikan, tidak sampai membuat tabel berkedip.
+ */
+function PenandaBaru() {
+  return (
+    <span
+      className="penanda-baru inline-flex shrink-0 items-center gap-1 rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-bold uppercase leading-none tracking-wider text-primary-foreground"
+      title="Terdaftar dalam 7 hari terakhir"
+    >
+      <span className="size-1 rounded-full bg-primary-foreground/90" aria-hidden="true" />
+      Baru
+    </span>
+  );
+}
+
+/**
  * MemberList — daftar member dari API.
  *
  * Desktop: tabel. HP: kartu bertumpuk (tidak ada geser horizontal, PRD US-2).
@@ -166,7 +187,12 @@ export function MemberList({ state, onAdd, onOpen }: Props) {
                     }}
                     className="cursor-pointer hover:bg-accent/40 focus-visible:bg-accent/40"
                   >
-                    <TableCell className="font-medium">{member.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <span className="flex items-center gap-2">
+                        {member.name}
+                        {member.baru && <PenandaBaru />}
+                      </span>
+                    </TableCell>
                     <TableCell>{member.phone}</TableCell>
                     <TableCell className="text-muted-foreground">{member.member_code ?? "—"}</TableCell>
                     <TableCell>{formatDate(member.membership_started_at)}</TableCell>
@@ -193,7 +219,10 @@ export function MemberList({ state, onAdd, onOpen }: Props) {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-foreground">{member.name}</p>
+                      <span className="flex items-center gap-2">
+                        <p className="truncate text-sm font-semibold text-foreground">{member.name}</p>
+                        {member.baru && <PenandaBaru />}
+                      </span>
                       <p className="text-sm text-muted-foreground">{member.phone}</p>
                     </div>
                     <Badge variant="outline" className={STATUS_CLASS[member.status]}>

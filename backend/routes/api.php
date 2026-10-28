@@ -4,7 +4,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Models\Member;
 use App\Http\Controllers\AdminMemberController;
+use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\MessageController;
 use App\Http\Controllers\OwnerController;
 use App\Http\Controllers\SettingController;
 
@@ -34,6 +36,15 @@ Route::middleware(['auth:sanctum', 'role:admin,owner'])->prefix('admin')->group(
     Route::post('/members/{member}/renew', [AdminMemberController::class, 'renew']);
     Route::post('/members/{member}/deactivate', [AdminMemberController::class, 'deactivate']);
     Route::post('/members/{member}/reactivate', [AdminMemberController::class, 'reactivate']);
+
+    // Absen masuk lewat kamera HP petugas (keputusan josjis 2026-10-29).
+    Route::post('/attendances', [AttendanceController::class, 'store']);
+    Route::get('/attendances', [AttendanceController::class, 'index']);
+
+    // Pesan dari form kontak landing + notifikasi lonceng header.
+    Route::get('/messages', [MessageController::class, 'index']);
+    Route::get('/messages/unread', [MessageController::class, 'unread']);
+    Route::patch('/messages/{message}', [MessageController::class, 'update']);
 });
 
 // Panel owner: angka & keputusan (rencana dashboard owner, tahap 1-2). Semuanya baca KECUALI
@@ -56,6 +67,9 @@ Route::middleware(['auth:sanctum', 'role:owner'])->prefix('owner')->group(functi
 // Pengaturan publik untuk landing -- TANPA login. Setelah ini landing berhenti memakai angka
 // yang ditanam di kode.
 Route::get('/settings/public', [SettingController::class, 'publicPayload']);
+
+// Form kontak landing -- publik, tanpa login. Notifikasi header panel membaca baris yang sama.
+Route::post('/messages', [MessageController::class, 'store']);
 
 // Endpoint untuk Integration Test -- hanya di lingkungan lokal.
 // Sebelumnya endpoint ini hidup juga di produksi dan membocorkan versi PHP + versi Laravel.

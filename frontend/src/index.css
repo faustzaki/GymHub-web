@@ -242,3 +242,32 @@
     color: #ffffff;
   }
 }
+
+/* ---------------------------------------------------------------------------
+ * Penanda "BARU" di tabel anggota.
+ *
+ * Keputusan josjis 2026-10-29: anggota yang terdaftar dalam 7 hari terakhir diberi tanda, dan
+ * tandanya berdenyut pelan. Dua aturan yang dijaga:
+ * - Satu elemen per baris, hanya pada anggota baru. Denyut di semua baris = dinding berkedip.
+ * - `prefers-reduced-motion` mematikan denyutnya; tandanya tetap ada (informasinya bukan
+ *   animasinya).
+ * ------------------------------------------------------------------------- */
+@keyframes denyut-baru {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 55%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 0%, transparent);
+  }
+}
+
+.penanda-baru {
+  animation: denyut-baru 2.4s var(--ease-out-quint, ease-out) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .penanda-baru {
+    animation: none;
+  }
+}

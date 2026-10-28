@@ -1,25 +1,21 @@
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { ArrowUpRight, Mail } from "lucide-react";
+import { ArrowUpRight, Mail, Phone } from "lucide-react";
 import logoImg from "@/assets/logo-gymhub.png";
-
-/**
- * Ikon brand digambar sendiri (lucide sudah menghapus ikon merek):
- * satu warna `currentColor`, ukuran 16px, dekoratif.
- */
-const IconInstagram = ({ className = "" }: { className?: string }) => (
-  <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
-    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-    <circle cx="12" cy="12" r="5" />
-    <circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none" />
-  </svg>
-);
-
-const IconX = ({ className = "" }: { className?: string }) => (
-  <svg width={16} height={16} viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
-    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-  </svg>
-);
+import {
+  IconFacebook,
+  IconInstagram,
+  IconTiktok,
+  IconYoutube,
+} from "@/components/brand/SocialIcons";
+import {
+  SETTING_KEYS,
+  fetchPublicSettings,
+  petaLink,
+  waNumber,
+  type PublicSettings,
+} from "@/lib/services/owner";
 
 // Urutan sama dengan Navbar dan urutan seksi di DOM halaman beranda.
 const FOOTER_NAV = [
@@ -31,14 +27,52 @@ const FOOTER_NAV = [
   { label: "Kontak", href: "#contact" },
 ] as const;
 
-// dummy — tautan sosial contoh sampai akun resmi tersedia.
-const SOCIAL_LINKS = [
-  { icon: IconInstagram, label: "Instagram", href: "https://instagram.com" },
-  { icon: IconX, label: "X", href: "https://x.com" },
+/**
+ * Ikon sosial footer.
+ *
+ * Keputusan josjis 2026-10-29: "media sosial bisa dinamis juga di footer". Dulu tautannya ditanam
+ * di kode (`https://instagram.com`, `https://x.com`) -- dua tautan contoh yang selalu tampil walau
+ * gym tidak punya akunnya. Sekarang isinya dari `GET /settings/public`, sama seperti seksi kontak;
+ * yang kosong tidak dirender.
+ */
+const SOSIAL = [
+  { key: SETTING_KEYS.instagram, label: "Instagram", Icon: IconInstagram },
+  { key: SETTING_KEYS.tiktok, label: "TikTok", Icon: IconTiktok },
+  { key: SETTING_KEYS.facebook, label: "Facebook", Icon: IconFacebook },
+  { key: SETTING_KEYS.youtube, label: "YouTube", Icon: IconYoutube },
 ] as const;
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const [settings, setSettings] = useState<PublicSettings | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchPublicSettings()
+      .then((hasil) => !cancelled && setSettings(hasil))
+      .catch(() => {
+        // Footer tetap tampil tanpa data: navigasi dan hak cipta tidak bergantung pada settings.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const alamat = settings?.[SETTING_KEYS.address] ?? null;
+  const jam = settings?.[SETTING_KEYS.hours] ?? null;
+  const nomorWa = waNumber(settings?.[SETTING_KEYS.whatsapp] ?? null);
+  const tautanPeta = petaLink(alamat);
+
+  // Yang kosong dibuang seluruhnya -- tidak ada baris "· " menggantung di footer.
+  const jejak = [
+    jam && { label: jam, href: null as string | null },
+    alamat && { label: alamat, href: tautanPeta },
+  ].filter(Boolean) as { label: string; href: string | null }[];
+
+  const sosial = SOSIAL.filter((s) => {
+    const isi = settings?.[s.key];
+    return typeof isi === "string" && isi.trim() !== "";
+  });
 
   return (
     <footer className="border-t border-border bg-background text-foreground">
@@ -52,12 +86,30 @@ export default function Footer() {
               </span>
             </a>
             <p className="max-w-sm text-sm font-light leading-relaxed text-muted-foreground">
-              Satu atap, tiga ruang: angkat beban, yoga, dan muaythai. Jadwal, progres, dan materi latihan member
-              tercatat di satu sistem.
+              Satu pintu masuk, satu sistem: keanggotaan, perpanjangan, dan uang masuk tercatat di
+              tempat yang sama.
             </p>
-            <p className="text-xs uppercase tracking-widest text-muted-foreground">
-              Buka setiap hari 05.00–23.00 · Jakarta Selatan
-            </p>
+            {jejak.length > 0 && (
+              <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                {jejak.map((j, i) => (
+                  <span key={j.label}>
+                    {i > 0 && " · "}
+                    {j.href ? (
+                      <a
+                        href={j.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline-offset-4 hover:underline"
+                      >
+                        {j.label}
+                      </a>
+                    ) : (
+                      j.label
+                    )}
+                  </span>
+                ))}
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:col-span-7">
@@ -78,36 +130,60 @@ export default function Footer() {
             </div>
 
             <div>
-              <h2 className="mb-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">Ada pertanyaan?</h2>
+              <h2 className="mb-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                Ada pertanyaan?
+              </h2>
               <p className="mb-4 text-sm font-light leading-relaxed text-muted-foreground">
-                Tulis ke email kami; dibalas pada jam kerja.
+                Kirim lewat form di halaman ini, atau WhatsApp di jam operasional.
               </p>
+
+              {nomorWa && (
+                <Button
+                  asChild
+                  variant="outline"
+                  className="mb-2 h-11 rounded border-border bg-transparent text-foreground hover:bg-card hover:text-foreground"
+                >
+                  <a href={`https://wa.me/${nomorWa}`} target="_blank" rel="noopener noreferrer">
+                    <Phone aria-hidden="true" />
+                    WhatsApp
+                  </a>
+                </Button>
+              )}
+
               <Button
                 asChild
                 variant="outline"
                 className="h-11 rounded border-border bg-transparent text-foreground hover:bg-card hover:text-foreground"
               >
-                <a href="mailto:hello@bifrostgym.id">
+                <a href="#contact">
                   <Mail aria-hidden="true" />
-                  hello@bifrostgym.id
+                  Kirim pesan
                 </a>
               </Button>
 
-              <div className="mt-6 flex items-center gap-2">
-                {SOCIAL_LINKS.map((social) => (
-                  <Button
-                    key={social.label}
-                    asChild
-                    variant="ghost"
-                    size="icon"
-                    className="size-11 rounded border border-border text-muted-foreground hover:border-primary/50 hover:bg-card hover:text-foreground"
-                  >
-                    <a href={social.href} target="_blank" rel="noopener noreferrer" aria-label={social.label}>
-                      <social.icon />
-                    </a>
-                  </Button>
-                ))}
-              </div>
+              {sosial.length > 0 && (
+                <div className="mt-6 flex items-center gap-2">
+                  {sosial.map(({ key, label, Icon }) => (
+                    <Button
+                      key={key}
+                      asChild
+                      variant="ghost"
+                      size="icon"
+                      className="size-11 rounded border border-border text-muted-foreground hover:border-primary/50 hover:bg-card hover:text-foreground"
+                    >
+                      <a
+                        href={settings?.[key] ?? undefined}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={label}
+                        title={label}
+                      >
+                        <Icon />
+                      </a>
+                    </Button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
