@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Plus, Search, RefreshCw } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Plus, ScanLine, Search, RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -114,13 +115,28 @@ export function MemberList({ state, onAdd, onOpen }: Props) {
             </SelectContent>
           </Select>
         </div>
-        <Button
-          onClick={onAdd}
-          className="h-11 rounded bg-primary px-5 text-xs font-bold uppercase tracking-widest text-primary-foreground hover:bg-primary/90"
-        >
-          <Plus size={16} className="mr-2" />
-          Tambah Member
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Jalan pintas ke alat absen. Orang yang berdiri di meja depan biasanya baru sampai
+              di layar ini ("cari anggota") sebelum sadar perlu mencatat kedatangan; menyuruhnya
+              menebak menu "Absen" di sidebar itu satu klik yang tidak perlu. */}
+          <Button
+            asChild
+            variant="outline"
+            className="h-11 rounded border-border px-4 text-xs font-bold uppercase tracking-widest"
+          >
+            <Link to="/admin/absen">
+              <ScanLine size={16} className="mr-2" />
+              Absen
+            </Link>
+          </Button>
+          <Button
+            onClick={onAdd}
+            className="h-11 rounded bg-primary px-5 text-xs font-bold uppercase tracking-widest text-primary-foreground hover:bg-primary/90"
+          >
+            <Plus size={16} className="mr-2" />
+            Tambah Member
+          </Button>
+        </div>
       </div>
 
       {error && (
