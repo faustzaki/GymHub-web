@@ -65,7 +65,10 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    // Dibaca dari .env. Gym ini beroperasi di WIB: kalau dibiarkan UTC, antara pukul 00:00-07:00
+    // WIB tanggal di server masih kemarin, sehingga status masa aktif dan tanggal pendaftaran
+    // bergeser satu hari.
+    'timezone' => env('APP_TIMEZONE', 'UTC'),
 
     /*
     |--------------------------------------------------------------------------

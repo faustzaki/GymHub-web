@@ -60,7 +60,7 @@ class Member extends Model
     /** aktif / akan_berakhir / kadaluarsa / nonaktif — PRD-001 §7. */
     public function status(): string
     {
-        if ($this->user?->trashed()) {
+        if ($this->nonaktif()) {
             return 'nonaktif';
         }
 
@@ -73,6 +73,22 @@ class Member extends Model
             $this->daysLeft() <= self::SOON_DAYS => 'akan_berakhir',
             default => 'aktif',
         };
+    }
+
+    /**
+     * Anggota nonaktif = akun user-nya dihapus (soft delete).
+     *
+     * Sengaja tidak hanya membaca relasi `user`: relasi itu secara bawaan MENYARING baris yang
+     * dihapus, jadi kalau pemanggilnya lupa memuat `withTrashed`, status anggota nonaktif diam-diam
+     * terbaca "aktif". Status yang berbohong lebih berbahaya daripada satu query tambahan.
+     */
+    private function nonaktif(): bool
+    {
+        if ($this->relationLoaded('user')) {
+            return (bool) $this->user?->trashed();
+        }
+
+        return User::withTrashed()->whereKey($this->user_id)->whereNotNull('deleted_at')->exists();
     }
 
     /** Sisa hari; negatif berarti sudah lewat. */
