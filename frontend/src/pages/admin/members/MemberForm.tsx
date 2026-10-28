@@ -13,7 +13,9 @@ import {
   type Member,
   type PlanMonths,
 } from "@/lib/services/members";
+import type { PaymentMethod } from "@/lib/services/owner";
 import { MonthStepper } from "./MonthStepper";
+import { PembayaranForm } from "./PembayaranForm";
 
 interface Props {
   open: boolean;
@@ -34,6 +36,8 @@ export function MemberForm({ open, onOpenChange, onCreated, onOpenExisting }: Pr
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [plan, setPlan] = useState<PlanMonths>(1);
+  const [method, setMethod] = useState<PaymentMethod>("cash");
+  const [amount, setAmount] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [existing, setExisting] = useState<{ id: number; name: string; member_code: string } | null>(null);
@@ -43,6 +47,8 @@ export function MemberForm({ open, onOpenChange, onCreated, onOpenExisting }: Pr
     setName("");
     setPhone("");
     setPlan(1);
+    setMethod("cash");
+    setAmount("");
     setSavingState();
   };
 
@@ -70,7 +76,13 @@ export function MemberForm({ open, onOpenChange, onCreated, onOpenExisting }: Pr
     setGeneralError(null);
 
     try {
-      const member = await createMember({ name: name.trim(), phone: phone.trim(), plan_months: plan });
+      const member = await createMember({
+        name: name.trim(),
+        phone: phone.trim(),
+        plan_months: plan,
+        payment_method: method,
+        amount_paid: amount === "" ? null : Number(amount),
+      });
       toast.success("Member tersimpan", { description: `${member.name} · ${member.member_code}` });
       onCreated(member);
       reset();
@@ -204,6 +216,15 @@ export function MemberForm({ open, onOpenChange, onCreated, onOpenExisting }: Pr
               </span>
             </p>
           </fieldset>
+
+          <PembayaranForm
+            months={plan}
+            method={method}
+            onMethodChange={setMethod}
+            amount={amount}
+            onAmountChange={setAmount}
+            disabled={isSaving}
+          />
 
           {existing && (
             <div role="alert" className="space-y-2 rounded-md border border-border bg-card p-3">

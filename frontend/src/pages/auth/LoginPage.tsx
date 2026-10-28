@@ -32,7 +32,8 @@ export default function LoginPage() {
       return;
     }
 
-    navigate(result.role === "admin" ? "/admin/members" : "/dashboard");
+    // Satu pintu masuk, panel awal menyesuaikan peran (P1): owner -> /owner, petugas -> daftar anggota.
+    navigate(result.role === "owner" ? "/owner" : result.role === "admin" ? "/admin/members" : "/dashboard");
   };
 
   return (

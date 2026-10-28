@@ -6,7 +6,7 @@ const DEV_EMAIL = import.meta.env.VITE_DEV_ADMIN_EMAIL as string | undefined;
 const DEV_PASSWORD = import.meta.env.VITE_DEV_ADMIN_PASSWORD as string | undefined;
 
 /** Role yang dikenal backend (users.role). */
-export type Role = "member" | "coach" | "admin";
+export type Role = "member" | "coach" | "admin" | "owner";
 
 interface User {
   id: number;

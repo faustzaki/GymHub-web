@@ -1,4 +1,5 @@
 import api from "@/lib/axios";
+import type { PaymentMethod } from "@/lib/services/owner";
 
 /** Status dihitung backend (Member::status()). FE hanya menerjemahkan ke label. */
 export type MemberStatus = "aktif" | "akan_berakhir" | "nonaktif";
@@ -81,13 +82,23 @@ export async function createMember(input: {
   name: string;
   phone: string;
   plan_months: PlanMonths;
+  /** Uang yang diterima (P2). `null` = tidak dicatat, bukan nol. */
+  amount_paid?: number | null;
+  payment_method?: PaymentMethod;
 }): Promise<Member> {
   const { data } = await api.post<{ data: Member }>("/admin/members", input);
   return data.data;
 }
 
-export async function renewMember(id: number, plan_months: PlanMonths): Promise<Member> {
-  const { data } = await api.post<{ data: Member }>(`/admin/members/${id}/renew`, { plan_months });
+export async function renewMember(
+  id: number,
+  plan_months: PlanMonths,
+  payment?: { amount_paid: number | null; payment_method: PaymentMethod }
+): Promise<Member> {
+  const { data } = await api.post<{ data: Member }>(`/admin/members/${id}/renew`, {
+    plan_months,
+    ...payment,
+  });
   return data.data;
 }
 

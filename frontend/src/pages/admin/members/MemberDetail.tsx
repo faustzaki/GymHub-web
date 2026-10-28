@@ -20,6 +20,8 @@ import {
 } from "@/lib/services/members";
 import { STATUS_CLASS, STATUS_LABEL } from "./status";
 import { MonthStepper } from "./MonthStepper";
+import { PembayaranForm } from "./PembayaranForm";
+import type { PaymentMethod } from "@/lib/services/owner";
 
 interface Props {
   memberId: number | null;
@@ -41,6 +43,10 @@ export function MemberDetail({ memberId, onClose, onChanged }: Props) {
   // Durasi untuk mode "atur sendiri": dikumpulkan dulu, baru dikonfirmasi.
   const [customMonths, setCustomMonths] = useState(3);
   const [showCustom, setShowCustom] = useState(false);
+  // Pembayaran perpanjangan: durasi terpilih ikut disimpan supaya nominal bisa dicocokkan.
+  const [renewMonths, setRenewMonths] = useState<PlanMonths>(1);
+  const [method, setMethod] = useState<PaymentMethod>("cash");
+  const [amount, setAmount] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
@@ -84,8 +90,12 @@ export function MemberDetail({ memberId, onClose, onChanged }: Props) {
   const perpanjang = async (months: PlanMonths) => {
     if (!detail || busy) return;
     setBusy(months);
+    setRenewMonths(months);
     try {
-      const updated = await renewMember(detail.id, months);
+      const updated = await renewMember(detail.id, months, {
+        payment_method: method,
+        amount_paid: amount === "" ? null : Number(amount),
+      });
       toast.success("Masa aktif diperpanjang", {
         description: `Berakhir ${formatDate(updated.membership_expires_at)}.`,
       });
@@ -184,8 +194,6 @@ export function MemberDetail({ memberId, onClose, onChanged }: Props) {
                 Masih aktif: ditambahkan dari tanggal berakhir lama, sisa waktu tidak dipotong.
                 Sudah lewat tenggat: dihitung dari hari ini.
               </p>
-              {/* Tiap tombol sudah menyebut tanggal berakhir barunya, jadi tidak ada
-                  perpanjangan yang diklik tanpa tahu hasilnya. */}
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {PLAN_OPTIONS.map((months) => (
                   <Button
@@ -193,7 +201,7 @@ export function MemberDetail({ memberId, onClose, onChanged }: Props) {
                     variant="outline"
                     className="h-auto flex-col items-start gap-0.5 rounded border-border py-2"
                     disabled={busy !== null}
-                    onClick={() => perpanjang(months)}
+                    onClick={() => setRenewMonths(months)}
                   >
                     <span className="text-sm">{busy === months ? "..." : `+${planLabel(months)}`}</span>
                     <span className="text-xs font-normal text-muted-foreground">
@@ -214,7 +222,13 @@ export function MemberDetail({ memberId, onClose, onChanged }: Props) {
 
               {showCustom && (
                 <div className="space-y-2 rounded-md border border-border bg-card p-3">
-                  <MonthStepper value={customMonths} onChange={setCustomMonths} />
+                  <MonthStepper
+                    value={customMonths}
+                    onChange={(bulan) => {
+                      setCustomMonths(bulan);
+                      setRenewMonths(bulan);
+                    }}
+                  />
                   <p className="text-sm text-muted-foreground">
                     Total {planLabel(customMonths)} · berakhir{" "}
                     <span className="text-foreground">
@@ -230,6 +244,19 @@ export function MemberDetail({ memberId, onClose, onChanged }: Props) {
                   </Button>
                 </div>
               )}
+
+              <PembayaranForm
+                months={renewMonths}
+                method={method}
+                onMethodChange={setMethod}
+                amount={amount}
+                onAmountChange={setAmount}
+                disabled={busy !== null}
+              />
+              <p className="text-xs text-muted-foreground">
+                Nominal dicatat sebagai uang diterima. Dikosongkan berarti pembayarannya tidak
+                dicatat di Uang Masuk.
+              </p>
             </div>
 
             <Separator />

@@ -13,6 +13,7 @@ import HomePage from "@/pages/public/home/HomePage";
 const AuthLayout = lazy(() => import("@/layouts/AuthLayout"));
 const DashboardLayout = lazy(() => import("@/layouts/DashboardLayout"));
 const AdminLayout = lazy(() => import("@/layouts/AdminLayout"));
+const OwnerLayout = lazy(() => import("@/layouts/OwnerLayout"));
 const CoachLayout = lazy(() => import("@/layouts/CoachLayout"));
 const ProtectedRoute = lazy(() => import("@/routes/ProtectedRoute"));
 
@@ -27,8 +28,9 @@ const CoachOverviewPage = lazy(() => import("@/pages/coach/overview/CoachOvervie
 const MemberManagementPage = lazy(() =>
   import("@/pages/admin/members/MemberManagementPage").then((m) => ({ default: m.MemberManagementPage }))
 );
-const CoachManagementPage = lazy(() => import("@/pages/admin/coaches/CoachManagementPage").then((m) => ({ default: m.CoachManagementPage })));
-const CoachFormPage = lazy(() => import("@/pages/admin/coaches/CoachFormPage").then((m) => ({ default: m.CoachFormPage })));
+const OwnerOverviewPage = lazy(() => import("@/pages/owner/overview/OwnerOverviewPage"));
+const RevenuePage = lazy(() => import("@/pages/owner/revenue/RevenuePage"));
+const WebSettingsPage = lazy(() => import("@/pages/owner/settings/WebSettingsPage"));
 
 /**
  * App Component
@@ -91,21 +93,30 @@ function App() {
         </Route>
 
         {/* =========================================
-            ADMIN DASHBOARD ROUTES (PROTECTED, role=admin)
+            ADMIN DASHBOARD ROUTES (PROTECTED, role=admin atau owner)
+            Owner bertingkat (P1): pemilik ikut jaga meja, jadi dia boleh masuk semua halaman
+            petugas. Petugas tidak boleh masuk /owner/*.
         ========================================= */}
-        <Route element={<ProtectedRoute requiredRole="admin" />}>
+        <Route element={<ProtectedRoute requiredRole={["admin", "owner"]} />}>
           <Route path="/admin" element={<AdminLayout />}>
-            {/* Petugas mendarat langsung di daftar anggota (keputusan josjis 2026-10-28).
-                Halaman ringkasan tidak dibuang -- disimpan untuk dashboard owner. */}
+            {/* Petugas mendarat langsung di daftar anggota (keputusan josjis 2026-10-28). */}
             <Route index element={<Navigate to="members" replace />} />
             <Route path="members" element={<MemberManagementPage />} />
-            <Route path="coaches" element={<CoachManagementPage />} />
-            <Route path="coaches/create" element={<CoachFormPage />} />
-            <Route path="coaches/:id/edit" element={<CoachFormPage />} />
-            <Route path="courses" element={<div className="p-4">Manajemen Kursus (Coming Soon)</div>} />
-            <Route path="schedule" element={<div className="p-4">Jadwal & Kalender (Coming Soon)</div>} />
             <Route path="reports" element={<div className="p-4">Laporan Ops (Coming Soon)</div>} />
             <Route path="settings" element={<div className="p-4">Pengaturan (Coming Soon)</div>} />
+          </Route>
+        </Route>
+
+        {/* =========================================
+            OWNER DASHBOARD ROUTES (PROTECTED, role=owner)
+            Owner bertingkat (P1): dia juga boleh masuk /admin/* karena grup di atas
+            menerima ["admin", "owner"].
+        ========================================= */}
+        <Route element={<ProtectedRoute requiredRole="owner" />}>
+          <Route path="/owner" element={<OwnerLayout />}>
+            <Route index element={<OwnerOverviewPage />} />
+            <Route path="uang" element={<RevenuePage />} />
+            <Route path="pengaturan" element={<WebSettingsPage />} />
           </Route>
         </Route>
 
