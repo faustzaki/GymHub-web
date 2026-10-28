@@ -13,7 +13,8 @@ padahal `is_active` masih true setelah penonaktifan.
 Yang dibuktikan:
  1. admin bisa login lewat /api/login
  2. GET  /api/admin/members tanpa token  -> 401
- 3. GET  /api/admin/members dengan token member biasa -> 403 (penjaga peran benar-benar bekerja)
+ 3. GET  /api/admin/members dengan token member biasa -> 403 penjagaan hidup / 200 kalau
+    DEV_BYPASS_AUTH menyala (keputusan josjis 2026-10-28)
  4. GET  /api/admin/members dengan token admin -> 200 + daftar
  5. POST /api/admin/members (nama + nomor) -> 201, member_code dibuat otomatis
  6. POST nomor yang sama lagi -> 409 + data pemilik nomor (supaya UI bisa menawarkan "buka member itu")
@@ -115,7 +116,11 @@ st, r = call("POST", "/register", {
 token_member = (r.get("data") or {}).get("access_token")
 cek("POST /register (bikin akun biasa)", st, 200 if st == 200 else 201)
 st, r = call("GET", "/admin/members", token=token_member)
-cek("GET /admin/members pakai token member", st, 403, f"pesan: {r.get('message')}")
+# Penjagaan peran di backend bisa sengaja dimatikan selama pengembangan lewat DEV_BYPASS_AUTH
+# (keputusan josjis 2026-10-28). Jadi dua-duanya benar: 403 kalau penjagaan hidup, 200 kalau
+# dilewati. Yang tetap wajib: 401 tanpa token (diuji di atas) -- jadi tidak ada lubang tanpa sesi.
+cek("GET /admin/members pakai token member", st in (200, 403), True,
+    f"| {st} = {'dilewati DEV_BYPASS_AUTH' if st == 200 else 'penjagaan hidup'} | pesan: {r.get('message')}")
 
 print("\n== 3. daftar member (admin) ==")
 st, r = call("GET", "/admin/members", token=token_admin)

@@ -48,6 +48,27 @@ Supaya tidak bolak-balik login saat mengerjakan tampilan, aplikasi masuk sendiri
   sekaligus, jadi 10 permintaan berbaris (±0,5 detik masing-masing). Bukan kerusakan — tunggu, atau
   jalankan API di belakang nginx/php-fpm kalau mengganggu.
 - Penjaganya bisa dipaksa hidup untuk menguji ulang: jalankan dev dengan `VITE_DEV_BYPASS_AUTH=0`.
+  Saklar itu mematikan **dua-duanya** — penjaga halaman dan masuk otomatis (lihat
+  `frontend/src/lib/devMode.ts`). Kalau hanya penjaganya yang mati sementara masuk otomatis tetap
+  jalan, penjaganya mustahil diuji karena sesinya selalu dibuat sendiri.
+
+## Selama Pengembangan: Tidak Ada Penjagaan Peran
+
+Keputusan josjis 2026-10-28: *"jangan ada keamanan dulu ya ini"* — supaya tidak ada layar yang
+menolak saat pindah-pindah halaman. Di `backend/.env`:
+
+```
+DEV_BYPASS_AUTH=true
+```
+
+Syaratnya **dua-duanya** harus terpenuhi: `APP_ENV=local` **dan** saklar itu hidup. Di server
+`APP_ENV` bukan `local` dan `DEV_BYPASS_AUTH` tidak pernah ditulis, jadi penjagaan perannya penuh.
+Tiap kali dilewati, `EnsureRole` menulis peringatan ke `storage/logs/laravel.log` (rute + peran
+akun), jadi tidak hilang diam-diam. Mau menguji penjagaan peran? Set `DEV_BYPASS_AUTH=false`,
+lalu akun petugas akan ditolak 403 di `/api/owner/*` seperti di server.
+
+Yang tetap berlaku meski saklar hidup: **login itu sendiri**. `/api/owner/*` tanpa token tetap
+dijawab 401 — karena di dev, sesinya dibuat otomatis oleh frontend.
 
 ## Perintah Harian
 

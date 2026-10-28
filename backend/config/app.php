@@ -72,6 +72,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Pengembangan: matikan penjagaan peran
+    |--------------------------------------------------------------------------
+    |
+    | Keputusan josjis 2026-10-28: "jangan ada keamanan dulu ya ini" -- selama pengembangan tidak
+    | ada layar yang menolak saat pindah-pindah halaman. Hanya berlaku kalau APP_ENV=local; di
+    | server nilainya tidak pernah ada, jadi penjagaan aslinya tetap penuh. Diisi di .env lokal dan
+    | dicatat di docs/workflow.md.
+    */
+    'dev_bypass_auth' => env('DEV_BYPASS_AUTH', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Locale Configuration
     |--------------------------------------------------------------------------
     |
