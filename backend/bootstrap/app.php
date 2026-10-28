@@ -17,6 +17,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\EnsureRole::class,
         ]);
+
+        // Aplikasi ini API-only: TIDAK ada route bernama 'login'. Tanpa baris ini, permintaan
+        // tanpa header `Accept: application/json` dilempar ke route('login') yang tidak ada ->
+        // 500 "Route [login] not defined", padahal seharusnya 401. null = jangan redirect,
+        // serahkan ke handler exceptions yang sudah dibikin selalu JSON untuk api/*.
+        $middleware->redirectGuestsTo(fn () => null);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Balasan API selalu JSON, termasuk 401 dari auth:sanctum. Tanpa ini, permintaan tanpa

@@ -54,6 +54,24 @@ def call(method, path, body=None, token=None):
             return e.code, {"raw": mentah[:200]}
 
 
+def call_polos(path, token=None):
+    """Permintaan TANPA header Accept: application/json (seperti `curl` polos).
+
+    Ini jalur yang dulu memberi 500 "Route [login] not defined" alih-alih 401, karena
+    middleware auth mencoba melempar tamu ke route bernama 'login' yang tidak ada di
+    aplikasi API-only ini. Bug itu luput karena semua permintaan lain di skrip ini selalu
+    mengirim Accept: application/json.
+    """
+    req = urllib.request.Request(BASE + path, method="GET")
+    if token:
+        req.add_header("Authorization", f"Bearer {token}")
+    try:
+        with urllib.request.urlopen(req, timeout=20) as r:
+            return r.status, r.read().decode()
+    except urllib.error.HTTPError as e:
+        return e.code, e.read().decode()
+
+
 def cek(label, dapat, harap, tambahan=""):
     ok = dapat == harap
     HASIL.append(ok)
@@ -80,6 +98,14 @@ print(f"     token admin: {'ada' if token_admin else 'TIDAK ADA'} | peran: {(r.g
 print("\n== 2. penjaga akses ==")
 st, _ = call("GET", "/admin/members")
 cek("GET /admin/members tanpa token", st, 401)
+
+st_polos, badan = call_polos("/admin/members")
+try:
+    json.loads(badan)
+    berbentuk_json = True
+except json.JSONDecodeError:
+    berbentuk_json = False
+cek("GET /admin/members TANPA header Accept", st_polos, 401, f"| JSON={berbentuk_json}")
 
 st, r = call("POST", "/register", {
     "name": "Uji Member Biasa", "email": EMAIL_UJI,
