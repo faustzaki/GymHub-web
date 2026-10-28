@@ -26,6 +26,7 @@ Route::middleware('auth:sanctum')->group(function () {
 // boleh admin, karena pemiliknya ikut jaga meja). Diuji: tanpa token 401, token member 403,
 // token admin & owner 200.
 Route::middleware(['auth:sanctum', 'role:admin,owner'])->prefix('admin')->group(function () {
+    Route::get('/dashboard', [AdminMemberController::class, 'dashboard']);
     Route::get('/members', [AdminMemberController::class, 'index']);
     Route::post('/members', [AdminMemberController::class, 'store']);
     Route::get('/members/{member}', [AdminMemberController::class, 'show']);
@@ -44,6 +45,8 @@ Route::middleware(['auth:sanctum', 'role:owner'])->prefix('owner')->group(functi
     // jadi empat permintaan berarti kartu di layar menunggu antrean (lihat OwnerController::dashboard).
     Route::get('/dashboard', [OwnerController::class, 'dashboard']);
     Route::get('/revenue', [OwnerController::class, 'revenue']);
+    // Rincian satu periode: dipakai saat baris tabel Uang Masuk diklik.
+    Route::get('/revenue/detail', [OwnerController::class, 'revenueDetail']);
     Route::get('/growth', [OwnerController::class, 'growth']);
     Route::get('/priorities', [OwnerController::class, 'priorities']);
     Route::get('/settings', [SettingController::class, 'index']);

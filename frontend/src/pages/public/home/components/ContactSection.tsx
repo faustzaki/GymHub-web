@@ -1,35 +1,27 @@
-import { useState } from "react";
-import { MapPin, Phone, Clock, Mail, Send, ArrowUpRight, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { MapPin, Phone, Clock, Camera, Globe, Play, Music2, Send, ArrowUpRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  SETTING_KEYS,
+  fetchPublicSettings,
+  waNumber,
+  type PublicSettings,
+} from "@/lib/services/owner";
 
-// dummy — alamat & nomor kontak contoh; ganti dengan data resmi sebelum publikasi.
-const CONTACT_INFO = [
-  {
-    icon: MapPin,
-    label: "Lokasi",
-    value: "Jl. Fitness No. 88, Jakarta Selatan",
-    href: "https://maps.google.com",
-  },
-  {
-    icon: Phone,
-    label: "Telepon",
-    value: "+62 812 3456 7890",
-    href: "tel:+6281234567890",
-  },
-  {
-    icon: Clock,
-    label: "Jam operasional",
-    value: "Setiap hari, 05.00 – 23.00",
-    href: null,
-  },
-  {
-    icon: Mail,
-    label: "Email",
-    value: "hello@bifrostgym.id",
-    href: "mailto:hello@bifrostgym.id",
-  },
+/**
+ * Penutup: lokasi, jam buka, peta, dan kanal sosial.
+ *
+ * Semua isinya dari `GET /settings/public`. Yang belum diisi owner TIDAK dirender -- tidak ada
+ * alamat karangan, tidak ada tautan sosial yang mati, tidak ada "jam buka: –".
+ */
+const SOSIAL = [
+  // lucide 1.8 tidak punya ikon merek; dipakai ikon bentuk, bukan logo tiruan.
+  { key: SETTING_KEYS.instagram, label: "Instagram", Icon: Camera },
+  { key: SETTING_KEYS.tiktok, label: "TikTok", Icon: Music2 },
+  { key: SETTING_KEYS.facebook, label: "Facebook", Icon: Globe },
+  { key: SETTING_KEYS.youtube, label: "YouTube", Icon: Play },
 ] as const;
 
 function useContactForm() {
@@ -63,6 +55,48 @@ function useContactForm() {
 /** Penutup: lokasi, jam buka, kanal kontak, dan form singkat. */
 export default function ContactSection() {
   const { formData, updateField, isValid, isSubmitting, isSubmitted, handleSubmit } = useContactForm();
+  const [settings, setSettings] = useState<PublicSettings | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchPublicSettings()
+      .then((hasil) => !cancelled && setSettings(hasil))
+      .catch(() => {
+        // Gagal memuat pengaturan bukan alasan menyembunyikan seluruh seksi: form tetap tampil.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const alamat = settings?.[SETTING_KEYS.address] ?? null;
+  const jam = settings?.[SETTING_KEYS.hours] ?? null;
+  const nomorWa = waNumber(settings?.[SETTING_KEYS.whatsapp] ?? null);
+  const embed = settings?.[SETTING_KEYS.maps_embed] ?? null;
+
+  // Baris kosong dibuang seluruhnya: alamat "–" lebih buruk daripada tidak ada baris alamat.
+  const kontak = [
+    alamat && {
+      Icon: MapPin,
+      label: "Lokasi",
+      value: alamat,
+      href: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(alamat)}`,
+    },
+    nomorWa && {
+      Icon: Phone,
+      label: "WhatsApp",
+      value: settings?.[SETTING_KEYS.whatsapp] ?? "",
+      href: `https://wa.me/${nomorWa}`,
+    },
+    jam && { Icon: Clock, label: "Jam operasional", value: jam, href: null },
+  ].filter(Boolean) as {
+    Icon: typeof MapPin;
+    label: string;
+    value: string;
+    href: string | null;
+  }[];
+
+  const sosial = SOSIAL.filter((s) => (settings?.[s.key] ?? null) !== null);
 
   return (
     <section
@@ -79,38 +113,81 @@ export default function ContactSection() {
               <span className="italic font-light normal-case text-muted-foreground">{" "}Datang, atau tanya dulu.</span>
             </h2>
             <p className="mt-5 max-w-md text-base font-light leading-relaxed text-muted-foreground">
-              Kunjungi gym langsung untuk lihat ruangannya, atau kirim pertanyaan lewat salah satu kanal di bawah. Pernah
-              dibalas dalam 24 jam kerja.
+              Kunjungi gym langsung untuk lihat ruangannya, atau hubungi lewat salah satu kanal di
+              bawah.
             </p>
 
-            <dl className="mt-10 divide-y divide-border border-y border-border">
-              {CONTACT_INFO.map((item) => {
-                const content = (
-                  <div className="flex min-h-14 items-center gap-4 py-3">
-                    <item.icon className="size-4 shrink-0 text-primary" aria-hidden="true" />
-                    <dt className="w-32 shrink-0 text-xs font-bold uppercase tracking-widest text-muted-foreground">{item.label}</dt>
-                    <dd className="flex min-w-0 flex-1 items-center gap-2 text-sm text-foreground group-hover:underline group-hover:underline-offset-4">
-                      {item.value}
-                      {item.href && <ArrowUpRight className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />}
-                    </dd>
-                  </div>
-                );
+            {kontak.length > 0 && (
+              <dl className="mt-10 divide-y divide-border border-y border-border">
+                {kontak.map((item) => {
+                  const content = (
+                    <div className="flex min-h-14 items-center gap-4 py-3">
+                      <item.Icon className="size-4 shrink-0 text-primary" aria-hidden="true" />
+                      <dt className="w-32 shrink-0 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                        {item.label}
+                      </dt>
+                      <dd className="flex min-w-0 flex-1 items-center gap-2 text-sm text-foreground group-hover:underline group-hover:underline-offset-4">
+                        {item.value}
+                        {item.href && (
+                          <ArrowUpRight className="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                        )}
+                      </dd>
+                    </div>
+                  );
 
-                return item.href ? (
-                  <a
-                    key={item.label}
-                    href={item.href}
-                    target={item.href.startsWith("http") ? "_blank" : undefined}
-                    rel={item.href.startsWith("http") ? "noopener noreferrer" : undefined}
-                    className="group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    {content}
-                  </a>
-                ) : (
-                  <div key={item.label}>{content}</div>
-                );
-              })}
-            </dl>
+                  return item.href ? (
+                    <a
+                      key={item.label}
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      {content}
+                    </a>
+                  ) : (
+                    <div key={item.label}>{content}</div>
+                  );
+                })}
+              </dl>
+            )}
+
+            {sosial.length > 0 && (
+              <div className="mt-8">
+                <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                  Ikuti
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {sosial.map(({ key, label, Icon }) => (
+                    <a
+                      key={key}
+                      href={settings?.[key] ?? undefined}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={label}
+                      className="flex min-h-11 items-center gap-2 border border-border px-3 text-sm text-foreground transition-colors hover:bg-accent"
+                    >
+                      <Icon className="size-4 text-primary" aria-hidden="true" />
+                      {label}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {embed && (
+              <div className="mt-8 overflow-hidden border border-border">
+                {/* loading="lazy": peta tidak boleh menahan muat pertama landing. */}
+                <iframe
+                  src={embed}
+                  title="Peta lokasi gym"
+                  className="h-64 w-full border-0"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  allowFullScreen
+                />
+              </div>
+            )}
           </div>
 
           <div className="lg:col-span-7">
@@ -187,9 +264,11 @@ export default function ContactSection() {
                   )}
                 </Button>
 
-                <p className="text-center text-xs text-muted-foreground">
-                  Butuh jawaban cepat? WhatsApp lebih dulu dibalas di jam operasional.
-                </p>
+                {nomorWa && (
+                  <p className="text-center text-xs text-muted-foreground">
+                    Butuh jawaban cepat? WhatsApp lebih dulu dibalas di jam operasional.
+                  </p>
+                )}
               </form>
             </div>
           </div>

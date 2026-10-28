@@ -1,15 +1,18 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   fetchRevenue,
+  fetchRevenueDetail,
   formatRupiah,
   periodeJudul,
   periodeLabel,
   type GrupWaktu,
   type MoneyPoint,
+  type RevenueDetail,
 } from "@/lib/services/owner";
+import { ChevronDown, ChevronRight } from "lucide-react";
 
 /**
  * RevenuePage — uang masuk, bisa dilihat harian, mingguan, atau bulanan.
@@ -28,8 +31,42 @@ export default function RevenuePage() {
   const [hasil, setHasil] = useState<{ grup: GrupWaktu; items: MoneyPoint[] } | null>(null);
   const [masalah, setMasalah] = useState<{ grup: GrupWaktu; pesan: string } | null>(null);
 
+  // Satu periode yang sedang dibuka, disimpan BERSAMA kelompok waktunya. Saat tombol kelompok
+  // ditekan, baris terbuka otomatis dianggap tertutup tanpa perlu setState di dalam effect.
+  const [buka, setBuka] = useState<{ grup: GrupWaktu; periode: string } | null>(null);
+  const [rincian, setRincian] = useState<{
+    periode: string;
+    data?: RevenueDetail;
+    error?: string;
+  } | null>(null);
+
   const tren = hasil?.grup === grup ? hasil.items : null;
   const error = masalah?.grup === grup ? masalah.pesan : null;
+  const periodeTerbuka = buka?.grup === grup ? buka.periode : null;
+
+  const gantiBuka = (periode: string) => {
+    if (periodeTerbuka === periode) {
+      setBuka(null);
+      return;
+    }
+
+    setBuka({ grup, periode });
+    // Rincian periode yang sudah pernah dimuat dipakai lagi -- menutup lalu membuka baris yang
+    // sama tidak perlu memanggil server untuk kedua kalinya.
+    if (rincian?.periode === periode) return;
+
+    fetchRevenueDetail(grup, periode)
+      .then((data) => setRincian({ periode, data }))
+      .catch((err: unknown) => {
+        const e = err as { response?: { data?: { message?: string } } };
+        setRincian({
+          periode,
+          error:
+            e.response?.data?.message ??
+            "Rincian transaksi belum bisa dimuat. Periksa koneksi ke server.",
+        });
+      });
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -149,6 +186,9 @@ export default function RevenuePage() {
       <Card className="rounded-xl border-border">
         <CardHeader className="pb-2">
           <CardTitle className="text-base">Rincian per {pilihan.satuan}</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Klik satu baris untuk melihat transaksi di dalamnya &mdash; siapa, kapan, dan berapa.
+          </p>
         </CardHeader>
         <CardContent className="px-0">
           {!tren ? (
@@ -158,6 +198,9 @@ export default function RevenuePage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border text-left text-[11px] uppercase tracking-widest text-muted-foreground">
+                    <th className="w-8 px-2 py-2 font-bold">
+                      <span className="sr-only">Buka rincian</span>
+                    </th>
                     <th className="px-4 py-2 font-bold">{pilihan.kolom}</th>
                     <th className="px-4 py-2 text-right font-bold">Cash</th>
                     <th className="px-4 py-2 text-right font-bold">QRIS</th>
@@ -166,25 +209,70 @@ export default function RevenuePage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {[...tren].reverse().map((point) => (
-                    <tr key={point.periode} className="border-b border-border last:border-0">
-                      <td className="px-4 py-3 text-foreground">
-                        {periodeJudul(point.periode, grup)}
-                      </td>
-                      <td className="px-4 py-3 text-right tabular-nums text-foreground">
-                        {formatRupiah(point.cash ?? 0)}
-                      </td>
-                      <td className="px-4 py-3 text-right tabular-nums text-foreground">
-                        {formatRupiah(point.qris ?? 0)}
-                      </td>
-                      <td className="px-4 py-3 text-right tabular-nums text-foreground">
-                        {point.transaksi ?? 0}
-                      </td>
-                      <td className="px-4 py-3 text-right font-semibold tabular-nums text-foreground">
-                        {formatRupiah(point.total ?? 0)}
-                      </td>
-                    </tr>
-                  ))}
+                  {[...tren].reverse().map((point) => {
+                    const terbuka = periodeTerbuka === point.periode;
+                    const tanpaTransaksi = (point.transaksi ?? 0) === 0;
+
+                    return (
+                      <Fragment key={point.periode}>
+                        <tr
+                          // Baris tanpa transaksi tetap bisa diklik: isinya kosong, dan itu
+                          // jawaban yang sah ("memang tidak ada yang bayar hari itu").
+                          onClick={() => gantiBuka(point.periode)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault();
+                              gantiBuka(point.periode);
+                            }
+                          }}
+                          tabIndex={0}
+                          role="button"
+                          aria-expanded={terbuka}
+                          className="cursor-pointer border-b border-border last:border-0 hover:bg-accent/40 focus-visible:bg-accent/40 focus-visible:outline-none"
+                        >
+                          <td className="px-2 py-3 text-muted-foreground">
+                            {terbuka ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+                          </td>
+                          <td className="px-4 py-3 text-foreground">
+                            {periodeJudul(point.periode, grup)}
+                          </td>
+                          <td className="px-4 py-3 text-right tabular-nums text-foreground">
+                            {formatRupiah(point.cash ?? 0)}
+                          </td>
+                          <td className="px-4 py-3 text-right tabular-nums text-foreground">
+                            {formatRupiah(point.qris ?? 0)}
+                          </td>
+                          <td className="px-4 py-3 text-right tabular-nums text-foreground">
+                            {point.transaksi ?? 0}
+                          </td>
+                          <td className="px-4 py-3 text-right font-semibold tabular-nums text-foreground">
+                            {formatRupiah(point.total ?? 0)}
+                          </td>
+                        </tr>
+
+                        {terbuka && (
+                          <tr className="border-b border-border bg-card/60">
+                            <td />
+                            <td colSpan={5} className="px-4 py-3">
+                              {tanpaTransaksi ? (
+                                <p className="text-sm text-muted-foreground">
+                                  Tidak ada transaksi di {periodeJudul(point.periode, grup)}.
+                                </p>
+                              ) : rincian && rincian.periode === point.periode && rincian.error ? (
+                                <p role="alert" className="text-sm text-foreground">
+                                  {rincian.error}
+                                </p>
+                              ) : rincian && rincian.periode === point.periode && rincian.data ? (
+                                <RincianTransaksi data={rincian.data} />
+                              ) : (
+                                <Skeleton className="h-20 w-full" />
+                              )}
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -196,6 +284,59 @@ export default function RevenuePage() {
         Hanya transaksi yang dicatat petugas yang masuk ke sini. Kalau seorang anggota
         didaftarkan tanpa nominal, uangnya tidak dihitung &mdash; catat ulang saat pembayaran
         benar-benar diterima.
+      </p>
+    </div>
+  );
+}
+
+/**
+ * Isi satu periode yang dibuka: daftar transaksi, bukan ringkasan.
+ *
+ * Kolomnya dipilih supaya pertanyaan "siapa yang bayar tadi" terjawab tanpa membuka panel
+ * petugas: nama + kode anggota, jenis (pendaftaran/perpanjangan) + durasi, cara bayar, nominal,
+ * dan siapa petugas yang mencatatnya.
+ */
+function RincianTransaksi({ data }: { data: RevenueDetail }) {
+  return (
+    <div className="space-y-2">
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left text-[11px] uppercase tracking-widest text-muted-foreground">
+              <th className="py-1.5 pr-3 font-bold">Anggota</th>
+              <th className="py-1.5 pr-3 font-bold">Jenis</th>
+              <th className="py-1.5 pr-3 font-bold">Bayar</th>
+              <th className="py-1.5 pr-3 text-right font-bold">Nominal</th>
+              <th className="py-1.5 font-bold">Dicatat</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.items.map((row) => (
+              <tr key={row.id} className="border-t border-border/60">
+                <td className="py-2 pr-3">
+                  <p className="text-foreground">{row.nama ?? "—"}</p>
+                  <p className="text-xs text-muted-foreground">{row.member_code ?? "—"}</p>
+                </td>
+                <td className="py-2 pr-3 text-foreground">
+                  {row.kind}
+                  {row.months ? ` · ${row.months} bln` : ""}
+                </td>
+                <td className="py-2 pr-3 uppercase text-muted-foreground">{row.method}</td>
+                <td className="py-2 pr-3 text-right font-semibold tabular-nums text-foreground">
+                  {formatRupiah(row.amount)}
+                </td>
+                <td className="py-2 text-xs text-muted-foreground">
+                  {row.dicatat ? row.dicatat.slice(11, 16) : "—"}
+                  {row.oleh ? ` · ${row.oleh}` : ""}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        {data.jumlah} transaksi · total {formatRupiah(data.total)}
+        {data.dipotong ? " · hanya 500 transaksi pertama yang ditampilkan" : ""}
       </p>
     </div>
   );

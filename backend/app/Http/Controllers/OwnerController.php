@@ -161,6 +161,118 @@ class OwnerController extends Controller
         ]);
     }
 
+    /**
+     * Rincian transaksi di dalam satu periode -- dipakai saat baris tabel Uang Masuk diklik.
+     *
+     * Sebab ada: rekap harian "Rp 1.200.000" tidak bisa dipakai untuk menjawab pertanyaan yang
+     * sebenarnya ("siapa yang bayar tadi?"). Petugas mencatat, pemilik harus bisa menelusurinya
+     * sampai ke nama & jam, tanpa pindah ke panel petugas.
+     *
+     * `periode` memakai bentuk mesin yang sama dengan `revenue()`: 2026-10-28 (harian),
+     * 2026-W44 (mingguan), 2026-10 (bulanan).
+     */
+    public function revenueDetail(Request $request): JsonResponse
+    {
+        $kelompok = (string) $request->query('group', 'harian');
+        $periode = trim((string) $request->query('periode', ''));
+
+        if (! array_key_exists($kelompok, self::KELOMPOK_WAKTU)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Kelompok waktu tidak dikenal. Pilih: '
+                    .implode(' / ', array_keys(self::KELOMPOK_WAKTU)).'.',
+            ], 422);
+        }
+
+        [$awal, $akhir] = $this->rentangPeriode($kelompok, $periode);
+
+        if ($awal === null) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Periode tidak dikenali. Contoh: 2026-10-28 (harian), 2026-W44 (mingguan), 2026-10 (bulanan).',
+            ], 422);
+        }
+
+        $baris = Payment::query()
+            ->with(['member.user' => fn ($q) => $q->withTrashed(), 'recordedBy'])
+            ->where('paid_at', '>=', $awal->toDateString())
+            ->where('paid_at', '<=', $akhir->toDateString())
+            ->orderByDesc('paid_at')
+            ->orderByDesc('id')
+            ->limit(500)
+            ->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'group' => $kelompok,
+                'periode' => $periode,
+                'dari' => $awal->toDateString(),
+                'sampai' => $akhir->toDateString(),
+                'items' => $baris->map(fn (Payment $p) => [
+                    'id' => $p->id,
+                    'paid_at' => $p->paid_at?->toDateString(),
+                    // Jam pencatatan: satu hari bisa berisi beberapa transaksi dan urutannya penting
+                    // waktu ada selisih.
+                    'dicatat' => $p->created_at?->toDateTimeString(),
+                    'member_code' => $p->member?->member_code,
+                    'nama' => $p->member?->user?->name,
+                    'phone' => $p->member?->user?->phone,
+                    'kind' => $p->kind,
+                    'method' => $p->method,
+                    'months' => $p->months,
+                    'amount' => (float) $p->amount,
+                    'oleh' => $p->recordedBy?->name,
+                ])->all(),
+                'total' => (float) $baris->sum('amount'),
+                'jumlah' => $baris->count(),
+                // 500 baris per periode bukan batas yang wajar dilewati diam-diam.
+                'dipotong' => $baris->count() >= 500,
+            ],
+        ]);
+    }
+
+    /**
+     * Tanggal awal & akhir satu periode. `null` kalau bentuk periodenya tidak masuk akal --
+     * lebih baik 422 daripada diam-diam mengembalikan seluruh riwayat.
+     *
+     * @return array{0: Carbon|null, 1: Carbon|null}
+     */
+    private function rentangPeriode(string $kelompok, string $periode): array
+    {
+        // Bentuknya diperiksa ketat. Tanpa ini, "2026-1" atau "hari ini" akan lolos ke Carbon dan
+        // menghasilkan rentang yang tidak diminta.
+        $cocok = match ($kelompok) {
+            'harian' => preg_match('/^\d{4}-\d{2}-\d{2}$/', $periode),
+            'mingguan' => preg_match('/^\d{4}-W\d{2}$/', $periode),
+            default => preg_match('/^\d{4}-\d{2}$/', $periode),
+        };
+
+        if (! $cocok) {
+            return [null, null];
+        }
+
+        [$awal, $akhir] = match ($kelompok) {
+            'harian' => [Carbon::createFromFormat('Y-m-d', $periode)->startOfDay(), null],
+            'mingguan' => (function () use ($periode) {
+                [$tahun, $minggu] = array_map('intval', explode('-W', $periode));
+                $senin = Carbon::now()->setISODate($tahun, $minggu)->startOfWeek();
+
+                return [$senin->copy(), $senin->copy()->endOfWeek()];
+            })(),
+            default => [Carbon::createFromFormat('Y-m', $periode)->startOfMonth(), null],
+        };
+
+        if ($akhir === null) {
+            $akhir = match ($kelompok) {
+                'harian' => $awal->copy(),
+                default => $awal->copy()->endOfMonth(),
+            };
+        }
+
+        return [$awal, $akhir];
+    }
+
     /** Seberapa jauh ke depan orang masih pantas dikabari, dan berapa lama setelah lewat masih dikejar. */
     private const TAGIH_HARI_KE_DEPAN = 14;
 
@@ -229,6 +341,12 @@ class OwnerController extends Controller
                 'summary' => $this->summary()->getData(true)['data'],
                 'growth' => $this->growth($request)->getData(true)['data'],
                 'priorities' => $this->priorities()->getData(true)['data'],
+                // Deret uang masuk 12 bulan: bahan grafik gaya chart trading di layar Ringkasan.
+                // Dihitung di sini, bukan diambil lewat permintaan kedua -- server dev melayani satu
+                // permintaan sekaligus, jadi grafik akan menunggu di belakang kartu.
+                'revenue' => $this->revenue(
+                    $request->duplicate(['group' => 'bulanan', 'jumlah' => 12])
+                )->getData(true)['data'],
                 'settings' => Setting::publicPayload(),
             ],
         ]);

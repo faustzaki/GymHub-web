@@ -78,14 +78,21 @@ export type SettingsPayload = Record<string, string | null>;
 
 export const SETTING_KEYS = {
   registration: "price.registration",
+  /** Sekali kunjungan. Bukan paket -- tidak menambah masa aktif. */
+  daily: "price.daily",
   monthly: "price.monthly",
-  months_3: "price.months_3",
   months_6: "price.months_6",
   months_12: "price.months_12",
   name: "gym.name",
   address: "gym.address",
   hours: "gym.hours",
   whatsapp: "gym.whatsapp",
+  /** URL embed Google Maps. Kosong = peta tidak ditampilkan di landing. */
+  maps_embed: "gym.maps_embed",
+  instagram: "social.instagram",
+  tiktok: "social.tiktok",
+  facebook: "social.facebook",
+  youtube: "social.youtube",
 } as const;
 
 /** Jawaban `GET /settings/public` — dipakai form petugas dan landing, tanpa login. */
@@ -244,6 +251,8 @@ export interface OwnerDashboard {
   summary: OwnerSummary;
   growth: MonthPoint[];
   priorities: PriorityMember[];
+  /** Uang masuk 12 bulan terakhir -- bahan grafik gaya chart trading. */
+  revenue: MoneyPoint[];
   settings: PublicSettings;
 }
 
@@ -260,8 +269,9 @@ export async function fetchOwnerDashboard(): Promise<OwnerDashboard> {
       summary: OwnerSummary;
       growth: { months: number; items: MonthPoint[] };
       priorities: { months?: number; items: PriorityMember[] };
+      revenue: { group: GrupWaktu; jumlah: number; items: MoneyPoint[] };
       settings: PublicSettings;
-    };
+    }
   }>("/owner/dashboard", { params: { months: 6 } });
 
   // Backend mengirim deret mentah (bulan + items); di sini dibuka supaya layar tinggal pakai.
@@ -269,8 +279,48 @@ export async function fetchOwnerDashboard(): Promise<OwnerDashboard> {
     summary: data.data.summary,
     growth: data.data.growth.items,
     priorities: data.data.priorities.items,
+    revenue: data.data.revenue.items,
     settings: data.data.settings,
   };
+}
+
+/** Satu transaksi di dalam sebuah periode. */
+export interface RevenueDetailRow {
+  id: number;
+  paid_at: string | null;
+  dicatat: string | null;
+  member_code: string | null;
+  nama: string | null;
+  phone: string | null;
+  kind: string;
+  method: PaymentMethod;
+  months: number | null;
+  amount: number;
+  oleh: string | null;
+}
+
+export interface RevenueDetail {
+  dari: string;
+  sampai: string;
+  items: RevenueDetailRow[];
+  total: number;
+  jumlah: number;
+  /** `true` kalau barisnya lebih dari 500 dan dipotong (satu periode tidak wajar sebesar itu). */
+  dipotong: boolean;
+}
+
+/**
+ * Rincian transaksi satu periode. `periode` memakai bentuk mesin dari `revenue()`
+ * (2026-10-28 / 2026-W44 / 2026-10), bukan label yang tampil di layar.
+ */
+export async function fetchRevenueDetail(
+  group: GrupWaktu,
+  periode: string
+): Promise<RevenueDetail> {
+  const { data } = await getSekali<{ data: RevenueDetail }>("/owner/revenue/detail", {
+    params: { group, periode },
+  });
+  return data.data;
 }
 
 /** Anggota baru per bulan, deret kontinu (bulan kosong tetap muncul bernilai 0). */
@@ -339,16 +389,42 @@ export function priceForMonths(settings: PublicSettings | null, months: number):
   const khusus =
     months === 1
       ? settings[SETTING_KEYS.monthly]
-      : months === 3
-        ? settings[SETTING_KEYS.months_3]
-        : months === 6
-          ? settings[SETTING_KEYS.months_6]
-          : months === 12
-            ? settings[SETTING_KEYS.months_12]
-            : null;
+      : months === 6
+        ? settings[SETTING_KEYS.months_6]
+        : months === 12
+          ? settings[SETTING_KEYS.months_12]
+          : null;
   if (khusus !== null && khusus !== undefined) return Number(khusus);
   if (settings[SETTING_KEYS.monthly] === null || settings[SETTING_KEYS.monthly] === undefined) {
     return null;
   }
   return Number(settings[SETTING_KEYS.monthly]) * months;
+}
+
+/**
+ * Harga yang tampil di landing: pendaftaran, harian, 1 bulan, 6 bulan, 1 tahun.
+ *
+ * Susunannya sengaja tetap, bukan mengikuti `Object.keys(settings)`: urutan kartu harga adalah
+ * keputusan tampilan, bukan urutan kolom basis data. Yang belum diisi bernilai `null` dan tidak
+ * dirender sama sekali -- lebih baik kartunya tidak ada daripada "Rp –".
+ */
+export function priceCards(settings: PublicSettings | null): {
+  key: string;
+  label: string;
+  amount: Money;
+  note: string;
+}[] {
+  if (!settings) return [];
+  const angka = (key: string): Money => {
+    const nilai = settings[key as keyof PublicSettings];
+    return nilai === null || nilai === undefined ? null : Number(nilai);
+  };
+
+  return [
+    { key: "registration", label: "Pendaftaran", amount: angka(SETTING_KEYS.registration), note: "sekali bayar" },
+    { key: "daily", label: "Harian", amount: angka(SETTING_KEYS.daily), note: "per kunjungan" },
+    { key: "monthly", label: "1 Bulan", amount: angka(SETTING_KEYS.monthly), note: "per bulan" },
+    { key: "months_6", label: "6 Bulan", amount: angka(SETTING_KEYS.months_6), note: "per 6 bulan" },
+    { key: "months_12", label: "1 Tahun", amount: angka(SETTING_KEYS.months_12), note: "per tahun" },
+  ].filter((kartu) => kartu.amount !== null);
 }

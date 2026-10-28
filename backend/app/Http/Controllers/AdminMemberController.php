@@ -413,6 +413,81 @@ class AdminMemberController extends Controller
     }
 
     /**
+     * Seluruh isi layar Dashboard petugas dalam SATU permintaan.
+     *
+     * Sebabnya sama dengan panel owner: `php -S` di Windows melayani satu permintaan sekaligus, jadi
+     * empat permintaan berarti empat kali antre sebelum kartu pertama terisi.
+     *
+     * Bedanya dengan `OwnerController::summary()`: di sini yang dihitung adalah pekerjaan MEJA hari
+     * ini (uang yang masuk hari ini, siapa yang harus dihubungi hari ini), bukan keadaan gym sebulan.
+     */
+    public function dashboard(): JsonResponse
+    {
+        $hariIni = now()->startOfDay();
+        $mulaiBulan = now()->startOfMonth();
+
+        // Status lewat Member::status() per anggota -- satu sumber kebenaran, sama seperti panel owner.
+        $anggota = Member::query()->with(['user' => fn ($q) => $q->withTrashed()])->get();
+        $hitung = ['aktif' => 0, 'akan_berakhir' => 0, 'nonaktif' => 0];
+        foreach ($anggota as $m) {
+            $hitung[$m->status()]++;
+        }
+
+        $uang = Payment::query()
+            ->where('paid_at', '>=', $mulaiBulan->toDateString())
+            ->selectRaw('COALESCE(SUM(amount), 0) as bulan')
+            ->selectRaw('COUNT(*) as transaksi_bulan')
+            ->selectRaw("COALESCE(SUM(CASE WHEN paid_at >= ? THEN amount END), 0) as hari", [$hariIni->toDateString()])
+            ->selectRaw("COUNT(CASE WHEN paid_at >= ? THEN 1 END) as transaksi_hari", [$hariIni->toDateString()])
+            ->selectRaw("COALESCE(SUM(CASE WHEN paid_at >= ? AND method = 'cash' THEN amount END), 0) as cash_hari", [$hariIni->toDateString()])
+            ->selectRaw("COALESCE(SUM(CASE WHEN paid_at >= ? AND method = 'qris' THEN amount END), 0) as qris_hari", [$hariIni->toDateString()])
+            ->first();
+
+        $baruHariIni = Member::query()->where('created_at', '>=', $hariIni)->count();
+
+        // Yang paling mendesak didahulukan: habis hari ini/beberapa hari lagi, lalu yang baru lewat.
+        // Urutan `expires ASC` saja salah -- yang lewat 6 bulan muncul paling atas dan menutupi orang
+        // yang masa aktifnya habis besok. Yang belum lewat selalu di atas, lalu yang paling dekat.
+        $segera = Member::query()
+            ->with(['user' => fn ($q) => $q->withTrashed()])
+            ->whereNotNull('membership_expires_at')
+            ->whereDate('membership_expires_at', '>=', $hariIni->copy()->subDays(30)->toDateString())
+            ->whereDate('membership_expires_at', '<=', $hariIni->copy()->addDays(Member::SOON_DAYS)->toDateString())
+            ->whereHas('user', fn ($u) => $u->whereNull('deleted_at'))
+            ->orderByRaw(
+                'CASE WHEN DATE(membership_expires_at) >= ? THEN 0 ELSE 1 END ASC,'
+                .' ABS(DATEDIFF(DATE(membership_expires_at), ?)) ASC',
+                [$hariIni->toDateString(), $hariIni->toDateString()],
+            )
+            ->limit(5)
+            ->get();
+
+        $terbaru = Member::query()
+            ->with(['user' => fn ($q) => $q->withTrashed()])
+            ->whereHas('user', fn ($u) => $u->whereNull('deleted_at')->where('role', User::ROLE_MEMBER))
+            ->orderByDesc('created_at')
+            ->limit(5)
+            ->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'hitung' => $hitung + ['total' => $anggota->count()],
+                'uang_hari_ini' => (float) $uang->hari,
+                'transaksi_hari_ini' => (int) $uang->transaksi_hari,
+                'cash_hari_ini' => (float) $uang->cash_hari,
+                'qris_hari_ini' => (float) $uang->qris_hari,
+                'uang_bulan_ini' => (float) $uang->bulan,
+                'transaksi_bulan_ini' => (int) $uang->transaksi_bulan,
+                'baru_hari_ini' => $baruHariIni,
+                'harga_terisi' => Setting::money(Setting::PRICE_MONTHLY) !== null,
+                'segera_habis' => $segera->map(fn (Member $m) => $this->present($m))->all(),
+                'terbaru' => $terbaru->map(fn (Member $m) => $this->present($m))->all(),
+            ],
+        ]);
+    }
+
+    /**
      * Bentuk satu baris member yang dipakai semua endpoint (PRD-001 §8).
      *
      * @return array<string, mixed>

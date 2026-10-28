@@ -23,20 +23,34 @@ class SettingController extends Controller
     /** @var list<string> */
     private const KUNCI_HARGA = [
         Setting::PRICE_REGISTRATION,
+        Setting::PRICE_DAILY,
         Setting::PRICE_MONTHLY,
         // Literal, bukan array_values(Setting::PRICE_PER_DURATION): konstanta kelas tidak
         // boleh memanggil fungsi. Sama seperti literal di Setting::PUBLIC_KEYS.
-        'price.months_3',
         'price.months_6',
         'price.months_12',
     ];
 
     /** @var list<string> */
     private const KUNCI_TEKS = [
-        Setting::GYM_NAME,
         Setting::GYM_ADDRESS,
         Setting::GYM_HOURS,
         Setting::GYM_WHATSAPP,
+    ];
+
+    /**
+     * Kolom yang isinya URL. Kosong tetap boleh (artinya "tidak ditampilkan"); yang tidak kosong
+     * harus benar-benar alamat http(s) -- kalau tidak, landing akan menyematkan tautan mati atau
+     * iframe kosong, dan penyebabnya tidak kelihatan dari layar owner.
+     *
+     * @var list<string>
+     */
+    private const KUNCI_URL = [
+        Setting::GYM_MAPS_EMBED,
+        'social.instagram',
+        'social.tiktok',
+        'social.facebook',
+        'social.youtube',
     ];
 
     public function publicPayload(): JsonResponse
@@ -79,6 +93,34 @@ class SettingController extends Controller
                 } else {
                     $bersih[$key] = $value;
                 }
+            } elseif (in_array($key, self::KUNCI_URL, true)) {
+                // Kosong = tidak ditampilkan di landing. Itu keadaan yang sah, bukan kesalahan.
+                if ($value === null || $value === '') {
+                    $bersih[$key] = null;
+                    continue;
+                }
+
+                if (! is_string($value) || mb_strlen($value) > 1000) {
+                    $errors[$key] = ['Tautan terlalu panjang (maksimal 1000 huruf).'];
+
+                    continue;
+                }
+
+                // Pemilik menempel seluruh tag <iframe> dari Google Maps; yang disimpan hanya src-nya.
+                // Tanpa ini, landing harus menyisipkan HTML mentah -- dan HTML mentah dari kolom
+                // basis data adalah jalan masuk yang tidak perlu.
+                $isi = trim($value);
+                if (preg_match('/src=["\']([^"\']+)["\']/i', $isi, $cocok)) {
+                    $isi = $cocok[1];
+                }
+
+                if (! preg_match('#^https?://#i', $isi)) {
+                    $errors[$key] = ['Alamat harus dimulai dengan http:// atau https://.'];
+
+                    continue;
+                }
+
+                $bersih[$key] = $isi;
             } else {
                 // Kunci asing ditolak, bukan diam-diam disimpan: table ini akan dibaca landing.
                 $errors[$key] = ['Kunci pengaturan ini tidak dikenal.'];

@@ -21,9 +21,7 @@ const ProtectedRoute = lazy(() => import("@/routes/ProtectedRoute"));
 const LoginPage = lazy(() => import("@/pages/auth/LoginPage"));
 const NotFoundPage = lazy(() => import("@/pages/auth/NotFoundPage"));
 const MemberOverviewPage = lazy(() => import("@/pages/member/overview/MemberOverviewPage"));
-// Halaman ringkasan admin tidak lagi dipakai sebagai halaman pertama (petugas langsung ke
-// daftar anggota). Berkasnya sengaja dibiarkan di repositori untuk dashboard owner nanti.
-// const AdminOverviewPage = lazy(() => import("@/pages/admin/overview/AdminOverviewPage"));
+const AdminDashboardPage = lazy(() => import("@/pages/admin/overview/AdminDashboardPage"));
 const CoachOverviewPage = lazy(() => import("@/pages/coach/overview/CoachOverviewPage"));
 const MemberManagementPage = lazy(() =>
   import("@/pages/admin/members/MemberManagementPage").then((m) => ({ default: m.MemberManagementPage }))
@@ -99,8 +97,10 @@ function App() {
         ========================================= */}
         <Route element={<ProtectedRoute requiredRole={["admin", "owner"]} />}>
           <Route path="/admin" element={<AdminLayout />}>
-            {/* Petugas mendarat langsung di daftar anggota (keputusan josjis 2026-10-28). */}
-            <Route index element={<Navigate to="members" replace />} />
+            {/* Dashboard = layar pertama petugas (permintaan josjis 2026-10-28). */}
+            <Route index element={<AdminDashboardPage />} />
+            {/* Alamat eksplisit /admin/dashboard, sama isinya dengan /admin. */}
+            <Route path="dashboard" element={<AdminDashboardPage />} />
             <Route path="members" element={<MemberManagementPage />} />
           </Route>
         </Route>

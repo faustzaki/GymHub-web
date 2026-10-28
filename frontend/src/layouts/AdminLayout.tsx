@@ -10,17 +10,19 @@ import {
   X,
   Bell,
   Shield,
+  LayoutDashboard,
 } from "lucide-react";
 
 /**
  * Menu sidebar untuk Admin Dashboard.
  *
- * Sengaja pendek. Keputusan josjis 2026-10-28: yang tampil hanya yang benar-benar dipakai --
- * menu "Coming Soon" (Coach, Kursus, Jadwal, Laporan, Pengaturan) dibuang dari sidebar karena
- * bikin panel terlihat belum jadi. Rutenya masih ada di App.tsx kalau nanti dikerjakan.
+ * Sengaja pendek. Keputusan josjis 2026-10-28: yang tampil hanya yang benar-benar dipakai -- menu
+ * "Coming Soon" (Coach, Kursus, Jadwal, Laporan, Pengaturan) dibuang dari sidebar karena bikin
+ * panel terlihat belum jadi.
  */
 const ADMIN_MENU = [
-  { label: "Anggota Gym", href: "/admin/members", icon: Users },
+  { label: "Dashboard", href: "/admin", icon: LayoutDashboard, exact: true },
+  { label: "Anggota Gym", href: "/admin/members", icon: Users, exact: false },
 ] as const;
 
 /**
@@ -84,7 +86,9 @@ export default function AdminLayout() {
         {/* Navigation Menu */}
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {ADMIN_MENU.map((item) => {
-            const isActive = location.pathname.startsWith(item.href);
+            const isActive = item.exact
+              ? location.pathname === item.href
+              : location.pathname.startsWith(item.href);
 
             return (
               <NavLink

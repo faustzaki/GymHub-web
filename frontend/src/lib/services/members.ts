@@ -78,6 +78,33 @@ export async function fetchMember(id: number): Promise<MemberDetail> {
   return data.data;
 }
 
+/** Isi layar Dashboard petugas -- satu permintaan, bukan empat. */
+export interface AdminDashboard {
+  hitung: { aktif: number; akan_berakhir: number; nonaktif: number; total: number };
+  uang_hari_ini: number;
+  transaksi_hari_ini: number;
+  cash_hari_ini: number;
+  qris_hari_ini: number;
+  uang_bulan_ini: number;
+  transaksi_bulan_ini: number;
+  baru_hari_ini: number;
+  /** `false` = harga bulanan belum diisi, jadi Rp 0 di layar berarti "belum diisi". */
+  harga_terisi: boolean;
+  segera_habis: Member[];
+  terbaru: Member[];
+}
+
+/**
+ * Satu permintaan untuk seluruh Dashboard petugas.
+ *
+ * Sama seperti panel owner: `php -S` di Windows melayani satu permintaan sekaligus, jadi angka
+ * kartu, daftar tagihan, dan daftar terbaru diminta bersama-sama, bukan berbaris.
+ */
+export async function fetchAdminDashboard(): Promise<AdminDashboard> {
+  const { data } = await getSekali<{ data: AdminDashboard }>("/admin/dashboard");
+  return data.data;
+}
+
 export async function createMember(input: {
   name: string;
   phone: string;

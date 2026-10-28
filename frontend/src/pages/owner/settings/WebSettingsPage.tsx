@@ -16,25 +16,54 @@ import {
   type SettingsPayload,
 } from "@/lib/services/owner";
 
-type HargaKey = (typeof SETTING_KEYS)["registration"] | "price.monthly" | "price.months_3" | "price.months_6" | "price.months_12";
-
-const HARGA: { key: HargaKey; label: string; bantuan: string }[] = [
+/** Nominal rupiah yang disimpan sebagai teks angka ("200000"), bukan "Rp 200.000". */
+const HARGA: { key: string; label: string; bantuan: string }[] = [
   {
     key: SETTING_KEYS.registration,
     label: "Biaya pendaftaran",
     bantuan: "Sekali bayar saat anggota pertama kali masuk.",
   },
-  { key: SETTING_KEYS.monthly, label: "1 bulan", bantuan: "Harga bulanan. Durasi lain bisa dihitung dari sini." },
-  { key: SETTING_KEYS.months_3, label: "3 bulan", bantuan: "Kosongkan kalau memakai harga bulanan x 3." },
-  { key: SETTING_KEYS.months_6, label: "6 bulan", bantuan: "Kosongkan kalau memakai harga bulanan x 6." },
-  { key: SETTING_KEYS.months_12, label: "12 bulan", bantuan: "Kosongkan kalau memakai harga bulanan x 12." },
+  {
+    key: SETTING_KEYS.daily,
+    label: "Biaya harian / visit",
+    bantuan: "Sekali kunjungan untuk yang tidak berlangganan. Tidak menambah masa aktif.",
+  },
+  { key: SETTING_KEYS.monthly, label: "1 bulan", bantuan: "Harga bulanan. Durasi 2–5 bulan dihitung dari sini." },
+  { key: SETTING_KEYS.months_6, label: "6 bulan", bantuan: "Kosongkan kalau memakai harga bulanan × 6." },
+  { key: SETTING_KEYS.months_12, label: "1 tahun", bantuan: "Kosongkan kalau memakai harga bulanan × 12." },
 ];
 
-const TEKS: { key: string; label: string; bantuan: string }[] = [
-  { key: SETTING_KEYS.name, label: "Nama gym", bantuan: "Tampil di landing dan pesan tagihan." },
-  { key: SETTING_KEYS.address, label: "Alamat", bantuan: "Alamat yang ditampilkan ke calon anggota." },
-  { key: SETTING_KEYS.hours, label: "Jam buka", bantuan: "Contoh: 06.00-22.00." },
-  { key: SETTING_KEYS.whatsapp, label: "Nomor WhatsApp", bantuan: "Nomor yang dihubungi calon anggota." },
+/**
+ * Info gym. Nama gym SENGAJA tidak ada di sini (permintaan josjis 2026-10-28): brand sudah tetap
+ * "GymHub", dan kolom nama yang bisa diubah cuma menambah tempat untuk salah ketik.
+ */
+const TEKS: { key: string; label: string; bantuan: string; placeholder: string }[] = [
+  {
+    key: SETTING_KEYS.address,
+    label: "Alamat",
+    bantuan: "Tampil di landing, dan dipakai tombol \"Buka di Google Maps\".",
+    placeholder: "Jl. ... No. ..., Kota",
+  },
+  {
+    key: SETTING_KEYS.hours,
+    label: "Jam buka",
+    bantuan: "Contoh: Setiap hari, 06.00–22.00.",
+    placeholder: "Setiap hari, 06.00–22.00",
+  },
+  {
+    key: SETTING_KEYS.whatsapp,
+    label: "Nomor WhatsApp",
+    bantuan: "Nomor yang dihubungi calon anggota. Tombol WhatsApp di landing memakai nomor ini.",
+    placeholder: "08123456789",
+  },
+];
+
+/** Semua opsional: yang kosong tidak ditampilkan di landing sama sekali. */
+const SOSIAL: { key: string; label: string; contoh: string }[] = [
+  { key: SETTING_KEYS.instagram, label: "Instagram", contoh: "https://instagram.com/namagym" },
+  { key: SETTING_KEYS.tiktok, label: "TikTok", contoh: "https://tiktok.com/@namagym" },
+  { key: SETTING_KEYS.facebook, label: "Facebook", contoh: "https://facebook.com/namagym" },
+  { key: SETTING_KEYS.youtube, label: "YouTube", contoh: "https://youtube.com/@namagym" },
 ];
 
 /**
@@ -83,7 +112,13 @@ export default function WebSettingsPage() {
     try {
       // Hanya kunci yang dikenal backend; kosong -> null (belum diisi), bukan 0.
       const payload: SettingsPayload = {};
-      for (const { key } of [...HARGA, ...TEKS]) {
+      const semua = [
+        ...HARGA.map((h) => h.key),
+        ...TEKS.map((t) => t.key),
+        SETTING_KEYS.maps_embed,
+        ...SOSIAL.map((s) => s.key),
+      ];
+      for (const key of semua) {
         const isi = (nilai[key] ?? "").trim();
         payload[key] = isi === "" ? null : isi;
       }
@@ -110,6 +145,9 @@ export default function WebSettingsPage() {
   const terakhir = baris
     ?.filter((row) => row.updated_at)
     .sort((a, b) => (a.updated_at! < b.updated_at! ? 1 : -1))[0];
+
+  const embed = (nilai[SETTING_KEYS.maps_embed] ?? "").trim();
+  const alamat = (nilai[SETTING_KEYS.address] ?? "").trim();
 
   return (
     <div className="space-y-6">
@@ -149,12 +187,15 @@ export default function WebSettingsPage() {
             <TabsTrigger value="info" className="h-9 rounded px-4 text-sm">
               Info Gym
             </TabsTrigger>
+            <TabsTrigger value="sosial" className="h-9 rounded px-4 text-sm">
+              Media Sosial
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="harga">
             <Card className="rounded-xl border-border">
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">Harga keanggotaan</CardTitle>
+                <CardTitle className="text-base">Harga Member</CardTitle>
                 <p className="text-sm text-muted-foreground">
                   Nominal ini mengisi kolom pembayaran di panel petugas, dan tetap boleh diubah
                   saat transaksi.
@@ -184,7 +225,7 @@ export default function WebSettingsPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="info">
+          <TabsContent value="info" className="space-y-4">
             <Card className="rounded-xl border-border">
               <CardHeader className="pb-2">
                 <CardTitle className="text-base">Identitas gym</CardTitle>
@@ -193,7 +234,7 @@ export default function WebSettingsPage() {
                 </p>
               </CardHeader>
               <CardContent className="grid gap-4 sm:grid-cols-2">
-                {TEKS.map(({ key, label, bantuan }) => (
+                {TEKS.map(({ key, label, bantuan, placeholder }) => (
                   <div key={key} className="space-y-1.5">
                     <label htmlFor={key} className="text-sm font-medium text-foreground">
                       {label}
@@ -203,10 +244,85 @@ export default function WebSettingsPage() {
                       value={nilai[key] ?? ""}
                       onChange={(e) => ubah(key, e.target.value)}
                       maxLength={200}
-                      placeholder="Belum diisi"
+                      placeholder={placeholder}
                       className="h-11 rounded-md border-border"
                     />
                     <p className="text-xs text-muted-foreground">{bantuan}</p>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-xl border-border">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Peta lokasi</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Buka Google Maps &rarr; cari lokasi gym &rarr; Bagikan &rarr; Sematkan peta
+                  &rarr; salin kodenya, tempel di sini. Yang disimpan hanya alamat peta-nya.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="space-y-1.5">
+                  <label htmlFor={SETTING_KEYS.maps_embed} className="text-sm font-medium text-foreground">
+                    Kode sematan / tautan peta
+                  </label>
+                  <Input
+                    id={SETTING_KEYS.maps_embed}
+                    value={nilai[SETTING_KEYS.maps_embed] ?? ""}
+                    onChange={(e) => ubah(SETTING_KEYS.maps_embed, e.target.value)}
+                    placeholder="<iframe src=&quot;https://www.google.com/maps/embed?pb=...&quot;>"
+                    className="h-11 rounded-md border-border"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Kosongkan kalau peta belum mau ditampilkan. Peta hanya muncul di landing kalau
+                    kolom ini terisi.
+                  </p>
+                </div>
+
+                {embed !== "" && (
+                  <div className="overflow-hidden rounded-md border border-border">
+                    <iframe
+                      src={embed.match(/src=["']([^"']+)["']/i)?.[1] ?? embed}
+                      title="Pratinjau peta lokasi gym"
+                      className="h-56 w-full border-0"
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                    />
+                  </div>
+                )}
+
+                {alamat !== "" && (
+                  <p className="text-xs text-muted-foreground">
+                    Tombol &ldquo;Buka di Google Maps&rdquo; di landing memakai alamat:{" "}
+                    <span className="text-foreground">{alamat}</span>
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="sosial">
+            <Card className="rounded-xl border-border">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Media sosial</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Ikon hanya muncul di landing kalau kolomnya diisi. Kolom kosong tidak
+                  menampilkan apa pun &mdash; bukan tautan mati.
+                </p>
+              </CardHeader>
+              <CardContent className="grid gap-4 sm:grid-cols-2">
+                {SOSIAL.map(({ key, label, contoh }) => (
+                  <div key={key} className="space-y-1.5">
+                    <label htmlFor={key} className="text-sm font-medium text-foreground">
+                      {label}
+                    </label>
+                    <Input
+                      id={key}
+                      value={nilai[key] ?? ""}
+                      onChange={(e) => ubah(key, e.target.value)}
+                      placeholder={contoh}
+                      className="h-11 rounded-md border-border"
+                    />
                   </div>
                 ))}
               </CardContent>

@@ -21,8 +21,21 @@ class Setting extends Model
 
     public const PRICE_MONTHLY = 'price.monthly';
 
-    /** Durasi yang punya harga sendiri. Di luar daftar ini dipakai harga bulanan x bulan. */
-    public const PRICE_PER_DURATION = [3 => 'price.months_3', 6 => 'price.months_6', 12 => 'price.months_12'];
+    /**
+     * Biaya harian / sekali kunjungan (walk-in). Bukan paket keanggotaan -- tidak menambah masa
+     * aktif apa pun, jadi tidak pernah dipakai `priceFor()`. Ada karena itu yang paling sering
+     * ditanya orang di depan pintu, dan angkanya harus bisa diubah pemilik tanpa menyentuh kode.
+     */
+    public const PRICE_DAILY = 'price.daily';
+
+    /**
+     * Durasi yang punya harga sendiri. Di luar daftar ini dipakai harga bulanan x bulan.
+     *
+     * 3 bulan sengaja TIDAK punya harga sendiri (keputusan josjis 2026-10-28): form harga hanya
+     * memuat 1 bulan / 6 bulan / 1 tahun, dan 3 bulan dihitung bulanan x 3. Baris `price.months_3`
+     * lama dibiarkan di basis data kalau ada, tapi tidak lagi dibaca maupun ditampilkan.
+     */
+    public const PRICE_PER_DURATION = [6 => 'price.months_6', 12 => 'price.months_12'];
 
     public const GYM_NAME = 'gym.name';
 
@@ -32,17 +45,37 @@ class Setting extends Model
 
     public const GYM_WHATSAPP = 'gym.whatsapp';
 
+    /**
+     * URL embed Google Maps (https://www.google.com/maps/embed?pb=...). Disimpan sebagai satu teks,
+     * bukan koordinat: pemilik cukup menyalin "Salin HTML"/"Sematkan peta" dari Google Maps, dan
+     * tidak perlu mengubah lat/lng setiap kali alamatnya bergeser sedikit.
+     */
+    public const GYM_MAPS_EMBED = 'gym.maps_embed';
+
+    /** Media sosial. Kosong = tidak ditampilkan di landing (bukan ditampilkan sebagai tautan mati). */
+    public const SOCIAL_KEYS = [
+        'social.instagram',
+        'social.tiktok',
+        'social.facebook',
+        'social.youtube',
+    ];
+
     /** Kunci yang boleh dibaca publik (landing) -- tanpa kunci internal apa pun. */
     public const PUBLIC_KEYS = [
         self::PRICE_REGISTRATION,
+        self::PRICE_DAILY,
         self::PRICE_MONTHLY,
-        'price.months_3',
         'price.months_6',
         'price.months_12',
         self::GYM_NAME,
         self::GYM_ADDRESS,
         self::GYM_HOURS,
         self::GYM_WHATSAPP,
+        self::GYM_MAPS_EMBED,
+        'social.instagram',
+        'social.tiktok',
+        'social.facebook',
+        'social.youtube',
     ];
 
     protected $primaryKey = 'key';

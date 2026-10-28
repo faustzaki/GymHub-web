@@ -10,21 +10,24 @@ import {
   formatTanggal,
   monthLabel,
   waLink,
+  type MoneyPoint,
   type MonthPoint,
   type OwnerSummary,
   type PriorityMember,
 } from "@/lib/services/owner";
 import { MessageCircle, Users, Clock, UserX, Wallet, UserPlus } from "lucide-react";
+import { RevenueChart } from "./components/RevenueChart";
 
 /**
  * OwnerOverviewPage — "bagaimana keadaan gym", bukan pekerjaan meja.
  *
- * Panel ini tidak menyalin tabel anggota: yang tampil cuma angka, grafik batang, dan 10 nama
- * untuk ditagih. Uang yang harga sumbernya belum diisi tampil "–" + keterangan (P5).
+ * Panel ini tidak menyalin tabel anggota: yang tampil cuma angka, grafik, dan 10 nama untuk
+ * ditagih. Uang yang harga sumbernya belum diisi tampil "–" + keterangan (P5).
  */
 export default function OwnerOverviewPage() {
   const [ringkasan, setRingkasan] = useState<OwnerSummary | null>(null);
   const [tren, setTren] = useState<MonthPoint[] | null>(null);
+  const [uang, setUang] = useState<MoneyPoint[] | null>(null);
   const [prioritas, setPrioritas] = useState<PriorityMember[] | null>(null);
   const [namaGym, setNamaGym] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +39,7 @@ export default function OwnerOverviewPage() {
       const e = err as { response?: { data?: { message?: string } } };
       setError(
         e.response?.data?.message ??
-          "Ringkasan belum bisa dimuat. Periksa koneksi ke server lalu muat ulang halaman."
+          "Dashboard belum bisa dimuat. Periksa koneksi ke server lalu muat ulang halaman."
       );
     };
 
@@ -47,9 +50,10 @@ export default function OwnerOverviewPage() {
         if (cancelled) return;
         setRingkasan(hasil.summary);
         setTren(hasil.growth);
+        setUang(hasil.revenue);
         setPrioritas(hasil.priorities);
-        // Nama gym hanya dipakai pesan tagihan, jadi boleh kosong tanpa mengganggu layar.
-        setNamaGym(hasil.settings["gym.name"] ?? null);
+        // Nama gym tidak lagi bisa diubah pemilik (brand tetap "GymHub"), jadi jatuh ke situ.
+        setNamaGym(hasil.settings["gym.name"] ?? "GymHub");
       })
       .catch(gagal);
 
@@ -68,7 +72,7 @@ export default function OwnerOverviewPage() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-extrabold uppercase tracking-tight text-foreground">
-            Ringkasan
+            Dashboard
           </h1>
           <p className="text-sm text-muted-foreground">
             Keadaan gym bulan ini. Untuk melayani anggota, buka Panel Petugas.
@@ -107,6 +111,18 @@ export default function OwnerOverviewPage() {
           loading={memuat}
         />
       </div>
+
+      <Card className="rounded-xl border-border">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Uang masuk 12 bulan terakhir</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Geser kursor di atas grafik untuk melihat nominal dan jumlah transaksi tiap bulan.
+          </p>
+        </CardHeader>
+        <CardContent>
+          {!uang ? <Skeleton className="h-56 w-full" /> : <RevenueChart points={uang} />}
+        </CardContent>
+      </Card>
 
       {/* Grafik batang dari <div>: tanpa pustaka chart (aturan repo). */}
       <Card className="rounded-xl border-border">
