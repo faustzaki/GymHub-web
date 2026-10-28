@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import api, { TOKEN_KEY } from "@/lib/axios";
+import api, { getSekali, TOKEN_KEY } from "@/lib/axios";
 import { DEV_BYPASS_AUTH, DEV_EMAIL, DEV_PASSWORD } from "@/lib/devMode";
 
 /** Role yang dikenal backend (users.role). */
@@ -35,6 +35,16 @@ interface AuthState {
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
 }
+
+/**
+ * Penjaga agar pemeriksaan sesi tidak berjalan dua kali sekaligus.
+ *
+ * Penjaga rute dipasang dua kali oleh StrictMode di dev, dan tanpa penjaga ini dua-duanya
+ * menjalankan checkAuth -- artinya /login dipanggil dua kali. Terukur: masuk otomatis sekali
+ * saja sudah ~1,5 detik, jadi salinan kedua itu langsung terasa. Panggilan kedua sekarang hanya
+ * menunggu yang pertama selesai.
+ */
+let checkAuthSedangJalan: Promise<void> | null = null;
 
 /**
  * Auth Store (Zustand)
@@ -83,7 +93,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
-  checkAuth: async () => {
+  checkAuth: () => {
+    if (checkAuthSedangJalan) return checkAuthSedangJalan;
+
+    checkAuthSedangJalan = (async () => {
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token) {
       // [DEV-SAJA] Halaman masuk dilewati selama pengembangan: masuk otomatis memakai akun
@@ -104,7 +117,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
     set({ isLoading: true });
     try {
-      const response = await api.get("/me");
+      const response = await getSekali<{ data: User }>("/me");
       const akun = response.data.data;
 
       // [DEV-SAJA] Sesi lama bisa saja milik akun lain -- dulu masuk otomatis memakai
@@ -135,5 +148,10 @@ export const useAuthStore = create<AuthState>((set) => ({
       localStorage.removeItem(TOKEN_KEY);
       set({ user: null, token: null, isAuthenticated: false, isLoading: false });
     }
+    })().finally(() => {
+      checkAuthSedangJalan = null;
+    });
+
+    return checkAuthSedangJalan;
   },
 }));

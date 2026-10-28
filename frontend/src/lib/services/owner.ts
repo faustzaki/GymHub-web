@@ -1,4 +1,4 @@
-import api from "@/lib/axios";
+import api, { getSekali } from "@/lib/axios";
 import type { MemberStatus } from "@/lib/services/members";
 
 /**
@@ -235,7 +235,7 @@ export function waLink(member: PriorityMember, gymName: string | null): string |
 // ---------------------------------------------------------------------------
 
 export async function fetchOwnerSummary(): Promise<OwnerSummary> {
-  const { data } = await api.get<{ data: OwnerSummary }>("/owner/summary");
+  const { data } = await getSekali<{ data: OwnerSummary }>("/owner/summary");
   return data.data;
 }
 
@@ -255,7 +255,7 @@ export interface OwnerDashboard {
  * Endpoint terpisah tetap dipakai halaman lain (Uang Masuk, Pengaturan Web).
  */
 export async function fetchOwnerDashboard(): Promise<OwnerDashboard> {
-  const { data } = await api.get<{
+  const { data } = await getSekali<{
     data: {
       summary: OwnerSummary;
       growth: { months: number; items: MonthPoint[] };
@@ -275,7 +275,7 @@ export async function fetchOwnerDashboard(): Promise<OwnerDashboard> {
 
 /** Anggota baru per bulan, deret kontinu (bulan kosong tetap muncul bernilai 0). */
 export async function fetchGrowth(): Promise<MonthPoint[]> {
-  const { data } = await api.get<{ data: { items: MonthPoint[] } }>("/owner/growth", {
+  const { data } = await getSekali<{ data: { items: MonthPoint[] } }>("/owner/growth", {
     params: { months: 6 },
   });
   return data.data.items;
@@ -292,7 +292,7 @@ export async function fetchRevenue(
   group: GrupWaktu = "bulanan",
   jumlah?: number
 ): Promise<MoneyPoint[]> {
-  const { data } = await api.get<{ data: { items: MoneyPoint[] } }>("/owner/revenue", {
+  const { data } = await getSekali<{ data: { items: MoneyPoint[] } }>("/owner/revenue", {
     params: { group, ...(jumlah ? { jumlah } : {}) },
   });
   return data.data.items;
@@ -300,17 +300,17 @@ export async function fetchRevenue(
 
 /** Sepuluh anggota yang paling perlu ditagih, sudah diurutkan backend. */
 export async function fetchPriorities(): Promise<PriorityMember[]> {
-  const { data } = await api.get<{ data: { items: PriorityMember[] } }>("/owner/priorities");
+  const { data } = await getSekali<{ data: { items: PriorityMember[] } }>("/owner/priorities");
   return data.data.items;
 }
 
 export async function fetchOwnerSettings(): Promise<OwnerSettingsRow[]> {
-  const { data } = await api.get<{ data: { items: OwnerSettingsRow[] } }>("/owner/settings");
+  const { data } = await getSekali<{ data: { items: OwnerSettingsRow[] } }>("/owner/settings");
   return data.data.items;
 }
 
 export async function fetchPublicSettings(): Promise<PublicSettings> {
-  const { data } = await api.get<{ data: PublicSettings }>("/settings/public");
+  const { data } = await getSekali<{ data: PublicSettings }>("/settings/public");
   return data.data;
 }
 

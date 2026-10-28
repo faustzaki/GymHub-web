@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { type AxiosRequestConfig, type AxiosResponse } from "axios";
 
 /**
  * Konfigurasi Global Axios.
@@ -38,3 +38,31 @@ api.interceptors.response.use(
 );
 
 export default api;
+
+/**
+ * GET yang sama dan belum selesai tidak diulang: pemanggil kedua menerima permintaan yang sama.
+ *
+ * Sejak React 18, StrictMode menjalankan effect dua kali di dev -- tanpa ini setiap halaman
+ * memanggil API dua kali. Terukur di GymHub: `/login` dan `/owner/revenue` masing-masing 2x per
+ * muat halaman, dan karena server dev melayani satu permintaan sekaligus, salinan kedua ikut
+ * mengantre -- halaman terasa dua kali lebih lambat. Dedupe ini juga menolong di produksi saat
+ * dua komponen kebetulan meminta data yang sama.
+ *
+ * Sengaja hanya untuk GET, dan hanya selama permintaannya masih berjalan (dihapus begitu selesai,
+ * jadi data tidak pernah basi). POST/PATCH tidak di-dedupe: menekan "simpan" dua kali adalah dua
+ * tindakan, bukan satu.
+ */
+const permintaanAktif = new Map<string, Promise<AxiosResponse<unknown>>>();
+
+export function getSekali<T>(
+  url: string,
+  config?: AxiosRequestConfig
+): Promise<AxiosResponse<T>> {
+  const kunci = `${url}|${JSON.stringify(config?.params ?? {})}`;
+  const sudahJalan = permintaanAktif.get(kunci) as Promise<AxiosResponse<T>> | undefined;
+  if (sudahJalan) return sudahJalan;
+
+  const jalan = api.get<T>(url, config).finally(() => permintaanAktif.delete(kunci));
+  permintaanAktif.set(kunci, jalan as Promise<AxiosResponse<unknown>>);
+  return jalan;
+}

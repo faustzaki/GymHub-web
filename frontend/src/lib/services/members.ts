@@ -1,4 +1,4 @@
-import api from "@/lib/axios";
+import api, { getSekali } from "@/lib/axios";
 import type { PaymentMethod } from "@/lib/services/owner";
 
 /** Status dihitung backend (Member::status()). FE hanya menerjemahkan ke label. */
@@ -62,7 +62,7 @@ export async function fetchMembers(params: {
   page?: number;
   per_page?: number;
 }): Promise<MemberList> {
-  const { data } = await api.get<{ data: MemberList }>("/admin/members", {
+  const { data } = await getSekali<{ data: MemberList }>("/admin/members", {
     params: {
       q: params.q || undefined,
       status: params.status || undefined,
@@ -74,7 +74,7 @@ export async function fetchMembers(params: {
 }
 
 export async function fetchMember(id: number): Promise<MemberDetail> {
-  const { data } = await api.get<{ data: MemberDetail }>(`/admin/members/${id}`);
+  const { data } = await getSekali<{ data: MemberDetail }>(`/admin/members/${id}`);
   return data.data;
 }
 

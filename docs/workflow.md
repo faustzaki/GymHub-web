@@ -144,3 +144,15 @@ GymHub-web/
 | Tanggal tampil bergeser sehari | ada `toISOString()` untuk tanggal tampilan; itu UTC, pakai tanggal lokal |
 | Status anggota meleset | `app.timezone` harus `Asia/Jakarta` (ADR-002) |
 | Frontend tidak lihat perubahan | proses `vite` basi menahan port 5178 |
+
+## Kalau Terasa Lambat
+
+Tiga sebab yang pernah terukur, dan di mana obatnya:
+
+| Gejala | Sebab | Obat |
+| --- | --- | --- |
+| Halaman terasa dua kali lebih lambat | React StrictMode memasang effect dua kali di dev, jadi setiap panggilan API terkirim dua kali — dan server dev melayani satu permintaan sekaligus, jadi salinan kedua ikut mengantre | `getSekali()` di `src/lib/axios.ts` (GET yang sama & belum selesai dipakai bersama) + penjaga `checkAuthSedangJalan` di `useAuthStore.ts`. Ukur sendiri: satu halaman harus **2** panggilan API (periksa sesi + data), bukan 4 |
+| Masuk terasa lama (~0,4–1,5 detik) | bcrypt cost 12 | `BCRYPT_ROUNDS=4` di `backend/.env`, lalu `php scripts/turunkan-biaya-bcrypt.php`. Sandi lama **harus** di-hash ulang: Laravel memakai cost yang tertulis di dalam hash, bukan yang di .env |
+| Muat pertama berat (3,4 MB / 70 permintaan) | dev menyajikan modul satu per satu, tidak digabung | itu memang harga dev. Untuk versi ringan: `npm run build` lalu `npm run preview` (293 KB / 30 permintaan). Build tidak punya masuk-otomatis — masuk sekali dengan akun dev |
+
+Mengukur, jangan menebak: `playwright` + `performance.getEntriesByType('resource')` — hitung panggilan `/api/`, ukuran unduhan, dan waktu sampai data benar-benar muncul di layar.
