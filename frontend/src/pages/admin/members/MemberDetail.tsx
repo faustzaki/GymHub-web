@@ -182,7 +182,7 @@ export function MemberDetail({ memberId, onClose, onChanged }: Props) {
               <p className="text-sm font-medium text-foreground">Perpanjang</p>
               <p className="text-xs text-muted-foreground">
                 Masih aktif: ditambahkan dari tanggal berakhir lama, sisa waktu tidak dipotong.
-                Sudah kadaluarsa: dihitung dari hari ini.
+                Sudah lewat tenggat: dihitung dari hari ini.
               </p>
               {/* Tiap tombol sudah menyebut tanggal berakhir barunya, jadi tidak ada
                   perpanjangan yang diklik tanpa tahu hasilnya. */}

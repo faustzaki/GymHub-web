@@ -12,12 +12,13 @@ use Illuminate\Support\Carbon;
 /**
  * Data contoh untuk pengembangan (dummy).
  *
- * Kenapa ada: tanpa sebaran status yang lengkap, filter "akan berakhir" dan "kadaluarsa" tidak
+ * Kenapa ada: tanpa sebaran status yang lengkap, filter "akan berakhir" dan "nonaktif" tidak
  * bisa diuji, dan warna badge-nya tidak pernah kelihatan. Seeder ini menghapus seluruh anggota
  * lama -- termasuk baris sampah sisa uji otomatis yang nomornya kosong -- lalu mengisi 15 anggota
  * dengan tanggal yang sengaja disebar.
  *
- * Sebaran: 8 aktif · 3 akan berakhir (<= 7 hari) · 2 kadaluarsa · 2 nonaktif (akunnya dihapus).
+ * Sebaran: 8 aktif · 3 akan berakhir (<= 7 hari) · 4 nonaktif (2 masa aktifnya lewat,
+ * 2 akunnya dimatikan) -- status hanya tiga sejak keputusan josjis 2026-10-28.
  *
  * AMAN: hanya berjalan di lingkungan `local`. Di lingkungan lain seeder ini menolak jalan, jadi
  * tidak akan menghapus data sungguhan.
@@ -108,6 +109,6 @@ class DemoMemberSeeder extends Seeder
             }
         });
 
-        $this->command?->info('Anggota contoh siap: '.count($this->contoh).' baris (8 aktif, 3 akan berakhir, 2 kadaluarsa, 2 nonaktif).');
+        $this->command?->info('Anggota contoh siap: '.count($this->contoh).' baris (8 aktif, 3 akan berakhir, 4 nonaktif).');
     }
 }

@@ -114,7 +114,7 @@ Semua list endpoint yang bisa besar menggunakan:
 | POST | `/api/admin/members/{id}/reactivate` | AdminMemberController@reactivate | Aktifkan kembali |
 
 Nomor HP duplikat dibalas **409** + `data.existing_member`, bukan 422, supaya UI bisa menawarkan
-"buka member itu". Status member (`aktif` / `akan_berakhir` / `kadaluarsa` / `nonaktif`) **dihitung**,
+"buka member itu". Status member (`aktif` / `akan_berakhir` / `nonaktif`) **dihitung**,
 tidak disimpan sebagai kolom. Rincian lengkap: `docs/prd/001-admin-manajemen-member.md`.
 | GET | `/api/admin/coaches` | AdminCoachController@index | List coach (paginated, filter) |
 | POST | `/api/admin/coaches` | AdminCoachController@store | Buat akun coach |

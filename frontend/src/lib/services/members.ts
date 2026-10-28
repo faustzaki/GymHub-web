@@ -1,7 +1,7 @@
 import api from "@/lib/axios";
 
 /** Status dihitung backend (Member::status()). FE hanya menerjemahkan ke label. */
-export type MemberStatus = "aktif" | "akan_berakhir" | "kadaluarsa" | "nonaktif";
+export type MemberStatus = "aktif" | "akan_berakhir" | "nonaktif";
 
 export interface Member {
   id: number;

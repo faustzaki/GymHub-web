@@ -28,12 +28,12 @@ $nomorUji = '0899000000';
 
 // nama, tambahan hari (null = tanpa tanggal berakhir), nonaktif, status yang diharapkan
 $kasus = [
-    ['Uji Batas H-1', -1, false, 'kadaluarsa'],
+    ['Uji Batas H-1', -1, false, 'nonaktif'],
     ['Uji Batas Hari Ini', 0, false, 'akan_berakhir'],
     ['Uji Batas H+1', 1, false, 'akan_berakhir'],
     ['Uji Batas H+7', 7, false, 'akan_berakhir'],
     ['Uji Batas H+8', 8, false, 'aktif'],
-    ['Uji Batas Tanpa Tanggal', null, false, 'kadaluarsa'],
+    ['Uji Batas Tanpa Tanggal', null, false, 'nonaktif'],
     ['Uji Batas Nonaktif', 30, true, 'nonaktif'],
 ];
 

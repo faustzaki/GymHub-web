@@ -2,14 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, UserX, AlarmClock, CalendarClock, ArrowRight } from "lucide-react";
+import { Users, UserX, AlarmClock, ArrowRight } from "lucide-react";
 import { useMembers } from "@/hooks/useMembers";
 import { fetchMembers, formatDate, type Member } from "@/lib/services/members";
 
 interface Counts {
   aktif: number;
   akan_berakhir: number;
-  kadaluarsa: number;
   nonaktif: number;
 }
 
@@ -33,16 +32,14 @@ export default function AdminOverviewPage() {
     Promise.all([
       fetchMembers({ status: "aktif", per_page: 1 }),
       fetchMembers({ status: "akan_berakhir", per_page: 1 }),
-      fetchMembers({ status: "kadaluarsa", per_page: 1 }),
       fetchMembers({ status: "nonaktif", per_page: 1 }),
       fetchMembers({ per_page: 5 }),
     ])
-      .then(([aktif, akanBerakhir, kadaluarsa, nonaktif, terbaru]) => {
+      .then(([aktif, akanBerakhir, nonaktif, terbaru]) => {
         if (cancelled) return;
         setCounts({
           aktif: aktif.meta.total,
           akan_berakhir: akanBerakhir.meta.total,
-          kadaluarsa: kadaluarsa.meta.total,
           nonaktif: nonaktif.meta.total,
         });
         setRecent(terbaru.items);
@@ -60,8 +57,12 @@ export default function AdminOverviewPage() {
     () => [
       { label: "Member aktif", value: counts?.aktif, icon: Users, href: "/admin/members?status=aktif" },
       { label: "Akan berakhir (≤7 hari)", value: counts?.akan_berakhir, icon: AlarmClock, href: "/admin/members?status=akan_berakhir" },
-      { label: "Kadaluarsa", value: counts?.kadaluarsa, icon: CalendarClock, href: "/admin/members?status=kadaluarsa" },
-      { label: "Nonaktif", value: counts?.nonaktif, icon: UserX, href: "/admin/members?status=nonaktif" },
+      {
+        label: "Nonaktif (habis masa aktif atau dimatikan)",
+        value: counts?.nonaktif,
+        icon: UserX,
+        href: "/admin/members?status=nonaktif",
+      },
     ],
     [counts]
   );

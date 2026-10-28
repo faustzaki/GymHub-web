@@ -57,22 +57,27 @@ class Member extends Model
         return 'GH-'.str_pad((string) ($tertinggi + 1), 4, '0', STR_PAD_LEFT);
     }
 
-    /** aktif / akan_berakhir / kadaluarsa / nonaktif — PRD-001 §7. */
+    /**
+     * aktif / akan_berakhir / nonaktif (keputusan josjis 2026-10-28).
+     *
+     * "Kadaluarsa" dilebur ke "nonaktif" -- dari sisi petugas, anggota yang masa aktifnya habis
+     * dan anggota yang dimatikan petugas sama-sama tidak boleh masuk. Tenggat "akan berakhir"
+     * dihitung SOON_DAYS hari sebelum tanggal berakhir, dan hari berakhirnya sendiri masih
+     * terhitung "akan berakhir" (anggota masih boleh masuk di hari terakhirnya).
+     */
     public function status(): string
     {
-        if ($this->nonaktif()) {
+        if ($this->nonaktif() || ! $this->membership_expires_at) {
             return 'nonaktif';
         }
 
-        if (! $this->membership_expires_at) {
-            return 'kadaluarsa';
+        $sisa = $this->daysLeft();
+
+        if ($sisa < 0) {
+            return 'nonaktif';
         }
 
-        return match (true) {
-            $this->daysLeft() < 0 => 'kadaluarsa',
-            $this->daysLeft() <= self::SOON_DAYS => 'akan_berakhir',
-            default => 'aktif',
-        };
+        return $sisa <= self::SOON_DAYS ? 'akan_berakhir' : 'aktif';
     }
 
     /**

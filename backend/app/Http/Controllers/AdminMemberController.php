@@ -38,15 +38,29 @@ class AdminMemberController extends Controller
         $cari = trim((string) $request->query('q', ''));
         $status = (string) $request->query('status', '');
 
+        // Status yang tidak dikenal ditolak, bukan diabaikan: kalau diabaikan, salah ketik
+        // ("kadaluarsa" misalnya) diam-diam menampilkan SELURUH anggota dan angkanya terlihat wajar.
+        if ($status !== '' && ! in_array($status, ['aktif', 'akan_berakhir', 'nonaktif'], true)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Status tidak dikenal. Pilih: aktif, akan_berakhir, atau nonaktif.',
+            ], 422);
+        }
+
         // withTrashed: member nonaktif tetap punya baris user (soft delete), jadi relasinya
         // harus dimuat tanpa scope default. Tanpa ini, status member nonaktif salah dan
         // aksi "aktifkan kembali" meledak dengan trashed() on null.
         $query = Member::query()->with(['user' => fn ($q) => $q->withTrashed()]);
 
         // Hanya member. User ber-role coach/admin tidak pernah muncul di layar ini.
-        $query->whereHas('user', function ($q) use ($status) {
+        //
+        // Filter "nonaktif" harus bisa menampilkan akun yang SUDAH dimatikan, dan akun itu tersimpan
+        // sebagai soft delete -- relasi bawaan menyaringnya, jadi scope-nya dilepas khusus di sini.
+        // Tanpa ini, anggota nonaktif hilang dari daftar justru saat dicari.
+        $hanyaYangHidup = $status !== 'nonaktif';
+        $query->whereHas('user', function ($q) use ($hanyaYangHidup) {
+            $hanyaYangHidup ? $q->whereNull('deleted_at') : $q->withTrashed();
             $q->where('role', User::ROLE_MEMBER);
-            $status === 'nonaktif' ? $q->onlyTrashed() : $q->whereNull('deleted_at');
         });
 
         if ($cari !== '') {
@@ -65,11 +79,18 @@ class AdminMemberController extends Controller
         $hariIni = now()->startOfDay();
         $batas = $hariIni->copy()->addDays(Member::SOON_DAYS);
 
+        // Tiga status saja (keputusan josjis 2026-10-28): aktif, akan berakhir (tenggat 7 hari),
+        // nonaktif -- yang mencakup dua sebab: masa aktifnya lewat, atau akunnya dimatikan petugas.
+        // whereDate dipakai supaya jam yang tersimpan tidak ikut menentukan.
         match ($status) {
-            'aktif' => $query->where('membership_expires_at', '>', $batas),
-            'akan_berakhir' => $query->whereBetween('membership_expires_at', [$hariIni, $batas]),
-            'kadaluarsa' => $query->where(function ($w) use ($hariIni) {
-                $w->whereNull('membership_expires_at')->orWhere('membership_expires_at', '<', $hariIni);
+            'aktif' => $query->whereDate('membership_expires_at', '>', $batas->toDateString()),
+            'akan_berakhir' => $query
+                ->whereDate('membership_expires_at', '>=', $hariIni->toDateString())
+                ->whereDate('membership_expires_at', '<=', $batas->toDateString()),
+            'nonaktif' => $query->where(function ($w) use ($hariIni) {
+                $w->whereNull('membership_expires_at')
+                    ->orWhereDate('membership_expires_at', '<', $hariIni->toDateString())
+                    ->orWhereHas('user', fn ($u) => $u->withTrashed()->whereNotNull('deleted_at'));
             }),
             default => null,
         };
