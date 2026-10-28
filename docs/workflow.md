@@ -41,7 +41,12 @@ Supaya tidak bolak-balik login saat mengerjakan tampilan, aplikasi masuk sendiri
 `npm run dev`. Bukan pengaman — hanya kenyamanan, dan **mati sendiri di build produksi**.
 
 - `frontend/.env.local` (masuk `.gitignore`, jangan di-commit) memuat
-  `VITE_DEV_ADMIN_EMAIL` dan `VITE_DEV_ADMIN_PASSWORD` dari akun hasil seeder.
+  `VITE_DEV_ADMIN_EMAIL` dan `VITE_DEV_ADMIN_PASSWORD` dari akun hasil seeder — **isi akun owner**,
+  bukan petugas: owner bertingkat, jadi semua layar (`/admin/*` dan `/owner/*`) bisa dibuka tanpa
+  ganti akun. Dua akun hasil seeder: `owner@gymhub.local` dan `admin@gymhub.local`.
+- Panel owner butuh beberapa detik sebelum angkanya muncul di dev: `php -S` melayani satu permintaan
+  sekaligus, jadi 10 permintaan berbaris (±0,5 detik masing-masing). Bukan kerusakan — tunggu, atau
+  jalankan API di belakang nginx/php-fpm kalau mengganggu.
 - Penjaganya bisa dipaksa hidup untuk menguji ulang: jalankan dev dengan `VITE_DEV_BYPASS_AUTH=0`.
 
 ## Perintah Harian

@@ -102,8 +102,6 @@ function App() {
             {/* Petugas mendarat langsung di daftar anggota (keputusan josjis 2026-10-28). */}
             <Route index element={<Navigate to="members" replace />} />
             <Route path="members" element={<MemberManagementPage />} />
-            <Route path="reports" element={<div className="p-4">Laporan Ops (Coming Soon)</div>} />
-            <Route path="settings" element={<div className="p-4">Pengaturan (Coming Soon)</div>} />
           </Route>
         </Route>
 
