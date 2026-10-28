@@ -185,6 +185,7 @@ Alasan: kolom status yang bisa ditulis akan selalu basi — waktu berjalan tanpa
 |---|---|
 | id | bigint PK |
 | member_id | FK members.id CASCADE |
+| added_months | unsignedSmallInteger | Lama perpanjangan **dalam bulan** |
 | started_from | date |
 | expires_at_after | date |
 | created_by_user_id | FK users.id nullable |

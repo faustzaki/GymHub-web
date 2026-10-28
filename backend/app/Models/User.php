@@ -34,6 +34,9 @@ class User extends Authenticatable
 
     public const ROLE_ADMIN = 'admin';
 
+    /** Pemilik gym. Bertingkat: boleh semua yang boleh admin (keputusan josjis 2026-10-28, P1). */
+    public const ROLE_OWNER = 'owner';
+
     public function member(): HasOne
     {
         return $this->hasOne(Member::class);
@@ -42,6 +45,17 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->role === self::ROLE_ADMIN;
+    }
+
+    public function isOwner(): bool
+    {
+        return $this->role === self::ROLE_OWNER;
+    }
+
+    /** Petugas di meja atau pemilik -- dua-duanya boleh mengurus anggota. */
+    public function isStaff(): bool
+    {
+        return $this->isAdmin() || $this->isOwner();
     }
 
     /**
