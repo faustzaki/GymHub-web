@@ -1,5 +1,5 @@
 import { Outlet, Link } from "react-router-dom";
-import logoImg from "@/assets/Gemini_Generated_Image_kmomnfkmomnfkmom-removebg-preview.png";
+import logoImg from "@/assets/logo-gymhub.png";
 
 export default function AuthLayout() {
   return (
@@ -14,7 +14,7 @@ export default function AuthLayout() {
             <img
               src={logoImg}
               alt="GymHub"
-              className="h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-110"
+              className="h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-110"
             />
             <span className="text-2xl font-bold tracking-tight text-foreground">
               Gym<span className="text-primary">Hub</span>

@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ArrowUpRight, Mail } from "lucide-react";
-import logoImg from "@/assets/Gemini_Generated_Image_kmomnfkmomnfkmom-removebg-preview.png";
+import logoImg from "@/assets/logo-gymhub.png";
 
 /**
  * Ikon brand digambar sendiri (lucide sudah menghapus ikon merek):
@@ -46,7 +46,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-16">
           <div className="space-y-6 lg:col-span-5">
             <a href="#home" className="inline-flex items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-              <img src={logoImg} alt="" className="h-12 w-auto object-contain" />
+              <img src={logoImg} alt="" className="h-9 w-auto object-contain" />
               <span className="text-2xl font-extrabold tracking-tight">
                 Gym<span className="text-primary">Hub</span>
               </span>

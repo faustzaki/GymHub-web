@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Outlet, NavLink, Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import logoImg from "@/assets/Gemini_Generated_Image_kmomnfkmomnfkmom-removebg-preview.png";
+import logoImg from "@/assets/logo-gymhub.png";
 import {
   LayoutDashboard,
   BookOpen,

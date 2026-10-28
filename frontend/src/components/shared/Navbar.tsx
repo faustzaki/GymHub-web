@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useScrollNavbar } from "@/hooks/useScrollNavbar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import logoImg from "@/assets/Gemini_Generated_Image_kmomnfkmomnfkmom-removebg-preview.png";
+import logoImg from "@/assets/logo-gymhub.png";
 
 /**
  * Urutan tautan mengikuti urutan seksi di DOM pada HomePage, supaya mengikuti menu
